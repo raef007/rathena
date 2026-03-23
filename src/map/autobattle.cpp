@@ -29,7 +29,7 @@ struct block_list* autobattle_search_target(map_session_data *sd)
 	int32 best_damage = 0;
 
 	auto search_callback = [&](struct block_list* bl) -> int {
-		if (!bl || bl->id == sd->bl.id)
+		if (!bl || bl->id == sd->bl_id)
 			return 0; // Skip self
 
 		// Validate target
@@ -50,13 +50,13 @@ struct block_list* autobattle_search_target(map_session_data *sd)
 			// Estimate damage output from target (use mob ATK as proxy)
 			if (bl->type == BL_MOB) {
 				struct mob_data *md = (struct mob_data*)bl;
-				damage = md->status.atkmax;
+				damage = md->status.batk;
 				priority = -damage; // Negative so highest damage gets lowest priority (best)
 			} else if (bl->type == BL_PC) {
 				// For players, use status ATK
 				struct status_data *st = status_get_status_data(*bl);
 				if (st)
-					damage = st->atkmax;
+					damage = st->batk;
 				priority = -damage;
 			}
 		}
@@ -80,7 +80,7 @@ struct block_list* autobattle_search_target(map_session_data *sd)
 	};
 
 	// Search in defined range
-	map_foreachinrange(search_callback, &sd->bl, sd->autobattle_data.range, BL_MOB | BL_PC);
+	map_foreachinrange(search_callback, (block_list*)sd, sd->autobattle_data.range, BL_MOB | BL_PC);
 
 	if (target && target->prev != nullptr)
 		return target;
@@ -97,15 +97,15 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 		return false;
 
 	// Check if target is alive
-	if (status_isdead(sd->bl) || status_isdead(*target))
+	if (status_isdead(*sd) || status_isdead(*target))
 		return false;
 
 	// Check if it's a valid enemy
-	if (battle_check_target(&sd->bl, target, BCT_ENEMY) <= 0)
+	if (battle_check_target(*sd, target, BCT_ENEMY) <= 0)
 		return false;
 
 	// Check if we can use normal attack
-	if (!status_check_skilluse(&sd->bl, target, 0, 0))
+	if (!status_check_skilluse(*sd, target, 0, 0))
 		return false;
 
 	// PvP safety: Can only attack other player if they also have auto-attack
@@ -116,12 +116,12 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 	}
 
 	// Distance check
-	struct status_data *sstatus = status_get_status_data(sd->bl);
+	struct status_data *sstatus = status_get_status_data(*sd);
 	if (!sstatus)
 		return false;
 
 	int32 range = sstatus->rhw.range;
-	if (!check_distance_bl(&sd->bl, target, range))
+	if (!check_distance_bl(*sd, target, range))
 		return false;
 
 	return true;
@@ -147,7 +147,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 
 			// Only attack if not in combat cooldown
 			if (DIFF_TICK(sd->ud.canact_tick, tick) <= 0) {
-				unit_attack(&sd->bl, target->id, 1); // 1 = continuous attack
+				unit_attack((block_list*)sd, target->id, 1); // 1 = continuous attack
 			}
 		} else {
 			// No valid target found
@@ -201,7 +201,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					continue; // HP not below threshold
 
 				// Check if skill is usable
-				if (!skill_can_use_by_id(sd, skill.skill_id, skill.skill_lv))
+				if (!skill_check_condition_castbegin(*sd, skill.skill_id, skill.skill_lv))
 					continue;
 
 				// Check MP
@@ -210,7 +210,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					continue;
 
 				// Cast skill
-				unit_skilluse_id(&sd->bl, target->bl.id, skill.skill_id, skill.skill_lv);
+				unit_skilluse_id(*sd, target->id, skill.skill_id, skill.skill_lv);
 				skill.last_cast_time = tick;
 				break; // Only cast one support skill per frame
 			}
@@ -230,7 +230,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 				struct flooritem_data *fitem = (struct flooritem_data*)bl;
 
 				// Check distance
-				int16 dist = distance_bl(&sd->bl, bl);
+				int16 dist = distance_bl(*sd, bl);
 				if (dist > sd->autobattle_data.loot_range)
 					return 0;
 
@@ -246,7 +246,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 			};
 
 			// Search for items in loot range
-			map_foreachinrange(loot_callback, &sd->bl, sd->autobattle_data.loot_range, BL_ITEM);
+			map_foreachinrange(loot_callback, (block_list*)sd, sd->autobattle_data.loot_range, BL_ITEM);
 		}
 	}
 
@@ -260,7 +260,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 	sd->autobattle_data.attack_timer = add_timer(
 		tick + AUTOBATTLE_TIMER_INTERVAL,
 		autobattle_process,
-		sd->bl.id,
+		sd->bl_id,
 		0
 	);
 
@@ -371,7 +371,7 @@ void autobattle_start(map_session_data *sd)
 	sd->autobattle_data.attack_timer = add_timer(
 		gettick() + AUTOBATTLE_TIMER_INTERVAL,
 		autobattle_process,
-		sd->bl.id,
+		sd->bl_id,
 		0
 	);
 }
