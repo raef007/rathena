@@ -128,11 +128,11 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 		return false;
 
 	// Check if it's a valid enemy
-	if (battle_check_target((block_list*)sd, *target, BCT_ENEMY) <= 0)
+	if (battle_check_target((block_list*)sd, target, BCT_ENEMY) <= 0)
 		return false;
 
 	// Check if we can use normal attack
-	if (!status_check_skilluse(*sd, *target, 0, 0))
+	if (!status_check_skilluse((block_list*)sd, target, 0, 0))
 		return false;
 
 	// PvP safety: Can only attack other player if they also have auto-attack
@@ -148,7 +148,7 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 		return false;
 
 	int32 range = sstatus->rhw.range;
-	if (!check_distance_bl(*sd, *target, range))
+	if (!check_distance_bl((block_list*)sd, target, range))
 		return false;
 
 	return true;
