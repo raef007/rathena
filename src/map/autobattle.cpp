@@ -120,6 +120,8 @@ struct block_list* autobattle_search_target(map_session_data *sd)
 
 /**
  * Validate if player is allowed to attack target
+ * NOTE: This checks legality only (alive, enemy, not shielded).
+ * Distance checks are handled separately by the caller.
  */
 bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 {
@@ -144,15 +146,6 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 		if (!(target_sd->autobattle_data.mode & AUTOBATTLE_ATTACK))
 			return false; // Cannot auto-attack players without auto-attack enabled
 	}
-
-	// Distance check
-	struct status_data *sstatus = status_get_status_data(*sd);
-	if (!sstatus)
-		return false;
-
-	int32 range = sstatus->rhw.range;
-	if (!check_distance_bl((block_list*)sd, target, range))
-		return false;
 
 	return true;
 }
