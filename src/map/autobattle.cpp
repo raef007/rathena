@@ -243,7 +243,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 			if (sd->autobattle_data.mode & AUTOBATTLE_ROAM) {
 				if (DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) >= battle_config.autobattle_roam_interval) {
 					sd->autobattle_data.last_roam_tick = tick;
-					int16 rx = sd->bl.x, ry = sd->bl.y;
+					int16 rx = sd->x, ry = sd->y;
 					if (map_random_dir((block_list*)sd, &rx, &ry)) {
 						unit_walktoxy((block_list*)sd, rx, ry, 0);
 					}
