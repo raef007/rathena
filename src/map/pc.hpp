@@ -14,6 +14,7 @@
 #include <common/strlib.hpp>// StringBuf
 #include <common/timer.hpp>
 
+#include "autobattle.hpp" // Auto-battle structures
 #include "battleground.hpp"
 #include "buyingstore.hpp" // struct s_buyingstore
 #include "clif.hpp" //e_wip_block
@@ -945,6 +946,9 @@ public:
 	s_macro_detect macro_detect;
 
 	std::vector<uint32> party_booking_requests;
+
+	// Auto-Battle System
+	struct s_autobattle_data autobattle_data;
 
 	void update_look( _look look );
 };

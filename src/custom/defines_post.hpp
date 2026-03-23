@@ -9,6 +9,8 @@
  * For detailed guidance on these check http://rathena.org/wiki/SRC/config/
  **/
 
-
+// Disable the official packet obfuscation support (src\config\packets.hpp)
+#undef PACKET_OBFUSCATION
+#undef PACKET_OBFUSCATION_WARN
 
 #endif /* CONFIG_CUSTOM_DEFINES_POST_HPP */

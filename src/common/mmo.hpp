@@ -631,6 +631,13 @@ struct mmo_charstatus {
 	unsigned char hotkey_rowshift2;
 	unsigned long title_id;
 	uint16 inventory_slots;
+
+	// Auto-Battle System [rAthena]
+	// Persistent auto-battle configuration (loaded on login, saved on logout)
+	// Placeholder: In production, this would be serialized to a separate table
+	// uint8 autobattle_mode;
+	// uint8 autobattle_range;
+	// Note: Actual auto-battle state is stored in map_session_data at runtime
 };
 
 typedef enum mail_status {

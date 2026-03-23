@@ -31,6 +31,7 @@
 
 #include "achievement.hpp"
 #include "atcommand.hpp" // get_atcommand_level()
+#include "autobattle.hpp" // Auto-battle system initialization
 #include "battle.hpp" // battle_config
 #include "battleground.hpp"
 #include "buyingstore.hpp"  // struct s_buyingstore
@@ -1352,6 +1353,9 @@ bool pc_can_trade_item( const map_session_data* sd, int32 index ) {
 void pc_makesavestatus(map_session_data *sd) {
 	nullpo_retv(sd);
 
+	// Stop auto-battle system before saving
+	autobattle_stop(sd);
+
 	if(!battle_config.save_clothcolor)
 		sd->status.clothes_color = 0;
 
@@ -1454,6 +1458,9 @@ void pc_setnewpc(map_session_data *sd, uint32 account_id, uint32 char_id, int32 
 		sd->canlog_tick = gettick();
 	//Required to prevent homunculus copuing a base speed of 0.
 	sd->battle_status.speed = sd->base_status.speed = DEFAULT_WALK_SPEED;
+	
+	// Initialize auto-battle system
+	autobattle_init(sd, nullptr);
 }
 
 /**

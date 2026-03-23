@@ -24,6 +24,7 @@
 
 #include "achievement.hpp"
 #include "battle.hpp"
+#include "autobattle.hpp" // Auto-battle system
 #include "buyingstore.hpp"
 #include "channel.hpp"
 #include "chat.hpp"
@@ -11467,9 +11468,264 @@ ACMD_FUNC(macrochecker){
 #include <custom/atcommand.inc>
 
 /**
+// ===== AUTO-BATTLE COMMANDS =====
+
+/**
+ * @autoattack [@autoattack on|off|range <cells>]
+ **/
+ACMD_FUNC(autoattack) {
+	int32 range = sd->autobattle_data.range;
+	
+	if (!message || !*message) {
+		// Show status
+		clif_displaymessage(fd, "=== Auto-Attack Status ===");
+		if (sd->autobattle_data.mode & AUTOBATTLE_ATTACK) {
+			clif_displaymessage(fd, "Status: ON");
+			sprintf(atcmd_output, "Range: %d cells", sd->autobattle_data.range);
+			clif_displaymessage(fd, atcmd_output);
+		} else {
+			clif_displaymessage(fd, "Status: OFF");
+		}
+		return ATCMD_OK;
+	}
+
+	char arg1[100], arg2[100];
+	int32 argc = sscanf(message, "%99s %99s", arg1, arg2);
+
+	if (argc >= 1) {
+		if (strcmp(arg1, "on") == 0) {
+			autobattle_toggle_mode(sd, AUTOBATTLE_ATTACK, true);
+			autobattle_start(sd);
+			clif_displaymessage(fd, "Auto-attack enabled!");
+			return ATCMD_OK;
+		} else if (strcmp(arg1, "off") == 0) {
+			autobattle_toggle_mode(sd, AUTOBATTLE_ATTACK, false);
+			if (sd->autobattle_data.mode == AUTOBATTLE_OFF)
+				autobattle_stop(sd);
+			clif_displaymessage(fd, "Auto-attack disabled!");
+			return ATCMD_OK;
+		} else if (strcmp(arg1, "range") == 0 && argc >= 2) {
+			int32 new_range = atoi(arg2);
+			if (new_range < 1 || new_range > 15) {
+				clif_displaymessage(fd, "Range must be between 1 and 15 cells.");
+				return ATCMD_FAILED;
+			}
+			autobattle_set_range(sd, (uint8)new_range);
+			sprintf(atcmd_output, "Auto-attack range set to %d cells.", new_range);
+			clif_displaymessage(fd, atcmd_output);
+			return ATCMD_OK;
+		}
+	}
+
+	clif_displaymessage(fd, "Usage: @autoattack [on|off|range <cells>]");
+	return ATCMD_FAILED;
+}
+
+/**
+ * @autosupport [@autosupport list|clear|add <skill_id> <hp_threshold> <scope>]
+ * Scope: 0=self, 1=party, 2=guild
+ **/
+ACMD_FUNC(autosupport) {
+	if (!message || !*message) {
+		// Show status
+		clif_displaymessage(fd, "=== Auto-Support Status ===");
+		if (sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) {
+			clif_displaymessage(fd, "Status: ON");
+			sprintf(atcmd_output, "Configured skills: %d", sd->autobattle_data.support_skill_count);
+			clif_displaymessage(fd, atcmd_output);
+		} else {
+			clif_displaymessage(fd, "Status: OFF");
+		}
+		return ATCMD_OK;
+	}
+
+	char arg1[100], arg2[100], arg3[100], arg4[100];
+	int32 argc = sscanf(message, "%99s %99s %99s %99s", arg1, arg2, arg3, arg4);
+
+	if (argc >= 1) {
+		if (strcmp(arg1, "on") == 0) {
+			autobattle_toggle_mode(sd, AUTOBATTLE_SUPPORT, true);
+			autobattle_start(sd);
+			clif_displaymessage(fd, "Auto-support enabled!");
+			return ATCMD_OK;
+		} else if (strcmp(arg1, "off") == 0) {
+			autobattle_toggle_mode(sd, AUTOBATTLE_SUPPORT, false);
+			if (sd->autobattle_data.mode == AUTOBATTLE_OFF)
+				autobattle_stop(sd);
+			clif_displaymessage(fd, "Auto-support disabled!");
+			return ATCMD_OK;
+		} else if (strcmp(arg1, "list") == 0) {
+			if (sd->autobattle_data.support_skill_count == 0) {
+				clif_displaymessage(fd, "No auto-support skills configured.");
+			} else {
+				clif_displaymessage(fd, "=== Auto-Support Skills ===");
+				for (int i = 0; i < sd->autobattle_data.support_skill_count; i++) {
+					struct s_autosupport_skill &skill = sd->autobattle_data.support_skills[i];
+					sprintf(atcmd_output, "[%d] Skill: %d (Lv%d), HP Threshold: %d%%, Scope: %d",
+						i+1, skill.skill_id, skill.skill_lv, skill.hp_threshold, skill.target_scope);
+					clif_displaymessage(fd, atcmd_output);
+				}
+			}
+			return ATCMD_OK;
+		} else if (strcmp(arg1, "clear") == 0) {
+			autobattle_clear_support_skills(sd);
+			clif_displaymessage(fd, "All auto-support skills cleared.");
+			return ATCMD_OK;
+		} else if (strcmp(arg1, "add") == 0 && argc >= 4) {
+			uint16 skill_id = (uint16)atoi(arg2);
+			uint8 hp_threshold = (uint8)atoi(arg3);
+			uint8 scope = (uint8)atoi(arg4);
+			
+			if (hp_threshold < 1 || hp_threshold > 100) {
+				clif_displaymessage(fd, "HP threshold must be between 1 and 100.");
+				return ATCMD_FAILED;
+			}
+			if (scope > 2) {
+				clif_displaymessage(fd, "Scope must be 0 (self), 1 (party), or 2 (guild).");
+				return ATCMD_FAILED;
+			}
+			
+			autobattle_add_support_skill(sd, skill_id, 5, hp_threshold, scope); // Default skill lv 5
+			sprintf(atcmd_output, "Auto-support skill %d added (HP < %d%%).", skill_id, hp_threshold);
+			clif_displaymessage(fd, atcmd_output);
+			return ATCMD_OK;
+		}
+	}
+
+	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|add <id> <hp%> <scope>]");
+	return ATCMD_FAILED;
+}
+
+/**
+ * @autoloot [@autoloot on|off]
+ **/
+ACMD_FUNC(autoloot) {
+	if (!message || !*message) {
+		// Show status
+		clif_displaymessage(fd, "=== Auto-Loot Status ===");
+		if (sd->autobattle_data.mode & AUTOBATTLE_LOOT) {
+			clif_displaymessage(fd, "Status: ON");
+			sprintf(atcmd_output, "Range: %d cells", sd->autobattle_data.loot_range);
+			clif_displaymessage(fd, atcmd_output);
+		} else {
+			clif_displaymessage(fd, "Status: OFF");
+		}
+		return ATCMD_OK;
+	}
+
+	char arg1[100];
+	sscanf(message, "%99s", arg1);
+
+	if (strcmp(arg1, "on") == 0) {
+		autobattle_toggle_mode(sd, AUTOBATTLE_LOOT, true);
+		autobattle_start(sd);
+		clif_displaymessage(fd, "Auto-loot enabled!");
+		return ATCMD_OK;
+	} else if (strcmp(arg1, "off") == 0) {
+		autobattle_toggle_mode(sd, AUTOBATTLE_LOOT, false);
+		if (sd->autobattle_data.mode == AUTOBATTLE_OFF)
+			autobattle_stop(sd);
+		clif_displaymessage(fd, "Auto-loot disabled!");
+		return ATCMD_OK;
+	}
+
+	clif_displaymessage(fd, "Usage: @autoloot [on|off]");
+	return ATCMD_FAILED;
+}
+
+/**
+ * @skillrotation [@skillrotation list|set <slot> <skill1_id> [skill2_id] ...]
+ **/
+ACMD_FUNC(skillrotation) {
+	if (!message || !*message) {
+		// Show status
+		clif_displaymessage(fd, "=== Skill Rotation Status ===");
+		if (sd->autobattle_data.mode & AUTOBATTLE_SKILLROTATION) {
+			clif_displaymessage(fd, "Status: ON");
+		} else {
+			clif_displaymessage(fd, "Status: OFF");
+		}
+		return ATCMD_OK;
+	}
+
+	char arg1[100];
+	sscanf(message, "%99s", arg1);
+
+	if (strcmp(arg1, "list") == 0) {
+		clif_displaymessage(fd, "=== Skill Rotation Slots ===");
+		for (int slot = 0; slot < 3; slot++) {
+			struct s_skillrotation_slot &rot = sd->autobattle_data.rotations[slot];
+			if (rot.skill_count == 0) {
+				sprintf(atcmd_output, "Slot %d: [empty]", slot+1);
+			} else {
+				sprintf(atcmd_output, "Slot %d: ", slot+1);
+				for (int i = 0; i < rot.skill_count; i++) {
+					sprintf(atcmd_output + strlen(atcmd_output), "%d ", rot.skill_ids[i]);
+				}
+			}
+			clif_displaymessage(fd, atcmd_output);
+		}
+		return ATCMD_OK;
+	} else if (strcmp(arg1, "set") == 0) {
+		int32 slot = -1;
+		uint16 skills[10];
+		int32 skill_count = 0;
+
+		char temp_message[1000];
+		safestrncpy(temp_message, message + 4, sizeof(temp_message)); // Skip "set "
+		char *ptr = temp_message;
+		char token[100];
+
+		// Parse slot
+		sscanf(ptr, "%99s", token);
+		slot = atoi(token) - 1; // Convert to 0-based
+		if (slot < 0 || slot >= 3) {
+			clif_displaymessage(fd, "Slot must be 1, 2, or 3.");
+			return ATCMD_FAILED;
+		}
+
+		// Skip to next token
+		ptr = strchr(ptr, ' ');
+		if (!ptr) {
+			clif_displaymessage(fd, "Specify at least one skill ID.");
+			return ATCMD_FAILED;
+		}
+		ptr++;
+
+		// Parse skills
+		while (sscanf(ptr, "%99s", token) == 1 && skill_count < 10) {
+			skills[skill_count++] = (uint16)atoi(token);
+			ptr = strchr(ptr, ' ');
+			if (!ptr || !*(ptr + 1)) break;
+			ptr++;
+		}
+
+		autobattle_set_skillrotation(sd, (uint8)slot, skills, (uint8)skill_count);
+		sprintf(atcmd_output, "Skill rotation slot %d configured with %d skills.", slot+1, skill_count);
+		clif_displaymessage(fd, atcmd_output);
+		return ATCMD_OK;
+	}
+
+	clif_displaymessage(fd, "Usage: @skillrotation [list|set <slot> <skill_id> ...]");
+	return ATCMD_FAILED;
+}
+
+/**
+ * @autobattleoff - Turn off all auto-battle modes at once
+ **/
+ACMD_FUNC(autobattleoff) {
+	autobattle_stop(sd);
+	clif_displaymessage(fd, "All auto-battle modes disabled.");
+	return ATCMD_OK;
+}
+
+// ===== END AUTO-BATTLE COMMANDS =====
+
+
  * Fills the reference of available commands in atcommand DBMap
  **/
 #define ACMD_DEF(x) { #x, atcommand_ ## x, nullptr, nullptr, 0 }
+
 #define ACMD_DEF2(x2, x) { x2, atcommand_ ## x, nullptr, nullptr, 0 }
 // Define with restriction
 #define ACMD_DEFR(x, r) { #x, atcommand_ ## x, nullptr, nullptr, r }
@@ -11794,6 +12050,12 @@ void atcommand_basecommands(void) {
 		ACMD_DEFR(roulette, ATCMD_NOCONSOLE|ATCMD_NOAUTOTRADE),
 		ACMD_DEF(setcard),
 		ACMD_DEF(macrochecker),
+		// Auto-Battle System Commands
+		ACMD_DEF(autoattack),
+		ACMD_DEF(autosupport),
+		ACMD_DEF(autoloot),
+		ACMD_DEF(skillrotation),
+		ACMD_DEF(autobattleoff),
 	};
 	AtCommandInfo* atcommand;
 	int32 i;

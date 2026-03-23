@@ -8,6 +8,8 @@
 
 #include <common/db.hpp>
 #include <common/ers.hpp>  // ers_destroy
+
+#include "autobattle.hpp" // Auto-battle integration
 #include <common/malloc.hpp>
 #include <common/nullpo.hpp>
 #include <common/random.hpp>
