@@ -11486,7 +11486,7 @@ ACMD_FUNC(autoattack) {
 		} else {
 			clif_displaymessage(fd, "Status: OFF");
 		}
-		return ATCMD_OK;
+		return 0;
 	}
 
 	char arg1[100], arg2[100];
@@ -11497,28 +11497,28 @@ ACMD_FUNC(autoattack) {
 			autobattle_toggle_mode(sd, AUTOBATTLE_ATTACK, true);
 			autobattle_start(sd);
 			clif_displaymessage(fd, "Auto-attack enabled!");
-			return ATCMD_OK;
+			return 0;
 		} else if (strcmp(arg1, "off") == 0) {
 			autobattle_toggle_mode(sd, AUTOBATTLE_ATTACK, false);
 			if (sd->autobattle_data.mode == AUTOBATTLE_OFF)
 				autobattle_stop(sd);
 			clif_displaymessage(fd, "Auto-attack disabled!");
-			return ATCMD_OK;
+			return 0;
 		} else if (strcmp(arg1, "range") == 0 && argc >= 2) {
 			int32 new_range = atoi(arg2);
 			if (new_range < 1 || new_range > 15) {
 				clif_displaymessage(fd, "Range must be between 1 and 15 cells.");
-				return ATCMD_FAILED;
+				return -1;
 			}
 			autobattle_set_range(sd, (uint8)new_range);
 			sprintf(atcmd_output, "Auto-attack range set to %d cells.", new_range);
 			clif_displaymessage(fd, atcmd_output);
-			return ATCMD_OK;
+			return 0;
 		}
 	}
 
 	clif_displaymessage(fd, "Usage: @autoattack [on|off|range <cells>]");
-	return ATCMD_FAILED;
+	return -1;
 }
 
 /**
@@ -11536,7 +11536,7 @@ ACMD_FUNC(autosupport) {
 		} else {
 			clif_displaymessage(fd, "Status: OFF");
 		}
-		return ATCMD_OK;
+		return 0;
 	}
 
 	char arg1[100], arg2[100], arg3[100], arg4[100];
@@ -11547,13 +11547,13 @@ ACMD_FUNC(autosupport) {
 			autobattle_toggle_mode(sd, AUTOBATTLE_SUPPORT, true);
 			autobattle_start(sd);
 			clif_displaymessage(fd, "Auto-support enabled!");
-			return ATCMD_OK;
+			return 0;
 		} else if (strcmp(arg1, "off") == 0) {
 			autobattle_toggle_mode(sd, AUTOBATTLE_SUPPORT, false);
 			if (sd->autobattle_data.mode == AUTOBATTLE_OFF)
 				autobattle_stop(sd);
 			clif_displaymessage(fd, "Auto-support disabled!");
-			return ATCMD_OK;
+			return 0;
 		} else if (strcmp(arg1, "list") == 0) {
 			if (sd->autobattle_data.support_skill_count == 0) {
 				clif_displaymessage(fd, "No auto-support skills configured.");
@@ -11566,11 +11566,11 @@ ACMD_FUNC(autosupport) {
 					clif_displaymessage(fd, atcmd_output);
 				}
 			}
-			return ATCMD_OK;
+			return 0;
 		} else if (strcmp(arg1, "clear") == 0) {
 			autobattle_clear_support_skills(sd);
 			clif_displaymessage(fd, "All auto-support skills cleared.");
-			return ATCMD_OK;
+			return 0;
 		} else if (strcmp(arg1, "add") == 0 && argc >= 4) {
 			uint16 skill_id = (uint16)atoi(arg2);
 			uint8 hp_threshold = (uint8)atoi(arg3);
@@ -11578,60 +11578,25 @@ ACMD_FUNC(autosupport) {
 			
 			if (hp_threshold < 1 || hp_threshold > 100) {
 				clif_displaymessage(fd, "HP threshold must be between 1 and 100.");
-				return ATCMD_FAILED;
+				return -1;
 			}
 			if (scope > 2) {
 				clif_displaymessage(fd, "Scope must be 0 (self), 1 (party), or 2 (guild).");
-				return ATCMD_FAILED;
+				return -1;
 			}
 			
 			autobattle_add_support_skill(sd, skill_id, 5, hp_threshold, scope); // Default skill lv 5
 			sprintf(atcmd_output, "Auto-support skill %d added (HP < %d%%).", skill_id, hp_threshold);
 			clif_displaymessage(fd, atcmd_output);
-			return ATCMD_OK;
+			return 0;
 		}
 	}
 
 	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|add <id> <hp%> <scope>]");
-	return ATCMD_FAILED;
+	return -1;
 }
 
-/**
- * @autoloot [@autoloot on|off]
- **/
-ACMD_FUNC(autoloot) {
-	if (!message || !*message) {
-		// Show status
-		clif_displaymessage(fd, "=== Auto-Loot Status ===");
-		if (sd->autobattle_data.mode & AUTOBATTLE_LOOT) {
-			clif_displaymessage(fd, "Status: ON");
-			sprintf(atcmd_output, "Range: %d cells", sd->autobattle_data.loot_range);
-			clif_displaymessage(fd, atcmd_output);
-		} else {
-			clif_displaymessage(fd, "Status: OFF");
-		}
-		return ATCMD_OK;
-	}
 
-	char arg1[100];
-	sscanf(message, "%99s", arg1);
-
-	if (strcmp(arg1, "on") == 0) {
-		autobattle_toggle_mode(sd, AUTOBATTLE_LOOT, true);
-		autobattle_start(sd);
-		clif_displaymessage(fd, "Auto-loot enabled!");
-		return ATCMD_OK;
-	} else if (strcmp(arg1, "off") == 0) {
-		autobattle_toggle_mode(sd, AUTOBATTLE_LOOT, false);
-		if (sd->autobattle_data.mode == AUTOBATTLE_OFF)
-			autobattle_stop(sd);
-		clif_displaymessage(fd, "Auto-loot disabled!");
-		return ATCMD_OK;
-	}
-
-	clif_displaymessage(fd, "Usage: @autoloot [on|off]");
-	return ATCMD_FAILED;
-}
 
 /**
  * @skillrotation [@skillrotation list|set <slot> <skill1_id> [skill2_id] ...]
@@ -11645,7 +11610,7 @@ ACMD_FUNC(skillrotation) {
 		} else {
 			clif_displaymessage(fd, "Status: OFF");
 		}
-		return ATCMD_OK;
+		return 0;
 	}
 
 	char arg1[100];
@@ -11665,7 +11630,7 @@ ACMD_FUNC(skillrotation) {
 			}
 			clif_displaymessage(fd, atcmd_output);
 		}
-		return ATCMD_OK;
+		return 0;
 	} else if (strcmp(arg1, "set") == 0) {
 		int32 slot = -1;
 		uint16 skills[10];
@@ -11681,14 +11646,14 @@ ACMD_FUNC(skillrotation) {
 		slot = atoi(token) - 1; // Convert to 0-based
 		if (slot < 0 || slot >= 3) {
 			clif_displaymessage(fd, "Slot must be 1, 2, or 3.");
-			return ATCMD_FAILED;
+			return -1;
 		}
 
 		// Skip to next token
 		ptr = strchr(ptr, ' ');
 		if (!ptr) {
 			clif_displaymessage(fd, "Specify at least one skill ID.");
-			return ATCMD_FAILED;
+			return -1;
 		}
 		ptr++;
 
@@ -11703,11 +11668,11 @@ ACMD_FUNC(skillrotation) {
 		autobattle_set_skillrotation(sd, (uint8)slot, skills, (uint8)skill_count);
 		sprintf(atcmd_output, "Skill rotation slot %d configured with %d skills.", slot+1, skill_count);
 		clif_displaymessage(fd, atcmd_output);
-		return ATCMD_OK;
+		return 0;
 	}
 
 	clif_displaymessage(fd, "Usage: @skillrotation [list|set <slot> <skill_id> ...]");
-	return ATCMD_FAILED;
+	return -1;
 }
 
 /**
@@ -11716,12 +11681,12 @@ ACMD_FUNC(skillrotation) {
 ACMD_FUNC(autobattleoff) {
 	autobattle_stop(sd);
 	clif_displaymessage(fd, "All auto-battle modes disabled.");
-	return ATCMD_OK;
+	return 0;
 }
 
 // ===== END AUTO-BATTLE COMMANDS =====
 
-
+/**
  * Fills the reference of available commands in atcommand DBMap
  **/
 #define ACMD_DEF(x) { #x, atcommand_ ## x, nullptr, nullptr, 0 }
