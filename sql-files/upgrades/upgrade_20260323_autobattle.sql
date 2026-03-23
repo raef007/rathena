@@ -16,8 +16,7 @@ CREATE TABLE IF NOT EXISTS `char_autobattle_config` (
 	`loot_rarity_filter` TINYINT NOT NULL DEFAULT 0,
 	`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	`updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-	PRIMARY KEY (`char_id`),
-	FOREIGN KEY (`char_id`) REFERENCES `char`(`char_id`) ON DELETE CASCADE
+	PRIMARY KEY (`char_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Create index for faster lookups
