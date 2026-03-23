@@ -65,7 +65,7 @@ static int32 autobattle_search_target_callback(struct block_list* bl, va_list ap
 			priority = -damage; // Negative so highest damage gets lowest priority (best)
 		} else if (bl->type == BL_PC) {
 			// For players, use status ATK
-			struct status_data *st = status_get_status_data(bl);
+			struct status_data *st = status_get_status_data(*bl);
 			if (st)
 				damage = st->batk;
 			priority = -damage;
@@ -124,15 +124,15 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 		return false;
 
 	// Check if target is alive
-	if (status_isdead((block_list*)sd) || status_isdead(target))
+	if (status_isdead(*sd) || status_isdead(*target))
 		return false;
 
 	// Check if it's a valid enemy
-	if (battle_check_target((block_list*)sd, target, BCT_ENEMY) <= 0)
+	if (battle_check_target((block_list*)sd, *target, BCT_ENEMY) <= 0)
 		return false;
 
 	// Check if we can use normal attack
-	if (!status_check_skilluse((block_list*)sd, target, 0, 0))
+	if (!status_check_skilluse(*sd, *target, 0, 0))
 		return false;
 
 	// PvP safety: Can only attack other player if they also have auto-attack
@@ -143,12 +143,12 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 	}
 
 	// Distance check
-	struct status_data *sstatus = status_get_status_data((block_list*)sd);
+	struct status_data *sstatus = status_get_status_data(*sd);
 	if (!sstatus)
 		return false;
 
 	int32 range = sstatus->rhw.range;
-	if (!check_distance_bl((block_list*)sd, target, range))
+	if (!check_distance_bl(*sd, *target, range))
 		return false;
 
 	return true;
@@ -258,7 +258,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					continue; // HP not below threshold
 
 				// Check if skill is usable
-				if (!skill_check_condition_castbegin((block_list*)sd, skill.skill_id, skill.skill_lv))
+				if (!skill_check_condition_castbegin(*sd, skill.skill_id, skill.skill_lv))
 					continue;
 
 				// Check MP
