@@ -5,6 +5,7 @@
 #define AUTOBATTLE_HPP
 
 #include <common/cbasetypes.hpp>
+#include <common/mmo.hpp>
 #include <common/timer.hpp>
 
 class map_session_data;
