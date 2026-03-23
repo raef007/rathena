@@ -11478,35 +11478,49 @@ ACMD_FUNC(autoattack) {
 	
 	if (!message || !*message) {
 		// Show status
-		clif_displaymessage(fd, "=== Auto-Attack Status ===");
-		if (sd->autobattle_data.mode & AUTOBATTLE_ATTACK) {
-			clif_displaymessage(fd, "Status: ON");
-			sprintf(atcmd_output, "Range: %d cells", sd->autobattle_data.range);
+		clif_displaymessage(fd, "=== Auto-Battle Status ===");
+		if (sd->autobattle_data.mode & AUTOBATTLE_ATTACK)
+			clif_displaymessage(fd, "Attack: ON");
+		else
+			clif_displaymessage(fd, "Attack: OFF");
+		sprintf(atcmd_output, "Range: %d cells", sd->autobattle_data.range);
+		clif_displaymessage(fd, atcmd_output);
+		// Roam status
+		if (sd->autobattle_data.mode & AUTOBATTLE_ROAM) {
+			if (sd->autobattle_data.mode & AUTOBATTLE_FLYWING)
+				clif_displaymessage(fd, "Roam: ON (Fly Wing)");
+			else
+				clif_displaymessage(fd, "Roam: ON (Walk)");
+		} else {
+			clif_displaymessage(fd, "Roam: OFF");
+		}
+		// Loot status
+		if (sd->state.autoloot)
+			clif_displaymessage(fd, "Loot: ON");
+		else
+			clif_displaymessage(fd, "Loot: OFF");
+		// Pot status
+		if (sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT) {
+			sprintf(atcmd_output, "Auto-Pot: ON (HP item:%u @%d%%, SP item:%u @%d%%, GoHome:%s)",
+				sd->autobattle_data.autopot_hp_id, sd->autobattle_data.autopot_hp_threshold,
+				sd->autobattle_data.autopot_sp_id, sd->autobattle_data.autopot_sp_threshold,
+				sd->autobattle_data.gohome_no_pots ? "ON" : "OFF");
 			clif_displaymessage(fd, atcmd_output);
 		} else {
-			clif_displaymessage(fd, "Status: OFF");
+			clif_displaymessage(fd, "Auto-Pot: OFF");
 		}
-		// Roam status
-		if (sd->autobattle_data.mode & AUTOBATTLE_ROAM)
-			clif_displaymessage(fd, "Roam: ON");
-		else
-			clif_displaymessage(fd, "Roam: OFF");
 		// Time remaining
 		int32 remaining = autobattle_get_remaining_time(sd);
 		int32 hrs = remaining / 3600;
 		int32 mins = (remaining % 3600) / 60;
 		int32 secs = remaining % 60;
-		sprintf(atcmd_output, "Time remaining: %dh %dm %ds (daily limit: %ds, used: %ds, bonus: %ds)",
-			hrs, mins, secs,
-			sd->autobattle_data.daily_limit,
-			sd->autobattle_data.daily_seconds_used,
-			sd->autobattle_data.bonus_seconds);
+		sprintf(atcmd_output, "Time: %dh %dm %ds remaining", hrs, mins, secs);
 		clif_displaymessage(fd, atcmd_output);
 		return 0;
 	}
 
-	char arg1[100], arg2[100];
-	int32 argc = sscanf(message, "%99s %99s", arg1, arg2);
+	char arg1[100], arg2[100], arg3[100];
+	int32 argc = sscanf(message, "%99s %99s %99s", arg1, arg2, arg3);
 
 	if (argc >= 1) {
 		if (strcmp(arg1, "on") == 0) {
@@ -11533,10 +11547,79 @@ ACMD_FUNC(autoattack) {
 		} else if (strcmp(arg1, "roam") == 0) {
 			if (argc >= 2 && strcmp(arg2, "off") == 0) {
 				autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, false);
+				autobattle_toggle_mode(sd, AUTOBATTLE_FLYWING, false);
+				sd->autobattle_data.roam_has_dest = false;
 				clif_displaymessage(fd, "Auto-roam disabled.");
 			} else {
 				autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
-				clif_displaymessage(fd, "Auto-roam enabled. Character will wander when no enemies found.");
+				clif_displaymessage(fd, "Auto-roam enabled. Character will explore the map hunting enemies.");
+			}
+			return 0;
+		} else if (strcmp(arg1, "flywing") == 0) {
+			if (argc >= 2 && strcmp(arg2, "off") == 0) {
+				autobattle_toggle_mode(sd, AUTOBATTLE_FLYWING, false);
+				clif_displaymessage(fd, "Fly Wing roaming disabled. Using walk mode.");
+			} else {
+				autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
+				autobattle_toggle_mode(sd, AUTOBATTLE_FLYWING, true);
+				clif_displaymessage(fd, "Fly Wing roaming enabled. Uses Fly Wings from inventory to teleport.");
+			}
+			return 0;
+		} else if (strcmp(arg1, "loot") == 0) {
+			if (argc >= 2 && strcmp(arg2, "off") == 0) {
+				sd->state.autoloot = 0;
+				clif_displaymessage(fd, "Auto-loot disabled.");
+			} else {
+				sd->state.autoloot = 10000;
+				clif_displaymessage(fd, "Auto-loot enabled. All drops will be picked up.");
+			}
+			return 0;
+		} else if (strcmp(arg1, "pot") == 0) {
+			if (argc >= 2 && strcmp(arg2, "off") == 0) {
+				autobattle_toggle_mode(sd, AUTOBATTLE_AUTOPOT, false);
+				clif_displaymessage(fd, "Auto-pot disabled.");
+				return 0;
+			}
+			if (argc >= 3) {
+				t_itemid item_id = (t_itemid)strtoul(arg2, nullptr, 10);
+				int32 threshold = atoi(arg3);
+				if (threshold < 1 || threshold > 99) {
+					clif_displaymessage(fd, "HP threshold must be 1-99.");
+					return -1;
+				}
+				sd->autobattle_data.autopot_hp_id = item_id;
+				sd->autobattle_data.autopot_hp_threshold = (uint8)threshold;
+				autobattle_toggle_mode(sd, AUTOBATTLE_AUTOPOT, true);
+				sprintf(atcmd_output, "Auto-pot: using item %u when HP < %d%%.", item_id, threshold);
+				clif_displaymessage(fd, atcmd_output);
+				return 0;
+			}
+			clif_displaymessage(fd, "Usage: @autoattack pot <item_id> <hp%%> | pot off");
+			return -1;
+		} else if (strcmp(arg1, "sppot") == 0) {
+			if (argc >= 3) {
+				t_itemid item_id = (t_itemid)strtoul(arg2, nullptr, 10);
+				int32 threshold = atoi(arg3);
+				if (threshold < 1 || threshold > 99) {
+					clif_displaymessage(fd, "SP threshold must be 1-99.");
+					return -1;
+				}
+				sd->autobattle_data.autopot_sp_id = item_id;
+				sd->autobattle_data.autopot_sp_threshold = (uint8)threshold;
+				autobattle_toggle_mode(sd, AUTOBATTLE_AUTOPOT, true);
+				sprintf(atcmd_output, "SP pot: using item %u when SP < %d%%.", item_id, threshold);
+				clif_displaymessage(fd, atcmd_output);
+				return 0;
+			}
+			clif_displaymessage(fd, "Usage: @autoattack sppot <item_id> <sp%%>");
+			return -1;
+		} else if (strcmp(arg1, "gohome") == 0) {
+			if (argc >= 2 && strcmp(arg2, "off") == 0) {
+				sd->autobattle_data.gohome_no_pots = false;
+				clif_displaymessage(fd, "Go-home on out-of-pots disabled.");
+			} else {
+				sd->autobattle_data.gohome_no_pots = true;
+				clif_displaymessage(fd, "Go-home enabled. Will warp to save point when out of pots.");
 			}
 			return 0;
 		} else if (strcmp(arg1, "time") == 0) {
@@ -11561,7 +11644,7 @@ ACMD_FUNC(autoattack) {
 		}
 	}
 
-	clif_displaymessage(fd, "Usage: @autoattack [on|off|range <cells>|roam [off]|time|addtime <secs>]");
+	clif_displaymessage(fd, "Usage: @autoattack [on|off|range <n>|roam [off]|flywing [off]|loot [off]|pot <id> <hp%%>|sppot <id> <sp%%>|gohome [off]|time|addtime <s>]");
 	return -1;
 }
 

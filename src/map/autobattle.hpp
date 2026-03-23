@@ -21,6 +21,8 @@ enum e_autobattle_mode {
 	AUTOBATTLE_LOOT = 0x04,        ///< Auto-loot enabled
 	AUTOBATTLE_SKILLROTATION = 0x08, ///< Skill rotation enabled
 	AUTOBATTLE_ROAM = 0x10,        ///< Auto-roam when no enemies in range
+	AUTOBATTLE_AUTOPOT = 0x20,     ///< Auto-use potions when HP/SP low
+	AUTOBATTLE_FLYWING = 0x40,     ///< Use fly wing to teleport when roaming
 };
 
 /**
@@ -67,7 +69,7 @@ struct s_skillrotation_slot {
  * Runtime auto-battle state for a player
  */
 struct s_autobattle_data {
-	uint8 mode;                    ///< Bitmask of e_autobattle_mode
+	uint16 mode;                   ///< Bitmask of e_autobattle_mode
 	uint8 range;                   ///< Attack range in cells (default 9)
 	uint8 target_priority;         ///< e_autobattle_priority
 	int32 target_id;               ///< Current target (-1 if none)
@@ -84,6 +86,19 @@ struct s_autobattle_data {
 	// Auto-loot configuration
 	uint16 loot_range;             ///< Loot pickup range (cells, default=attack_range)
 	uint8 loot_rarity_filter;      ///< 0=all items, 1=white/blue/purple/gold only, 2=rare+ only
+	
+	// Auto-pot configuration
+	t_itemid autopot_hp_id;        ///< Item ID for HP potion (0 = disabled)
+	uint8 autopot_hp_threshold;    ///< Use HP pot when HP% below this (default 50)
+	t_itemid autopot_sp_id;        ///< Item ID for SP potion (0 = disabled)
+	uint8 autopot_sp_threshold;    ///< Use SP pot when SP% below this (default 30)
+	bool gohome_no_pots;           ///< Butterfly wing / walk home when out of pots
+	t_tick last_pot_tick;           ///< Throttle potion usage
+	
+	// Roaming state
+	int16 roam_dest_x;             ///< Current roam destination X
+	int16 roam_dest_y;             ///< Current roam destination Y
+	bool roam_has_dest;            ///< Whether we have an active roam destination
 	
 	// State tracking
 	t_tick last_support_tick;      ///< Throttle support casting
@@ -148,7 +163,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data);
  * @param mode Mode to toggle (e_autobattle_mode bit)
  * @param on true to enable, false to disable
  */
-void autobattle_toggle_mode(map_session_data *sd, uint8 mode, bool on);
+void autobattle_toggle_mode(map_session_data *sd, uint16 mode, bool on);
 
 /**
  * Set auto-attack range

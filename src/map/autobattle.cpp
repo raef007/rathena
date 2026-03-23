@@ -7,11 +7,13 @@
 #include "itemdb.hpp"      // item database
 #include "map.hpp"         // map_id2bl, map_getcell, map_foreachinarea
 #include "mob.hpp"         // mob data
+#include "npc.hpp"         // npc_check_areanpc
 #include "pc.hpp"          // map_session_data, pc_*
 #include "skill.hpp"       // skill_check, skill_can_use
 #include "status.hpp"      // status_get_* functions
 #include "unit.hpp"        // unit_attack, unit_move
 #include <common/sql.hpp>  // Sql_Query, mmysql_handle
+#include <common/random.hpp> // rnd_value
 
 extern Sql* mmysql_handle;
 
@@ -222,7 +224,8 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		struct block_list *target = autobattle_search_target(sd);
 
 		if (target) {
-			// Update target
+			// Found an enemy — cancel roam destination
+			sd->autobattle_data.roam_has_dest = false;
 			sd->autobattle_data.target_id = target->id;
 
 			// Check weapon range for melee approach
@@ -241,11 +244,54 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 
 			// Auto-roam when idle
 			if (sd->autobattle_data.mode & AUTOBATTLE_ROAM) {
-				if (DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) >= battle_config.autobattle_roam_interval) {
-					sd->autobattle_data.last_roam_tick = tick;
-					int16 rx = sd->x, ry = sd->y;
-					if (map_random_dir((block_list*)sd, &rx, &ry)) {
-						unit_walktoxy((block_list*)sd, rx, ry, 0);
+				// Fly wing mode: teleport randomly
+				if (sd->autobattle_data.mode & AUTOBATTLE_FLYWING) {
+					if (DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) >= battle_config.autobattle_roam_interval) {
+						sd->autobattle_data.last_roam_tick = tick;
+						// Check if player has a fly wing
+						int16 idx = pc_search_inventory(sd, 601); // 601 = Fly Wing
+						if (idx >= 0) {
+							pc_useitem(sd, idx);
+						} else {
+							clif_displaymessage(sd->fd, "[Auto-Battle] Out of Fly Wings! Switching to walk mode.");
+							sd->autobattle_data.mode &= ~AUTOBATTLE_FLYWING;
+						}
+					}
+				}
+				// Walk mode: pick a random far destination and walk there
+				else {
+					// Pick a new destination if we don't have one or we've arrived
+					bool need_new_dest = !sd->autobattle_data.roam_has_dest;
+					if (sd->autobattle_data.roam_has_dest) {
+						int16 dx = sd->x - sd->autobattle_data.roam_dest_x;
+						int16 dy = sd->y - sd->autobattle_data.roam_dest_y;
+						if (dx >= -2 && dx <= 2 && dy >= -2 && dy <= 2)
+							need_new_dest = true; // Close enough to destination
+					}
+
+					if (need_new_dest && DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) >= battle_config.autobattle_roam_interval) {
+						sd->autobattle_data.last_roam_tick = tick;
+						struct map_data *mapdata = map_getmapdata(sd->m);
+						if (mapdata) {
+							int32 edge = battle_config.map_edge_size;
+							int16 rx, ry;
+							int32 attempts = 0;
+							do {
+								rx = rnd_value<int16>(edge, mapdata->xs - edge - 1);
+								ry = rnd_value<int16>(edge, mapdata->ys - edge - 1);
+							} while (map_getcell(sd->m, rx, ry, CELL_CHKNOPASS) && (++attempts) < 100);
+
+							if (attempts < 100) {
+								sd->autobattle_data.roam_dest_x = rx;
+								sd->autobattle_data.roam_dest_y = ry;
+								sd->autobattle_data.roam_has_dest = true;
+								unit_walktoxy((block_list*)sd, rx, ry, 0);
+							}
+						}
+					}
+					// Re-issue walk command if stopped but haven't arrived
+					else if (sd->autobattle_data.roam_has_dest && sd->ud.walktimer == INVALID_TIMER) {
+						unit_walktoxy((block_list*)sd, sd->autobattle_data.roam_dest_x, sd->autobattle_data.roam_dest_y, 0);
 					}
 				}
 			}
@@ -337,6 +383,57 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		// This is just a placeholder for future expansion
 	}
 
+	// ===== AUTO-POT =====
+	if (sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT) {
+		if (DIFF_TICK(tick, sd->autobattle_data.last_pot_tick) >= 500) { // Check every 500ms
+			sd->autobattle_data.last_pot_tick = tick;
+			bool out_of_pots = false;
+
+			// HP potion check
+			if (sd->autobattle_data.autopot_hp_id > 0) {
+				int32 hp_pct = (sd->battle_status.max_hp > 0) ?
+					(sd->battle_status.hp * 100) / sd->battle_status.max_hp : 100;
+				if (hp_pct < sd->autobattle_data.autopot_hp_threshold) {
+					int16 idx = pc_search_inventory(sd, sd->autobattle_data.autopot_hp_id);
+					if (idx >= 0) {
+						pc_useitem(sd, idx);
+					} else {
+						out_of_pots = true;
+					}
+				}
+			}
+
+			// SP potion check
+			if (sd->autobattle_data.autopot_sp_id > 0) {
+				int32 sp_pct = (sd->battle_status.max_sp > 0) ?
+					(sd->battle_status.sp * 100) / sd->battle_status.max_sp : 100;
+				if (sp_pct < sd->autobattle_data.autopot_sp_threshold) {
+					int16 idx = pc_search_inventory(sd, sd->autobattle_data.autopot_sp_id);
+					if (idx >= 0) {
+						pc_useitem(sd, idx);
+					} else {
+						out_of_pots = true;
+					}
+				}
+			}
+
+			// Go home if out of potions
+			if (out_of_pots && sd->autobattle_data.gohome_no_pots) {
+				clif_displaymessage(sd->fd, "[Auto-Battle] Out of potions! Returning to save point...");
+				// Try butterfly wing first
+				int16 bw_idx = pc_search_inventory(sd, 602); // 602 = Butterfly Wing
+				if (bw_idx >= 0) {
+					pc_useitem(sd, bw_idx);
+				} else {
+					// No butterfly wing — teleport directly
+					pc_setpos_savepoint(*sd, CLR_TELEPORT);
+				}
+				autobattle_stop(sd);
+				return 0;
+			}
+		}
+	}
+
 	// Reschedule timer
 	sd->autobattle_data.attack_timer = add_timer(
 		tick + AUTOBATTLE_TIMER_INTERVAL,
@@ -351,7 +448,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 /**
  * Toggle auto-battle mode
  */
-void autobattle_toggle_mode(map_session_data *sd, uint8 mode, bool on)
+void autobattle_toggle_mode(map_session_data *sd, uint16 mode, bool on)
 {
 	if (!sd)
 		return;
@@ -506,6 +603,15 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config)
 	sd->autobattle_data.current_rotation_slot = 0;
 	sd->autobattle_data.loot_range = 9;
 	sd->autobattle_data.loot_rarity_filter = 0;
+	sd->autobattle_data.autopot_hp_id = 0;
+	sd->autobattle_data.autopot_hp_threshold = 50;
+	sd->autobattle_data.autopot_sp_id = 0;
+	sd->autobattle_data.autopot_sp_threshold = 30;
+	sd->autobattle_data.gohome_no_pots = false;
+	sd->autobattle_data.last_pot_tick = 0;
+	sd->autobattle_data.roam_dest_x = 0;
+	sd->autobattle_data.roam_dest_y = 0;
+	sd->autobattle_data.roam_has_dest = false;
 	sd->autobattle_data.last_support_tick = 0;
 	sd->autobattle_data.last_loot_tick = 0;
 	sd->autobattle_data.last_roam_tick = 0;
