@@ -258,7 +258,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						}
 					}
 				}
-				// Walk mode: pick a random far destination and walk there
+				// Walk mode: pick a random destination within walkable distance and walk there
 				else {
 					// Pick a new destination if we don't have one or we've arrived
 					bool need_new_dest = !sd->autobattle_data.roam_has_dest;
@@ -273,12 +273,19 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						sd->autobattle_data.last_roam_tick = tick;
 						struct map_data *mapdata = map_getmapdata(sd->m);
 						if (mapdata) {
+							// Pick random destination within ~20 cells of player (within MAX_WALKPATH=32 limit)
+							const int16 ROAM_RANGE = 20;
 							int32 edge = battle_config.map_edge_size;
 							int16 rx, ry;
 							int32 attempts = 0;
 							do {
-								rx = rnd_value<int16>(edge, mapdata->xs - edge - 1);
-								ry = rnd_value<int16>(edge, mapdata->ys - edge - 1);
+								rx = sd->x + rnd_value<int16>(-ROAM_RANGE, ROAM_RANGE);
+								ry = sd->y + rnd_value<int16>(-ROAM_RANGE, ROAM_RANGE);
+								// Clamp to map bounds
+								if (rx < edge) rx = edge;
+								if (ry < edge) ry = edge;
+								if (rx >= mapdata->xs - edge) rx = mapdata->xs - edge - 1;
+								if (ry >= mapdata->ys - edge) ry = mapdata->ys - edge - 1;
 							} while (map_getcell(sd->m, rx, ry, CELL_CHKNOPASS) && (++attempts) < 100);
 
 							if (attempts < 100) {
@@ -291,7 +298,16 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					}
 					// Re-issue walk command if stopped but haven't arrived
 					else if (sd->autobattle_data.roam_has_dest && sd->ud.walktimer == INVALID_TIMER) {
-						unit_walktoxy((block_list*)sd, sd->autobattle_data.roam_dest_x, sd->autobattle_data.roam_dest_y, 0);
+						// If walk failed (stuck), abandon this destination and pick a new one next tick
+						int16 dx = sd->x - sd->autobattle_data.roam_dest_x;
+						int16 dy = sd->y - sd->autobattle_data.roam_dest_y;
+						if (dx >= -2 && dx <= 2 && dy >= -2 && dy <= 2) {
+							sd->autobattle_data.roam_has_dest = false;
+						} else if (unit_walktoxy((block_list*)sd, sd->autobattle_data.roam_dest_x, sd->autobattle_data.roam_dest_y, 0) == 0) {
+							// Walk command failed — path unreachable, pick new dest
+							sd->autobattle_data.roam_has_dest = false;
+							sd->autobattle_data.last_roam_tick = tick; // Allow immediate re-pick
+						}
 					}
 				}
 			}
