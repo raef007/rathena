@@ -14,6 +14,82 @@
 
 #define AUTOBATTLE_TIMER_INTERVAL 500   // Main timer tick in milliseconds
 
+// ===== Static search context for callbacks =====
+struct s_autobattle_search_context {
+	struct map_session_data *searcher;
+	struct block_list *best_target;
+	int32 best_target_id;
+	int32 best_priority;
+	int16 best_distance;
+	int32 best_damage;
+};
+
+static struct s_autobattle_search_context g_search_context;
+
+/**
+ * Callback function for searching auto-attack targets
+ * Signature matches: int32 (*func)(block_list*, va_list)
+ */
+static int32 autobattle_search_target_callback(struct block_list* bl, va_list ap)
+{
+	if (!bl)
+		return 0;
+
+	struct map_session_data *sd = g_search_context.searcher;
+	if (!sd)
+		return 0;
+
+	// Skip self
+	if (bl->id == sd->id)
+		return 0;
+
+	// Validate target
+	if (!autobattle_can_attack(sd, bl))
+		return 0;
+
+	// Get distance
+	int16 dist = distance_bl((block_list*)sd, bl);
+	if (dist > sd->autobattle_data.range)
+		return 0; // Out of range
+
+	// Calculate priority
+	int32 priority = 0;
+	int32 damage = 0;
+
+	if (sd->autobattle_data.target_priority == PRIORITY_DAMAGE || 
+	    sd->autobattle_data.target_priority == PRIORITY_DAMAGE_DISTANCE) {
+		// Estimate damage output from target (use mob ATK as proxy)
+		if (bl->type == BL_MOB) {
+			struct mob_data *md = (struct mob_data*)bl;
+			damage = md->status.batk;
+			priority = -damage; // Negative so highest damage gets lowest priority (best)
+		} else if (bl->type == BL_PC) {
+			// For players, use status ATK
+			struct status_data *st = status_get_status_data(bl);
+			if (st)
+				damage = st->batk;
+			priority = -damage;
+		}
+	}
+
+	// Apply distance as tiebreaker if needed
+	if (sd->autobattle_data.target_priority == PRIORITY_DISTANCE || 
+	    (sd->autobattle_data.target_priority == PRIORITY_DAMAGE_DISTANCE && damage == g_search_context.best_damage)) {
+		priority = dist;
+	}
+
+	// Update best target
+	if (g_search_context.best_target_id == -1 || priority < g_search_context.best_priority) {
+		g_search_context.best_target_id = bl->id;
+		g_search_context.best_priority = priority;
+		g_search_context.best_distance = dist;
+		g_search_context.best_damage = damage;
+		g_search_context.best_target = bl;
+	}
+
+	return 0; // Continue searching
+}
+
 /**
  * Search for auto-attack target based on configured priority
  */
@@ -22,68 +98,19 @@ struct block_list* autobattle_search_target(map_session_data *sd)
 	if (!sd || !(sd->autobattle_data.mode & AUTOBATTLE_ATTACK))
 		return nullptr;
 
-	struct block_list *target = nullptr;
-	int32 best_target_id = -1;
-	int32 best_priority = INT_MAX;
-	int16 best_distance = INT16_MAX;
-	int32 best_damage = 0;
-
-	auto search_callback = [&](struct block_list* bl) -> int {
-		if (!bl || bl->id == sd->bl_id)
-			return 0; // Skip self
-
-		// Validate target
-		if (!autobattle_can_attack(sd, bl))
-			return 0;
-
-		// Get distance
-		int16 dist = distance_bl(sd, bl);
-		if (dist > sd->autobattle_data.range)
-			return 0; // Out of range
-
-		// Calculate priority
-		int32 priority = 0;
-		int32 damage = 0;
-
-		if (sd->autobattle_data.target_priority == PRIORITY_DAMAGE || 
-		    sd->autobattle_data.target_priority == PRIORITY_DAMAGE_DISTANCE) {
-			// Estimate damage output from target (use mob ATK as proxy)
-			if (bl->type == BL_MOB) {
-				struct mob_data *md = (struct mob_data*)bl;
-				damage = md->status.batk;
-				priority = -damage; // Negative so highest damage gets lowest priority (best)
-			} else if (bl->type == BL_PC) {
-				// For players, use status ATK
-				struct status_data *st = status_get_status_data(*bl);
-				if (st)
-					damage = st->batk;
-				priority = -damage;
-			}
-		}
-
-		// Apply distance as tiebreaker if needed
-		if (sd->autobattle_data.target_priority == PRIORITY_DISTANCE || 
-		    (sd->autobattle_data.target_priority == PRIORITY_DAMAGE_DISTANCE && damage == best_damage)) {
-			priority = dist;
-		}
-
-		// Update best target
-		if (best_target_id == -1 || priority < best_priority) {
-			best_target_id = bl->id;
-			best_priority = priority;
-			best_distance = dist;
-			best_damage = damage;
-			target = bl;
-		}
-
-		return 0; // Continue searching
-	};
+	// Initialize search context
+	g_search_context.searcher = sd;
+	g_search_context.best_target = nullptr;
+	g_search_context.best_target_id = -1;
+	g_search_context.best_priority = INT_MAX;
+	g_search_context.best_distance = INT16_MAX;
+	g_search_context.best_damage = 0;
 
 	// Search in defined range
-	map_foreachinrange(search_callback, (block_list*)sd, sd->autobattle_data.range, BL_MOB | BL_PC);
+	map_foreachinrange(autobattle_search_target_callback, (block_list*)sd, sd->autobattle_data.range, BL_MOB | BL_PC);
 
-	if (target && target->prev != nullptr)
-		return target;
+	if (g_search_context.best_target && g_search_context.best_target->prev != nullptr)
+		return g_search_context.best_target;
 
 	return nullptr;
 }
@@ -97,15 +124,15 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 		return false;
 
 	// Check if target is alive
-	if (status_isdead(*sd) || status_isdead(*target))
+	if (status_isdead((block_list*)sd) || status_isdead(target))
 		return false;
 
 	// Check if it's a valid enemy
-	if (battle_check_target(*sd, target, BCT_ENEMY) <= 0)
+	if (battle_check_target((block_list*)sd, target, BCT_ENEMY) <= 0)
 		return false;
 
 	// Check if we can use normal attack
-	if (!status_check_skilluse(*sd, target, 0, 0))
+	if (!status_check_skilluse((block_list*)sd, target, 0, 0))
 		return false;
 
 	// PvP safety: Can only attack other player if they also have auto-attack
@@ -116,15 +143,45 @@ bool autobattle_can_attack(map_session_data *sd, struct block_list *target)
 	}
 
 	// Distance check
-	struct status_data *sstatus = status_get_status_data(*sd);
+	struct status_data *sstatus = status_get_status_data((block_list*)sd);
 	if (!sstatus)
 		return false;
 
 	int32 range = sstatus->rhw.range;
-	if (!check_distance_bl(*sd, target, range))
+	if (!check_distance_bl((block_list*)sd, target, range))
 		return false;
 
 	return true;
+}
+
+/**
+ * Callback function for looting items
+ * Signature matches: int32 (*func)(block_list*, va_list)
+ */
+static struct map_session_data *g_loot_searcher = nullptr;
+
+static int32 autobattle_loot_callback(struct block_list* bl, va_list ap)
+{
+	if (!bl || !g_loot_searcher || bl->type != BL_ITEM)
+		return 0;
+
+	struct map_session_data *sd = g_loot_searcher;
+	struct flooritem_data *fitem = (struct flooritem_data*)bl;
+
+	// Check distance
+	int16 dist = distance_bl((block_list*)sd, bl);
+	if (dist > sd->autobattle_data.loot_range)
+		return 0;
+
+	// Check rarity filter if enabled
+	if (sd->autobattle_data.loot_rarity_filter > 0) {
+		// TODO: Implement item rarity checking
+	}
+
+	// Attempt to loot item
+	pc_takeitem(sd, fitem);
+
+	return 0;
 }
 
 /**
@@ -201,7 +258,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					continue; // HP not below threshold
 
 				// Check if skill is usable
-				if (!skill_check_condition_castbegin(*sd, skill.skill_id, skill.skill_lv))
+				if (!skill_check_condition_castbegin((block_list*)sd, skill.skill_id, skill.skill_lv))
 					continue;
 
 				// Check MP
@@ -210,7 +267,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					continue;
 
 				// Cast skill
-				unit_skilluse_id(*sd, target->id, skill.skill_id, skill.skill_lv);
+				unit_skilluse_id((block_list*)sd, ((block_list*)target)->id, skill.skill_id, skill.skill_lv);
 				skill.last_cast_time = tick;
 				break; // Only cast one support skill per frame
 			}
@@ -223,30 +280,14 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		if (DIFF_TICK(tick, sd->autobattle_data.last_loot_tick) >= 200) {
 			sd->autobattle_data.last_loot_tick = tick;
 
-			auto loot_callback = [&](struct block_list* bl) -> int {
-				if (!bl || bl->type != BL_ITEM)
-					return 0;
-
-				struct flooritem_data *fitem = (struct flooritem_data*)bl;
-
-				// Check distance
-				int16 dist = distance_bl(*sd, bl);
-				if (dist > sd->autobattle_data.loot_range)
-					return 0;
-
-				// Check rarity filter if enabled
-				if (sd->autobattle_data.loot_rarity_filter > 0) {
-					// TODO: Implement item rarity checking
-				}
-
-				// Attempt to loot item
-				pc_takeitem(sd, fitem);
-
-				return 0;
-			};
+			// Set global context for callback
+			g_loot_searcher = sd;
 
 			// Search for items in loot range
-			map_foreachinrange(loot_callback, (block_list*)sd, sd->autobattle_data.loot_range, BL_ITEM);
+			map_foreachinrange(autobattle_loot_callback, (block_list*)sd, sd->autobattle_data.loot_range, BL_ITEM);
+
+			// Clear context
+			g_loot_searcher = nullptr;
 		}
 	}
 
@@ -260,7 +301,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 	sd->autobattle_data.attack_timer = add_timer(
 		tick + AUTOBATTLE_TIMER_INTERVAL,
 		autobattle_process,
-		sd->bl_id,
+		sd->id,
 		0
 	);
 
@@ -371,7 +412,7 @@ void autobattle_start(map_session_data *sd)
 	sd->autobattle_data.attack_timer = add_timer(
 		gettick() + AUTOBATTLE_TIMER_INTERVAL,
 		autobattle_process,
-		sd->bl_id,
+		sd->id,
 		0
 	);
 }
