@@ -12,3 +12,8 @@
  *	 <datatype> name;
  **/
 
+int32 autobattle_default_seconds;    // Default auto-battle time per character (seconds)
+int32 autobattle_vip_bonus_seconds;  // Extra seconds granted to VIP players on login
+int32 autobattle_max_seconds;        // Maximum auto-battle time including bonuses (seconds)
+int32 autobattle_roam_interval;      // Milliseconds between roam attempts when idle
+

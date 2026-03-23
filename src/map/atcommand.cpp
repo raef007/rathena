@@ -11486,6 +11486,22 @@ ACMD_FUNC(autoattack) {
 		} else {
 			clif_displaymessage(fd, "Status: OFF");
 		}
+		// Roam status
+		if (sd->autobattle_data.mode & AUTOBATTLE_ROAM)
+			clif_displaymessage(fd, "Roam: ON");
+		else
+			clif_displaymessage(fd, "Roam: OFF");
+		// Time remaining
+		int32 remaining = autobattle_get_remaining_time(sd);
+		int32 hrs = remaining / 3600;
+		int32 mins = (remaining % 3600) / 60;
+		int32 secs = remaining % 60;
+		sprintf(atcmd_output, "Time remaining: %dh %dm %ds (daily limit: %ds, used: %ds, bonus: %ds)",
+			hrs, mins, secs,
+			sd->autobattle_data.daily_limit,
+			sd->autobattle_data.daily_seconds_used,
+			sd->autobattle_data.bonus_seconds);
+		clif_displaymessage(fd, atcmd_output);
 		return 0;
 	}
 
@@ -11514,10 +11530,38 @@ ACMD_FUNC(autoattack) {
 			sprintf(atcmd_output, "Auto-attack range set to %d cells.", new_range);
 			clif_displaymessage(fd, atcmd_output);
 			return 0;
+		} else if (strcmp(arg1, "roam") == 0) {
+			if (argc >= 2 && strcmp(arg2, "off") == 0) {
+				autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, false);
+				clif_displaymessage(fd, "Auto-roam disabled.");
+			} else {
+				autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
+				clif_displaymessage(fd, "Auto-roam enabled. Character will wander when no enemies found.");
+			}
+			return 0;
+		} else if (strcmp(arg1, "time") == 0) {
+			int32 remaining = autobattle_get_remaining_time(sd);
+			int32 hrs = remaining / 3600;
+			int32 mins = (remaining % 3600) / 60;
+			int32 secs = remaining % 60;
+			sprintf(atcmd_output, "Auto-battle time remaining: %dh %dm %ds", hrs, mins, secs);
+			clif_displaymessage(fd, atcmd_output);
+			return 0;
+		} else if (strcmp(arg1, "addtime") == 0 && argc >= 2) {
+			int32 add_secs = atoi(arg2);
+			if (add_secs <= 0) {
+				clif_displaymessage(fd, "Specify a positive number of seconds to add.");
+				return -1;
+			}
+			autobattle_add_time(sd, add_secs);
+			int32 remaining = autobattle_get_remaining_time(sd);
+			sprintf(atcmd_output, "Added %d seconds. Remaining: %d seconds.", add_secs, remaining);
+			clif_displaymessage(fd, atcmd_output);
+			return 0;
 		}
 	}
 
-	clif_displaymessage(fd, "Usage: @autoattack [on|off|range <cells>]");
+	clif_displaymessage(fd, "Usage: @autoattack [on|off|range <cells>|roam [off]|time|addtime <secs>]");
 	return -1;
 }
 

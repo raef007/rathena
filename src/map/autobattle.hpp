@@ -20,6 +20,7 @@ enum e_autobattle_mode {
 	AUTOBATTLE_SUPPORT = 0x02,     ///< Auto-support (heal/buff) enabled
 	AUTOBATTLE_LOOT = 0x04,        ///< Auto-loot enabled
 	AUTOBATTLE_SKILLROTATION = 0x08, ///< Skill rotation enabled
+	AUTOBATTLE_ROAM = 0x10,        ///< Auto-roam when no enemies in range
 };
 
 /**
@@ -87,6 +88,15 @@ struct s_autobattle_data {
 	// State tracking
 	t_tick last_support_tick;      ///< Throttle support casting
 	t_tick last_loot_tick;         ///< Throttle loot checking
+	t_tick last_roam_tick;         ///< Throttle roaming movement
+
+	// Time cap (DB-persisted daily limit)
+	t_tick start_tick;             ///< When auto-battle was last activated
+	int32 seconds_remaining;       ///< Remaining seconds of auto-battle time today
+	int32 daily_seconds_used;      ///< Seconds used today (persisted to DB)
+	int32 bonus_seconds;           ///< Bonus seconds (from purchases, persisted to DB)
+	int32 daily_limit;             ///< Today's limit loaded from DB settings table
+	int32 time_deduct_accum;       ///< Accumulator for sub-second time deduction (ms)
 };
 
 /**
@@ -199,5 +209,32 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config);
  * @param config Config to save to
  */
 void autobattle_save(map_session_data *sd, s_autobattle_config *config);
+
+/**
+ * Load daily time data from database (called on login)
+ * Reads autobattle_settings for limits, char_autobattle_config for usage
+ * @param sd Player session data
+ */
+void autobattle_load_time_db(map_session_data *sd);
+
+/**
+ * Save daily time data to database (called on logout and periodically)
+ * @param sd Player session data
+ */
+void autobattle_save_time_db(map_session_data *sd);
+
+/**
+ * Add bonus time to a character's auto-battle allowance (persisted to DB)
+ * @param sd Player session data
+ * @param seconds Seconds to add
+ */
+void autobattle_add_time(map_session_data *sd, int32 seconds);
+
+/**
+ * Get remaining auto-battle time in seconds
+ * @param sd Player session data
+ * @return Remaining seconds
+ */
+int32 autobattle_get_remaining_time(map_session_data *sd);
 
 #endif // AUTOBATTLE_HPP
