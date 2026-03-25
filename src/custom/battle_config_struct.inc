@@ -16,4 +16,6 @@ int32 autobattle_default_seconds;    // Default auto-battle time per character (
 int32 autobattle_vip_bonus_seconds;  // Extra seconds granted to VIP players on login
 int32 autobattle_max_seconds;        // Maximum auto-battle time including bonuses (seconds)
 int32 autobattle_roam_interval;      // Milliseconds between roam attempts when idle
+int32 autobattle_exp_penalty_base;   // Base EXP penalty % during auto-battle (0=none, 100=zero)
+int32 autobattle_exp_penalty_job;    // Job EXP penalty % during auto-battle (0=none, 100=zero)
 

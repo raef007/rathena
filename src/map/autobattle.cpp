@@ -193,30 +193,43 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		return 0;
 
 	// ===== TIME CAP CHECK =====
-	sd->autobattle_data.time_deduct_accum += AUTOBATTLE_TIMER_INTERVAL;
-	if (sd->autobattle_data.time_deduct_accum >= 1000) {
-		int32 secs = sd->autobattle_data.time_deduct_accum / 1000;
-		sd->autobattle_data.daily_seconds_used += secs;
-		sd->autobattle_data.seconds_remaining -= secs;
-		sd->autobattle_data.time_deduct_accum %= 1000;
+	if (sd->autobattle_data.daily_limit > 0) {
+		sd->autobattle_data.time_deduct_accum += AUTOBATTLE_TIMER_INTERVAL;
+		if (sd->autobattle_data.time_deduct_accum >= 1000) {
+			int32 secs = sd->autobattle_data.time_deduct_accum / 1000;
+			sd->autobattle_data.daily_seconds_used += secs;
+			sd->autobattle_data.seconds_remaining -= secs;
+			sd->autobattle_data.time_deduct_accum %= 1000;
 
-		// Periodic DB save every 60 seconds of usage
-		if (sd->autobattle_data.daily_seconds_used % 60 < secs)
+			// Periodic DB save every 60 seconds of usage
+			if (sd->autobattle_data.daily_seconds_used % 60 < secs)
+				autobattle_save_time_db(sd);
+
+			// Warn at 5 minutes remaining
+			if (sd->autobattle_data.seconds_remaining == 300)
+				clif_displaymessage(sd->fd, "[Auto-Battle] Warning: 5 minutes remaining.");
+			// Warn at 1 minute remaining
+			if (sd->autobattle_data.seconds_remaining == 60)
+				clif_displaymessage(sd->fd, "[Auto-Battle] Warning: 1 minute remaining!");
+		}
+		if (sd->autobattle_data.seconds_remaining <= 0) {
+			clif_displaymessage(sd->fd, "[Auto-Battle] Daily time expired. Auto-battle stopped.");
+			sd->autobattle_data.seconds_remaining = 0;
 			autobattle_save_time_db(sd);
+			autobattle_stop(sd);
+			return 0;
+		}
+	} // end daily_limit > 0
 
-		// Warn at 5 minutes remaining
-		if (sd->autobattle_data.seconds_remaining == 300)
-			clif_displaymessage(sd->fd, "[Auto-Battle] Warning: 5 minutes remaining.");
-		// Warn at 1 minute remaining
-		if (sd->autobattle_data.seconds_remaining == 60)
-			clif_displaymessage(sd->fd, "[Auto-Battle] Warning: 1 minute remaining!");
-	}
-	if (sd->autobattle_data.seconds_remaining <= 0) {
-		clif_displaymessage(sd->fd, "[Auto-Battle] Daily time expired. Auto-battle stopped.");
-		sd->autobattle_data.seconds_remaining = 0;
-		autobattle_save_time_db(sd);
-		autobattle_stop(sd);
-		return 0;
+	// ===== ITEM GATE CHECK (every ~10 seconds) =====
+	// Use tick-based check: fires once every 20 timer intervals (20 * 500ms = 10s)
+	if (sd->autobattle_data.start_tick > 0 &&
+		(DIFF_TICK(tick, sd->autobattle_data.start_tick) / AUTOBATTLE_TIMER_INTERVAL) % 20 == 0) {
+		if (pc_search_inventory(sd, AUTOBATTLE_ITEM_ID) < 0) {
+			clif_displaymessage(sd->fd, "[Auto-Battle] Auto-Battle Pass not found. Auto-battle stopped.");
+			autobattle_stop(sd);
+			return 0;
+		}
 	}
 
 	// ===== AUTO-ATTACK =====
@@ -269,7 +282,8 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 							need_new_dest = true; // Close enough to destination
 					}
 
-					if (need_new_dest && DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) >= battle_config.autobattle_roam_interval) {
+					// Skip roam interval when arrived (continuous roaming); keep interval only for stuck retries
+					if (need_new_dest) {
 						sd->autobattle_data.last_roam_tick = tick;
 						struct map_data *mapdata = map_getmapdata(sd->m);
 						if (mapdata) {
@@ -556,8 +570,15 @@ void autobattle_start(map_session_data *sd)
 	if (!sd || sd->autobattle_data.mode == AUTOBATTLE_OFF)
 		return;
 
-	// Check time cap
-	if (sd->autobattle_data.seconds_remaining <= 0) {
+	// Check item gate: must have Auto-Battle Pass in inventory
+	if (pc_search_inventory(sd, AUTOBATTLE_ITEM_ID) < 0) {
+		clif_displaymessage(sd->fd, "[Auto-Battle] You need an Auto-Battle Pass to use this feature.");
+		sd->autobattle_data.mode = AUTOBATTLE_OFF;
+		return;
+	}
+
+	// Check time cap (skip if unlimited: daily_limit == 0)
+	if (sd->autobattle_data.daily_limit > 0 && sd->autobattle_data.seconds_remaining <= 0) {
 		clif_displaymessage(sd->fd, "[Auto-Battle] No daily time remaining. Come back tomorrow or add bonus time.");
 		sd->autobattle_data.mode = AUTOBATTLE_OFF;
 		return;
@@ -637,6 +658,8 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config)
 	sd->autobattle_data.daily_limit = battle_config.autobattle_default_seconds; // fallback
 	sd->autobattle_data.seconds_remaining = battle_config.autobattle_default_seconds;
 	sd->autobattle_data.time_deduct_accum = 0;
+	sd->autobattle_data.exp_penalty_base = battle_config.autobattle_exp_penalty_base;
+	sd->autobattle_data.exp_penalty_job = battle_config.autobattle_exp_penalty_job;
 
 	// Load daily time data from database (overrides defaults above)
 	autobattle_load_time_db(sd);
@@ -734,6 +757,8 @@ void autobattle_load_time_db(map_session_data *sd)
 	int32 normal_limit = battle_config.autobattle_default_seconds; // fallback
 	int32 vip_limit = battle_config.autobattle_default_seconds * 2; // fallback
 	int32 max_bonus = battle_config.autobattle_max_seconds; // fallback
+	int32 exp_penalty_base = battle_config.autobattle_exp_penalty_base; // fallback
+	int32 exp_penalty_job = battle_config.autobattle_exp_penalty_job; // fallback
 
 	if (SQL_ERROR != Sql_Query(mmysql_handle,
 		"SELECT `setting_name`, `setting_value` FROM `autobattle_settings`"))
@@ -749,12 +774,20 @@ void autobattle_load_time_db(map_session_data *sd)
 					vip_limit = atoi(val);
 				else if (strcmp(name, "max_bonus_seconds") == 0)
 					max_bonus = atoi(val);
+				else if (strcmp(name, "exp_penalty_base") == 0)
+					exp_penalty_base = atoi(val);
+				else if (strcmp(name, "exp_penalty_job") == 0)
+					exp_penalty_job = atoi(val);
 			}
 		}
 		Sql_FreeResult(mmysql_handle);
 	} else {
 		Sql_ShowDebug(mmysql_handle);
 	}
+
+	// Apply EXP penalty (clamped 0-100)
+	sd->autobattle_data.exp_penalty_base = (exp_penalty_base < 0) ? 0 : (exp_penalty_base > 100) ? 100 : exp_penalty_base;
+	sd->autobattle_data.exp_penalty_job = (exp_penalty_job < 0) ? 0 : (exp_penalty_job > 100) ? 100 : exp_penalty_job;
 
 	// Determine this player's daily limit
 	int32 daily_limit = normal_limit;
@@ -763,6 +796,13 @@ void autobattle_load_time_db(map_session_data *sd)
 		daily_limit = vip_limit;
 #endif
 	sd->autobattle_data.daily_limit = daily_limit;
+
+	// If unlimited (daily_limit == 0), skip per-character time tracking
+	if (daily_limit == 0) {
+		sd->autobattle_data.seconds_remaining = 0; // unused
+		sd->autobattle_data.daily_seconds_used = 0;
+		return;
+	}
 
 	// --- Step 2: Read per-character usage ---
 	int32 db_daily_used = 0;

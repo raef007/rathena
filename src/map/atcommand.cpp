@@ -11495,8 +11495,8 @@ ACMD_FUNC(autoattack) {
 			clif_displaymessage(fd, "Roam: OFF");
 		}
 		// Loot status
-		if (sd->state.autoloot)
-			clif_displaymessage(fd, "Loot: ON");
+		if (sd->autobattle_data.mode & AUTOBATTLE_LOOT)
+			clif_displaymessage(fd, "Loot: ON (animated floor pickup)");
 		else
 			clif_displaymessage(fd, "Loot: OFF");
 		// Pot status
@@ -11510,12 +11510,24 @@ ACMD_FUNC(autoattack) {
 			clif_displaymessage(fd, "Auto-Pot: OFF");
 		}
 		// Time remaining
-		int32 remaining = autobattle_get_remaining_time(sd);
-		int32 hrs = remaining / 3600;
-		int32 mins = (remaining % 3600) / 60;
-		int32 secs = remaining % 60;
-		sprintf(atcmd_output, "Time: %dh %dm %ds remaining", hrs, mins, secs);
-		clif_displaymessage(fd, atcmd_output);
+		if (sd->autobattle_data.daily_limit == 0) {
+			clif_displaymessage(fd, "Time: Unlimited");
+		} else {
+			int32 remaining = autobattle_get_remaining_time(sd);
+			int32 hrs = remaining / 3600;
+			int32 mins = (remaining % 3600) / 60;
+			int32 secs = remaining % 60;
+			sprintf(atcmd_output, "Time: %dh %dm %ds remaining", hrs, mins, secs);
+			clif_displaymessage(fd, atcmd_output);
+		}
+		// EXP penalty
+		if (sd->autobattle_data.exp_penalty_base > 0 || sd->autobattle_data.exp_penalty_job > 0) {
+			sprintf(atcmd_output, "EXP Penalty: Base -%d%%, Job -%d%%",
+				sd->autobattle_data.exp_penalty_base, sd->autobattle_data.exp_penalty_job);
+			clif_displaymessage(fd, atcmd_output);
+		} else {
+			clif_displaymessage(fd, "EXP Penalty: None");
+		}
 		return 0;
 	}
 
@@ -11567,11 +11579,11 @@ ACMD_FUNC(autoattack) {
 			return 0;
 		} else if (strcmp(arg1, "loot") == 0) {
 			if (argc >= 2 && strcmp(arg2, "off") == 0) {
-				sd->state.autoloot = 0;
+				autobattle_toggle_mode(sd, AUTOBATTLE_LOOT, false);
 				clif_displaymessage(fd, "Auto-loot disabled.");
 			} else {
-				sd->state.autoloot = 10000;
-				clif_displaymessage(fd, "Auto-loot enabled. All drops will be picked up.");
+				autobattle_toggle_mode(sd, AUTOBATTLE_LOOT, true);
+				clif_displaymessage(fd, "Auto-loot enabled. Items drop to floor then get picked up with animation.");
 			}
 			return 0;
 		} else if (strcmp(arg1, "pot") == 0) {
@@ -11623,12 +11635,16 @@ ACMD_FUNC(autoattack) {
 			}
 			return 0;
 		} else if (strcmp(arg1, "time") == 0) {
-			int32 remaining = autobattle_get_remaining_time(sd);
-			int32 hrs = remaining / 3600;
-			int32 mins = (remaining % 3600) / 60;
-			int32 secs = remaining % 60;
-			sprintf(atcmd_output, "Auto-battle time remaining: %dh %dm %ds", hrs, mins, secs);
-			clif_displaymessage(fd, atcmd_output);
+			if (sd->autobattle_data.daily_limit == 0) {
+				clif_displaymessage(fd, "Auto-battle time: Unlimited");
+			} else {
+				int32 remaining = autobattle_get_remaining_time(sd);
+				int32 hrs = remaining / 3600;
+				int32 mins = (remaining % 3600) / 60;
+				int32 secs = remaining % 60;
+				sprintf(atcmd_output, "Auto-battle time remaining: %dh %dm %ds", hrs, mins, secs);
+				clif_displaymessage(fd, atcmd_output);
+			}
 			return 0;
 		} else if (strcmp(arg1, "addtime") == 0 && argc >= 2) {
 			int32 add_secs = atoi(arg2);

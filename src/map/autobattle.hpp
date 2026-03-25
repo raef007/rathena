@@ -11,6 +11,9 @@
 class map_session_data;
 struct block_list;
 
+/// Auto-Battle Pass item ID (must match db/import/item_db.yml entry)
+#define AUTOBATTLE_ITEM_ID 30000
+
 /**
  * Auto-Battle Mode Flags
  * Used as bitmask in map_session_data::autobattle_data.mode
@@ -111,8 +114,12 @@ struct s_autobattle_data {
 	int32 seconds_remaining;       ///< Remaining seconds of auto-battle time today
 	int32 daily_seconds_used;      ///< Seconds used today (persisted to DB)
 	int32 bonus_seconds;           ///< Bonus seconds (from purchases, persisted to DB)
-	int32 daily_limit;             ///< Today's limit loaded from DB settings table
+	int32 daily_limit;             ///< Today's limit loaded from DB settings table (0 = unlimited)
 	int32 time_deduct_accum;       ///< Accumulator for sub-second time deduction (ms)
+
+	// EXP penalty (loaded from DB, fallback to battle_config)
+	int32 exp_penalty_base;        ///< Base EXP penalty % (0=none, 50=half, 100=zero)
+	int32 exp_penalty_job;         ///< Job EXP penalty % (0=none, 50=half, 100=zero)
 };
 
 /**

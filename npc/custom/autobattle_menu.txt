@@ -1,0 +1,237 @@
+// Auto-Battle Config Menu + Cash Shop
+// Called when player uses Auto-Battle Pass item (ID 30000)
+// Also provides a cash shop NPC in Prontera
+
+// ========================================================
+// Function: Auto-Battle Configuration Menu
+// ========================================================
+function	script	F_AutoBattleMenu	{
+	mes "[Auto-Battle Pass]";
+	mes "Configure your Auto-Battle settings.";
+	mes "Select an option:";
+	next;
+
+.@menu = select(
+	"Attack Settings",
+	"Roam Settings",
+	"Loot Settings",
+	"Potion Settings",
+	"Time Info",
+	"Stop All",
+	"Close"
+);
+
+	switch (.@menu) {
+	case 1: // Attack Settings
+		mes "[Attack Settings]";
+		mes "Current status:";
+		mes "Choose an action:";
+		next;
+		.@sub = select("Toggle Auto-Attack ON", "Toggle Auto-Attack OFF", "Set Detection Range", "Back");
+		switch (.@sub) {
+		case 1:
+			atcommand "@autoattack on";
+			mes "[Auto-Battle]";
+			mes "Auto-Attack: ^00FF00ENABLED^000000";
+			close;
+		case 2:
+			atcommand "@autoattack off";
+			mes "[Auto-Battle]";
+			mes "Auto-Attack: ^FF0000DISABLED^000000";
+			close;
+		case 3:
+			mes "[Set Range]";
+			mes "Enter detection range (1-15 cells):";
+			input(.@range, 1, 15);
+			atcommand "@autoattack range " + .@range;
+			mes "[Auto-Battle]";
+			mes "Detection range set to ^0000FF" + .@range + "^000000 cells.";
+			close;
+		case 4:
+			callfunc "F_AutoBattleMenu";
+			end;
+		}
+		break;
+
+	case 2: // Roam Settings
+		mes "[Roam Settings]";
+		mes "Choose roam mode:";
+		next;
+		.@sub = select("Enable Walk Roam", "Enable Fly Wing Roam", "Disable Roaming", "Back");
+		switch (.@sub) {
+		case 1:
+			atcommand "@autoattack roam";
+			mes "[Auto-Battle]";
+			mes "Walk Roam: ^00FF00ENABLED^000000";
+			mes "Character will wander the map.";
+			close;
+		case 2:
+			atcommand "@autoattack flywing";
+			mes "[Auto-Battle]";
+			mes "Fly Wing Roam: ^00FF00ENABLED^000000";
+			mes "Uses Fly Wings from inventory.";
+			close;
+		case 3:
+			atcommand "@autoattack roam off";
+			atcommand "@autoattack flywing off";
+			mes "[Auto-Battle]";
+			mes "Roaming: ^FF0000DISABLED^000000";
+			close;
+		case 4:
+			callfunc "F_AutoBattleMenu";
+			end;
+		}
+		break;
+
+	case 3: // Loot Settings
+		mes "[Loot Settings]";
+		mes "Toggle auto-loot pickup.";
+		mes "Items drop to floor, then get picked up with animation.";
+		next;
+		.@sub = select("Enable Auto-Loot", "Disable Auto-Loot", "Back");
+		switch (.@sub) {
+		case 1:
+			atcommand "@autoattack loot";
+			mes "[Auto-Battle]";
+			mes "Auto-Loot: ^00FF00ENABLED^000000";
+			close;
+		case 2:
+			atcommand "@autoattack loot off";
+			mes "[Auto-Battle]";
+			mes "Auto-Loot: ^FF0000DISABLED^000000";
+			close;
+		case 3:
+			callfunc "F_AutoBattleMenu";
+			end;
+		}
+		break;
+
+	case 4: // Potion Settings
+		mes "[Potion Settings]";
+		mes "Configure automatic potion usage.";
+		next;
+		.@sub = select("Set HP Potion", "Set SP Potion", "Toggle Go-Home", "Disable All Potions", "Back");
+		switch (.@sub) {
+		case 1:
+			mes "[HP Potion]";
+			mes "Enter HP potion Item ID:";
+			mes "(501=Red Pot, 502=Orange, 503=Yellow, 504=White)";
+			input(.@itemid, 1, 65535);
+			mes "Enter HP threshold (use pot when HP below X%):";
+			input(.@threshold, 1, 99);
+			atcommand "@autoattack pot " + .@itemid + " " + .@threshold;
+			mes "[Auto-Battle]";
+			mes "HP Pot set: Item " + .@itemid + " @ " + .@threshold + "%";
+			close;
+		case 2:
+			mes "[SP Potion]";
+			mes "Enter SP potion Item ID:";
+			mes "(505=Blue Pot, 506=Green)";
+			input(.@itemid, 1, 65535);
+			mes "Enter SP threshold (use pot when SP below X%):";
+			input(.@threshold, 1, 99);
+			atcommand "@autoattack sppot " + .@itemid + " " + .@threshold;
+			mes "[Auto-Battle]";
+			mes "SP Pot set: Item " + .@itemid + " @ " + .@threshold + "%";
+			close;
+		case 3:
+			mes "[Go-Home]";
+			mes "Warp to save point when out of pots?";
+			next;
+			.@gh = select("Enable Go-Home", "Disable Go-Home");
+			if (.@gh == 1)
+				atcommand "@autoattack gohome";
+			else
+				atcommand "@autoattack gohome off";
+			mes "[Auto-Battle]";
+			mes "Go-Home: " + ((.@gh == 1) ? "^00FF00ENABLED^000000" : "^FF0000DISABLED^000000");
+			close;
+		case 4:
+			atcommand "@autoattack pot off";
+			mes "[Auto-Battle]";
+			mes "All potions: ^FF0000DISABLED^000000";
+			close;
+		case 5:
+			callfunc "F_AutoBattleMenu";
+			end;
+		}
+		break;
+
+	case 5: // Time Info
+		atcommand "@autoattack time";
+		mes "[Auto-Battle]";
+		mes "Time info displayed in chat window.";
+		close;
+
+	case 6: // Stop All
+		atcommand "@autobattleoff";
+		mes "[Auto-Battle]";
+		mes "All auto-battle modes ^FF0000STOPPED^000000.";
+		close;
+
+	case 7: // Close
+		close;
+	}
+	end;
+}
+
+// ========================================================
+// NPC: Auto-Battle Cash Shop (Prontera)
+// ========================================================
+prontera,150,180,4	script	Auto Battle Shop	4_F_KAFRA3,{
+	// Read expiry duration from DB
+	.@expiry = 2592000; // fallback: 30 days
+	if (query_sql("SELECT `setting_value` FROM `autobattle_settings` WHERE `setting_name`='item_expiry_seconds'", .@db_expiry)) {
+		.@expiry = atoi(.@db_expiry$);
+		if (.@expiry <= 0 && .@db_expiry$ != "0")
+			.@expiry = 2592000;
+	}
+
+	mes "[Auto-Battle Shop]";
+	mes "Welcome! I sell Auto-Battle Passes.";
+	mes " ";
+	mes "^0000FFAuto-Battle Pass^000000";
+	mes "Price: ^FF0000500 Cash Points^000000";
+	if (.@expiry > 0)
+		mes "Duration: ^00FF00" + (.@expiry / 86400) + " days^000000";
+	else
+		mes "Duration: ^00FF00Permanent^000000";
+	mes " ";
+	mes "Use the pass to open the Auto-Battle";
+	mes "configuration menu.";
+	next;
+
+	if (select("Purchase:Cancel") == 2) {
+		mes "[Auto-Battle Shop]";
+		mes "Come back anytime!";
+		close;
+	}
+
+	if (#CASHPOINTS < 500) {
+		mes "[Auto-Battle Shop]";
+		mes "You need ^FF0000500 Cash Points^000000.";
+		mes "Current balance: ^0000FF" + #CASHPOINTS + "^000000";
+		close;
+	}
+
+	// Check if already has one
+	if (countitem(30000) > 0) {
+		mes "[Auto-Battle Shop]";
+		mes "You already have an Auto-Battle Pass!";
+		close;
+	}
+
+	set #CASHPOINTS, #CASHPOINTS - 500;
+
+	if (.@expiry > 0)
+		rentitem 30000, .@expiry;
+	else
+		getitem 30000, 1;
+
+	mes "[Auto-Battle Shop]";
+	mes "Enjoy your Auto-Battle Pass!";
+	mes "Use it from your inventory to configure.";
+	mes " ";
+	mes "Remaining balance: ^0000FF" + #CASHPOINTS + "^000000";
+	close;
+}

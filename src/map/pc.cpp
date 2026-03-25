@@ -8436,6 +8436,14 @@ void pc_gainexp(map_session_data *sd, block_list *src, t_exp base_exp, t_exp job
 	
 		if (sd->status.guild_id>0)
 			base_exp -= guild_payexp(sd,base_exp);
+
+		// Auto-battle EXP penalty (applied after guild tax, before bonuses)
+		if (sd->autobattle_data.mode != AUTOBATTLE_OFF) {
+			if (sd->autobattle_data.exp_penalty_base > 0)
+				base_exp = base_exp * (100 - sd->autobattle_data.exp_penalty_base) / 100;
+			if (sd->autobattle_data.exp_penalty_job > 0)
+				job_exp = job_exp * (100 - sd->autobattle_data.exp_penalty_job) / 100;
+		}
 	}
 
 	flag = ((base_exp) ? 1 : 0) |
