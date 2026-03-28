@@ -1,30 +1,30 @@
 // Auto-Battle Config Menu + Cash Shop
 // Called when player uses Auto-Battle Pass item (ID 30000)
 // Also provides a cash shop NPC in Prontera
+//
+// NOTE: Item scripts cannot use interactive commands (next, select, menu, input)
+// because pc_useitem() destroys the script state after run_script returns.
+// The item uses doevent to hand off to this invisible NPC which has proper
+// script state management.
 
 // ========================================================
-// Function: Auto-Battle Configuration Menu
+// Invisible NPC: Auto-Battle Config (handles item doevent)
 // ========================================================
-function	script	F_AutoBattleMenu	{
+-	script	AutoBattleConfig	-1,{
+	end;
+
+OnUseItem:
 	mes "[Auto-Battle Pass]";
 	mes "Configure your Auto-Battle settings.";
 	mes "Select an option:";
 	next;
 
-.@menu = select(
-	"Attack Settings",
-	"Roam Settings",
-	"Loot Settings",
-	"Potion Settings",
-	"Time Info",
-	"Stop All",
-	"Close"
-);
+L_MainMenu:
+	.@menu = select("Attack Settings", "Roam Settings", "Loot Settings", "Potion Settings", "Time Info", "Stop All", "Close");
 
 	switch (.@menu) {
 	case 1: // Attack Settings
 		mes "[Attack Settings]";
-		mes "Current status:";
 		mes "Choose an action:";
 		next;
 		.@sub = select("Toggle Auto-Attack ON", "Toggle Auto-Attack OFF", "Set Detection Range", "Back");
@@ -48,8 +48,10 @@ function	script	F_AutoBattleMenu	{
 			mes "Detection range set to ^0000FF" + .@range + "^000000 cells.";
 			close;
 		case 4:
-			callfunc "F_AutoBattleMenu";
-			end;
+			mes "[Auto-Battle Pass]";
+			mes "Select an option:";
+			next;
+			goto L_MainMenu;
 		}
 		break;
 
@@ -78,8 +80,10 @@ function	script	F_AutoBattleMenu	{
 			mes "Roaming: ^FF0000DISABLED^000000";
 			close;
 		case 4:
-			callfunc "F_AutoBattleMenu";
-			end;
+			mes "[Auto-Battle Pass]";
+			mes "Select an option:";
+			next;
+			goto L_MainMenu;
 		}
 		break;
 
@@ -101,8 +105,10 @@ function	script	F_AutoBattleMenu	{
 			mes "Auto-Loot: ^FF0000DISABLED^000000";
 			close;
 		case 3:
-			callfunc "F_AutoBattleMenu";
-			end;
+			mes "[Auto-Battle Pass]";
+			mes "Select an option:";
+			next;
+			goto L_MainMenu;
 		}
 		break;
 
@@ -152,8 +158,10 @@ function	script	F_AutoBattleMenu	{
 			mes "All potions: ^FF0000DISABLED^000000";
 			close;
 		case 5:
-			callfunc "F_AutoBattleMenu";
-			end;
+			mes "[Auto-Battle Pass]";
+			mes "Select an option:";
+			next;
+			goto L_MainMenu;
 		}
 		break;
 
@@ -172,6 +180,15 @@ function	script	F_AutoBattleMenu	{
 	case 7: // Close
 		close;
 	}
+	end;
+}
+
+// ========================================================
+// Function: F_AutoBattleMenu (called from item script)
+// Hands off to the invisible NPC for proper dialog handling
+// ========================================================
+function	script	F_AutoBattleMenu	{
+	doevent "AutoBattleConfig::OnUseItem";
 	end;
 }
 

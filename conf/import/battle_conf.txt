@@ -1,0 +1,79 @@
+//-----------
+// drops.conf
+//-----------
+
+// The rate the common items are dropped (Items that are in the ETC tab, besides card)
+item_rate_common: 500
+item_rate_common_boss: 500
+item_rate_common_mvp: 500
+
+// The rate healing items are dropped (items that restore HP or SP)
+item_rate_heal_boss: 500
+item_rate_heal_mvp: 500
+
+// The rate at which usable items (in the item tab) other then healing items are dropped.
+item_rate_use_boss: 500
+item_rate_use_mvp: 500
+
+// The rate at which equipment is dropped.
+item_rate_equip: 500
+item_rate_equip_boss: 500
+item_rate_equip_mvp: 500
+
+// The rate at which cards are dropped
+item_rate_card: 500
+item_rate_card_boss: 500
+item_rate_card_mvp: 500
+
+// The rate adjustment for the MVP items that the MVP gets directly in their inventory
+// Mode: 0 - official order, 1 - random order, 2 - all items
+item_rate_mvp: 500
+
+// The rate adjustment for equip-granted item drops.
+item_rate_adddrop: 500
+
+// The rate adjustment for items inside of equip-granted item group drops.
+// This is used by Ore Discovery and items such as Gaia Sword, Jewel Sword, Blazzer Card, Tengu Card and Dokkaebi Horn.
+item_group_rate: 500
+
+//-----------
+// exp.conf
+//-----------
+
+// Rate at which exp. is given. (Note 2)
+base_exp_rate: 2000
+
+// Rate at which job exp. is given. (Note 2)
+job_exp_rate: 2000
+
+//-----------
+// feature.conf
+//-----------
+// Roulette (Note 1)
+// Requires: 2014-10-22bRagexe or later
+feature.roulette: off
+
+// Roulette bonus reward
+// Multiply amount by 2 if the reward item ID is the same as bonus item ID
+feature.roulette_bonus_reward: off
+
+//-----------
+// autobattle.conf
+//-----------
+
+// Default auto-battle time per character in seconds (3 hours = 10800)
+autobattle_default_seconds: 10800
+
+// VIP bonus seconds granted on login (3 hours = 10800, VIP total = 6 hours)
+autobattle_vip_bonus_seconds: 10800
+
+// Maximum possible auto-battle time including VIP bonuses (24 hours = 86400)
+autobattle_max_seconds: 86400
+
+// Milliseconds between roam attempts when no enemies in range (default 3000 = 3 seconds)
+autobattle_roam_interval: 3000
+
+// EXP penalty % during auto-battle (0 = no penalty, 50 = half exp, 100 = no exp)
+// Base and Job EXP are independent. Loaded from DB autobattle_settings if rows exist.
+autobattle_exp_penalty_base: 0
+autobattle_exp_penalty_job: 0
