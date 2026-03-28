@@ -42,6 +42,7 @@ L_MainMenu:
 		case 3:
 			mes "[Set Range]";
 			mes "Enter detection range (1-15 cells):";
+			next;
 			input(.@range, 1, 15);
 			atcommand "@autoattack range " + .@range;
 			mes "[Auto-Battle]";
@@ -122,8 +123,12 @@ L_MainMenu:
 			mes "[HP Potion]";
 			mes "Enter HP potion Item ID:";
 			mes "(501=Red Pot, 502=Orange, 503=Yellow, 504=White)";
+			next;
 			input(.@itemid, 1, 65535);
-			mes "Enter HP threshold (use pot when HP below X%):";
+			mes "[HP Potion]";
+			mes "Item ID: ^0000FF" + .@itemid + "^000000";
+			mes "Enter HP threshold % (use pot when HP below):";
+			next;
 			input(.@threshold, 1, 99);
 			atcommand "@autoattack pot " + .@itemid + " " + .@threshold;
 			mes "[Auto-Battle]";
@@ -133,8 +138,12 @@ L_MainMenu:
 			mes "[SP Potion]";
 			mes "Enter SP potion Item ID:";
 			mes "(505=Blue Pot, 506=Green)";
+			next;
 			input(.@itemid, 1, 65535);
-			mes "Enter SP threshold (use pot when SP below X%):";
+			mes "[SP Potion]";
+			mes "Item ID: ^0000FF" + .@itemid + "^000000";
+			mes "Enter SP threshold % (use pot when SP below):";
+			next;
 			input(.@threshold, 1, 99);
 			atcommand "@autoattack sppot " + .@itemid + " " + .@threshold;
 			mes "[Auto-Battle]";
