@@ -1,5 +1,5 @@
 // Auto-Battle Config Menu + Cash Shop
-// Called when player uses Auto-Battle Pass item (ID 30000)
+// Called when player uses Auto-Battle Capsule item (ID 30000)
 // Also provides a cash shop NPC in Prontera
 //
 // NOTE: Item scripts cannot use interactive commands (next, select, menu, input)
@@ -14,7 +14,7 @@
 	end;
 
 OnUseItem:
-	mes "[Auto-Battle Pass]";
+	mes "[Auto-Battle Capsule]";
 	mes "Configure your Auto-Battle settings.";
 	mes "Select an option:";
 	next;
@@ -49,7 +49,7 @@ L_MainMenu:
 			mes "Detection range set to ^0000FF" + .@range + "^000000 cells.";
 			close;
 		case 4:
-			mes "[Auto-Battle Pass]";
+			mes "[Auto-Battle Capsule]";
 			mes "Select an option:";
 			next;
 			goto L_MainMenu;
@@ -81,7 +81,7 @@ L_MainMenu:
 			mes "Roaming: ^FF0000DISABLED^000000";
 			close;
 		case 4:
-			mes "[Auto-Battle Pass]";
+			mes "[Auto-Battle Capsule]";
 			mes "Select an option:";
 			next;
 			goto L_MainMenu;
@@ -106,7 +106,7 @@ L_MainMenu:
 			mes "Auto-Loot: ^FF0000DISABLED^000000";
 			close;
 		case 3:
-			mes "[Auto-Battle Pass]";
+			mes "[Auto-Battle Capsule]";
 			mes "Select an option:";
 			next;
 			goto L_MainMenu;
@@ -167,7 +167,7 @@ L_MainMenu:
 			mes "All potions: ^FF0000DISABLED^000000";
 			close;
 		case 5:
-			mes "[Auto-Battle Pass]";
+			mes "[Auto-Battle Capsule]";
 			mes "Select an option:";
 			next;
 			goto L_MainMenu;
@@ -214,9 +214,9 @@ prontera,150,180,4	script	Auto Battle Shop	4_F_KAFRA3,{
 	}
 
 	mes "[Auto-Battle Shop]";
-	mes "Welcome! I sell Auto-Battle Passes.";
+	mes "Welcome! I sell Auto-Battle Capsule.";
 	mes " ";
-	mes "^0000FFAuto-Battle Pass^000000";
+	mes "^0000FFAuto-Battle Capsule^000000";
 	mes "Price: ^FF0000500 Cash Points^000000";
 	if (.@expiry > 0)
 		mes "Duration: ^00FF00" + (.@expiry / 86400) + " days^000000";
@@ -243,7 +243,7 @@ prontera,150,180,4	script	Auto Battle Shop	4_F_KAFRA3,{
 	// Check if already has one
 	if (countitem(30000) > 0) {
 		mes "[Auto-Battle Shop]";
-		mes "You already have an Auto-Battle Pass!";
+		mes "You already have an Auto-Battle Capsule!";
 		close;
 	}
 
@@ -255,7 +255,7 @@ prontera,150,180,4	script	Auto Battle Shop	4_F_KAFRA3,{
 		getitem 30000, 1;
 
 	mes "[Auto-Battle Shop]";
-	mes "Enjoy your Auto-Battle Pass!";
+	mes "Enjoy your Auto-Battle Capsule!";
 	mes "Use it from your inventory to configure.";
 	mes " ";
 	mes "Remaining balance: ^0000FF" + #CASHPOINTS + "^000000";
