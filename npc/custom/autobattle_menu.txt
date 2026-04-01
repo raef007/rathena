@@ -20,7 +20,7 @@ OnUseItem:
 	next;
 
 L_MainMenu:
-	.@menu = select("Attack Settings", "Roam Settings", "Loot Settings", "Potion Settings", "Time Info", "Stop All", "Close");
+	.@menu = select("Attack Settings", "Roam Settings", "Loot Settings", "Potion Settings", "Rest Settings", "Target Filter", "Skill Settings", "Time Info", "Stop All", "Close");
 
 	switch (.@menu) {
 	case 1: // Attack Settings
@@ -174,19 +174,246 @@ L_MainMenu:
 		}
 		break;
 
-	case 5: // Time Info
+	// ===== Phase 24: Rest Settings =====
+	case 5:
+		mes "[Rest Settings]";
+		mes "Auto-sit to regen when HP/SP is low.";
+		mes "Character will stand back up when recovered.";
+		next;
+		.@sub = select("Set HP Rest Threshold", "Set SP Rest Threshold", "Set Both", "Disable Auto-Sit", "Back");
+		switch (.@sub) {
+		case 1:
+			mes "[HP Rest]";
+			mes "Sit when HP% drops below (0=disabled):";
+			next;
+			input(.@hp, 0, 90);
+			atcommand "@autoattack sit " + .@hp + " 0";
+			mes "[Auto-Battle]";
+			if (.@hp > 0)
+				mes "Auto-Sit HP: ^00FF00" + .@hp + "%^000000 (stand at " + (.@hp + 20) + "%)";
+			else
+				mes "HP Rest: ^FF0000DISABLED^000000";
+			close;
+		case 2:
+			mes "[SP Rest]";
+			mes "Sit when SP% drops below (0=disabled):";
+			next;
+			input(.@sp, 0, 90);
+			atcommand "@autoattack sit 0 " + .@sp;
+			mes "[Auto-Battle]";
+			if (.@sp > 0)
+				mes "Auto-Sit SP: ^00FF00" + .@sp + "%^000000 (stand at " + (.@sp + 20) + "%)";
+			else
+				mes "SP Rest: ^FF0000DISABLED^000000";
+			close;
+		case 3:
+			mes "[Rest Thresholds]";
+			mes "Sit when HP% drops below (0=disabled):";
+			next;
+			input(.@hp, 0, 90);
+			mes "Sit when SP% drops below (0=disabled):";
+			next;
+			input(.@sp, 0, 90);
+			atcommand "@autoattack sit " + .@hp + " " + .@sp;
+			mes "[Auto-Battle]";
+			mes "Auto-Sit: HP<" + .@hp + "% SP<" + .@sp + "%";
+			close;
+		case 4:
+			atcommand "@autoattack sit off";
+			mes "[Auto-Battle]";
+			mes "Auto-Sit: ^FF0000DISABLED^000000";
+			close;
+		case 5:
+			mes "[Auto-Battle Capsule]";
+			mes "Select an option:";
+			next;
+			goto L_MainMenu;
+		}
+		break;
+
+	// ===== Phase 22: Target Filter =====
+	case 6:
+		mes "[Target Filter]";
+		mes "Choose which monsters to attack.";
+		next;
+		.@sub = select("Target All Monsters", "Select Specific Monsters", "View Current Targets", "Back");
+		switch (.@sub) {
+		case 1:
+			atcommand "@autoattack target all";
+			mes "[Auto-Battle]";
+			mes "Target: ^00FF00All monsters^000000";
+			close;
+		case 2:
+			// Build list of unique mobs on current map
+			.@mapname$ = strcharinfo(3);
+			.@mob_count = getmapunits(BL_MOB, .@mapname$, .@mob_gids);
+			// Extract unique mob class IDs
+			.@unique_count = 0;
+			for (.@i = 0; .@i < .@mob_count && .@i < 200; .@i++) {
+				.@class = getunitdata(.@mob_gids[.@i], UMOB_CLASS);
+				.@dupe = 0;
+				for (.@j = 0; .@j < .@unique_count; .@j++) {
+					if (.@unique_ids[.@j] == .@class) {
+						.@dupe = 1;
+						break;
+					}
+				}
+				if (!.@dupe && .@unique_count < 20) {
+					.@unique_ids[.@unique_count] = .@class;
+					.@unique_names$[.@unique_count] = strmobinfo(2, .@class);
+					.@unique_count++;
+				}
+			}
+			if (.@unique_count == 0) {
+				mes "[Target Filter]";
+				mes "No monsters found on this map.";
+				close;
+			}
+			// Initialize toggle state (all off)
+			for (.@i = 0; .@i < .@unique_count; .@i++)
+				.@selected[.@i] = 0;
+
+L_TargetToggle:
+			// Build menu with toggle indicators
+			.@tmenu$ = "";
+			for (.@i = 0; .@i < .@unique_count; .@i++) {
+				if (.@i > 0) .@tmenu$ = .@tmenu$ + ":";
+				if (.@selected[.@i])
+					.@tmenu$ = .@tmenu$ + "[X] " + .@unique_names$[.@i] + " (" + .@unique_ids[.@i] + ")";
+				else
+					.@tmenu$ = .@tmenu$ + "[ ] " + .@unique_names$[.@i] + " (" + .@unique_ids[.@i] + ")";
+			}
+			.@tmenu$ = .@tmenu$ + ":--- Apply Selection ---:--- Cancel ---";
+			mes "[Target Filter]";
+			mes "Toggle monsters to target:";
+			mes "^0000FF[X]^000000 = selected  ^999999[ ]^000000 = skip";
+			next;
+			.@pick = select(.@tmenu$);
+			if (.@pick == .@unique_count + 2) {
+				mes "[Auto-Battle]";
+				mes "Target filter unchanged.";
+				close;
+			}
+			if (.@pick == .@unique_count + 1) {
+				// Apply selection
+				atcommand "@autoattack target clear";
+				.@applied = 0;
+				for (.@i = 0; .@i < .@unique_count; .@i++) {
+					if (.@selected[.@i]) {
+						atcommand "@autoattack target " + .@unique_ids[.@i];
+						.@applied++;
+					}
+				}
+				mes "[Auto-Battle]";
+				if (.@applied == 0)
+					mes "Target: ^00FF00All monsters^000000 (none selected)";
+				else
+					mes "Target: ^0000FF" + .@applied + " specific mob type(s)^000000";
+				close;
+			}
+			// Toggle the picked entry
+			.@idx = .@pick - 1;
+			if (.@idx >= 0 && .@idx < .@unique_count)
+				.@selected[.@idx] = !.@selected[.@idx];
+			goto L_TargetToggle;
+
+		case 3:
+			atcommand "@autoattack target";
+			mes "[Auto-Battle]";
+			mes "Current targets shown in chat.";
+			close;
+		case 4:
+			mes "[Auto-Battle Capsule]";
+			mes "Select an option:";
+			next;
+			goto L_MainMenu;
+		}
+		break;
+
+	// ===== Phase 23: Skill Settings =====
+	case 7:
+		mes "[Skill Settings]";
+		mes "Choose your combat skill.";
+		next;
+		.@sub = select("Normal Attack Only", "Select Offensive Skill", "View Current Skill", "Back");
+		switch (.@sub) {
+		case 1:
+			atcommand "@autoattack skill off";
+			mes "[Auto-Battle]";
+			mes "Attack Skill: ^00FF00Normal Attack^000000";
+			close;
+		case 2:
+			// Build list of offensive skills the player knows
+			getskilllist;
+			.@off_count = 0;
+			for (.@i = 0; .@i < @skilllist_count; .@i++) {
+				.@sid = @skilllist_id[.@i];
+				.@slv = @skilllist_lv[.@i];
+				.@inf = getskillinfo(.@sid, 0);
+				.@nodmg = getskillinfo(.@sid, 1);
+				// Offensive: has INF_ATTACK_SKILL flag, or is not nodamage and not pure self-skill
+				if ((.@inf & 1) || (!.@nodmg && !(.@inf & 4 && !(.@inf & 2)))) {
+					if (.@nodmg) continue; // skip pure support/nodamage
+					.@off_ids[.@off_count] = .@sid;
+					.@off_lvs[.@off_count] = .@slv;
+					.@off_count++;
+					if (.@off_count >= 30) break;
+				}
+			}
+			if (.@off_count == 0) {
+				mes "[Skill Settings]";
+				mes "No offensive skills found.";
+				close;
+			}
+			// Build select menu
+			.@smenu$ = "";
+			for (.@i = 0; .@i < .@off_count; .@i++) {
+				if (.@i > 0) .@smenu$ = .@smenu$ + ":";
+				.@smenu$ = .@smenu$ + getskillname(.@off_ids[.@i]) + " Lv" + .@off_lvs[.@i];
+			}
+			.@smenu$ = .@smenu$ + ":Cancel";
+			mes "[Select Skill]";
+			mes "Pick your offensive skill:";
+			next;
+			.@spick = select(.@smenu$);
+			if (.@spick == .@off_count + 1) {
+				mes "[Auto-Battle]";
+				mes "Skill selection cancelled.";
+				close;
+			}
+			.@chosen_id = .@off_ids[.@spick - 1];
+			.@chosen_lv = .@off_lvs[.@spick - 1];
+			atcommand "@autoattack skill " + .@chosen_id + " " + .@chosen_lv;
+			mes "[Auto-Battle]";
+			mes "Skill: ^0000FF" + getskillname(.@chosen_id) + " Lv" + .@chosen_lv + "^000000";
+			mes "Falls back to normal attack when SP is low.";
+			close;
+		case 3:
+			atcommand "@autoattack skill";
+			mes "[Auto-Battle]";
+			mes "Current skill shown in chat.";
+			close;
+		case 4:
+			mes "[Auto-Battle Capsule]";
+			mes "Select an option:";
+			next;
+			goto L_MainMenu;
+		}
+		break;
+
+	case 8: // Time Info
 		atcommand "@autoattack time";
 		mes "[Auto-Battle]";
 		mes "Time info displayed in chat window.";
 		close;
 
-	case 6: // Stop All
+	case 9: // Stop All
 		atcommand "@autobattleoff";
 		mes "[Auto-Battle]";
 		mes "All auto-battle modes ^FF0000STOPPED^000000.";
 		close;
 
-	case 7: // Close
+	case 10: // Close
 		close;
 	}
 	end;
@@ -194,10 +421,212 @@ L_MainMenu:
 
 // ========================================================
 // Function: F_AutoBattleMenu (called from item script)
-// Hands off to the invisible NPC for proper dialog handling
 // ========================================================
 function	script	F_AutoBattleMenu	{
 	doevent "AutoBattleConfig::OnUseItem";
+	end;
+}
+
+// ========================================================
+// Invisible NPC: Auto-Support Config (Phase 25)
+// ========================================================
+-	script	AutoSupportConfig	-1,{
+	end;
+
+OnUseItem:
+	mes "[Auto-Support Capsule]";
+	mes "Configure party support automation.";
+	mes "Select an option:";
+	next;
+
+L_SupportMain:
+	.@menu = select("Heal Settings", "Buff Settings", "Target Settings", "Toggle ON/OFF", "View Status", "Close");
+
+	switch (.@menu) {
+	case 1: // Heal Settings
+		mes "[Heal Settings]";
+		mes "Select a healing skill to auto-cast.";
+		next;
+		// Build list of support/heal skills
+		getskilllist;
+		.@heal_count = 0;
+		for (.@i = 0; .@i < @skilllist_count; .@i++) {
+			.@sid = @skilllist_id[.@i];
+			.@slv = @skilllist_lv[.@i];
+			.@nodmg = getskillinfo(.@sid, 1);
+			.@inf = getskillinfo(.@sid, 0);
+			// Support skill: nodamage=1, or has INF_SUPPORT_SKILL flag
+			if (.@nodmg || (.@inf & 16)) {
+				.@heal_ids[.@heal_count] = .@sid;
+				.@heal_lvs[.@heal_count] = .@slv;
+				.@heal_count++;
+				if (.@heal_count >= 20) break;
+			}
+		}
+		if (.@heal_count == 0) {
+			mes "[Heal Settings]";
+			mes "No support skills found.";
+			close;
+		}
+		.@hmenu$ = "";
+		for (.@i = 0; .@i < .@heal_count; .@i++) {
+			if (.@i > 0) .@hmenu$ = .@hmenu$ + ":";
+			.@hmenu$ = .@hmenu$ + getskillname(.@heal_ids[.@i]) + " Lv" + .@heal_lvs[.@i];
+		}
+		.@hmenu$ = .@hmenu$ + ":Cancel";
+		mes "[Select Heal Skill]";
+		next;
+		.@hpick = select(.@hmenu$);
+		if (.@hpick == .@heal_count + 1) {
+			mes "Cancelled.";
+			close;
+		}
+		.@hid = .@heal_ids[.@hpick - 1];
+		.@hlv = .@heal_lvs[.@hpick - 1];
+		mes "[HP Threshold]";
+		mes "Cast when target HP drops below (%):";
+		next;
+		input(.@hthresh, 1, 100);
+		mes "[Target Scope]";
+		mes "Who to heal?";
+		next;
+		.@hscope = select("Self only", "Party members") - 1;
+		atcommand "@autosupport add " + .@hid + " " + .@hthresh + " " + .@hscope;
+		mes "[Auto-Support]";
+		mes "Heal skill ^0000FF" + getskillname(.@hid) + "^000000 added.";
+		mes "Trigger: HP < " + .@hthresh + "%";
+		mes "Scope: " + ((.@hscope == 0) ? "Self" : "Party");
+		close;
+
+	case 2: // Buff Settings — multi-select toggle loop
+		mes "[Buff Settings]";
+		mes "Select buff skills to auto-cast.";
+		next;
+		// Build list of support/buff skills
+		getskilllist;
+		.@buf_count = 0;
+		for (.@i = 0; .@i < @skilllist_count; .@i++) {
+			.@sid = @skilllist_id[.@i];
+			.@slv = @skilllist_lv[.@i];
+			.@nodmg = getskillinfo(.@sid, 1);
+			.@inf = getskillinfo(.@sid, 0);
+			if (.@nodmg || (.@inf & 16)) {
+				.@buf_ids[.@buf_count] = .@sid;
+				.@buf_lvs[.@buf_count] = .@slv;
+				.@buf_count++;
+				if (.@buf_count >= 20) break;
+			}
+		}
+		if (.@buf_count == 0) {
+			mes "No buff skills found.";
+			close;
+		}
+		// Init toggle state
+		for (.@i = 0; .@i < .@buf_count; .@i++)
+			.@bsel[.@i] = 0;
+
+L_BuffToggle:
+		.@bmenu$ = "";
+		for (.@i = 0; .@i < .@buf_count; .@i++) {
+			if (.@i > 0) .@bmenu$ = .@bmenu$ + ":";
+			if (.@bsel[.@i])
+				.@bmenu$ = .@bmenu$ + "[X] " + getskillname(.@buf_ids[.@i]) + " Lv" + .@buf_lvs[.@i];
+			else
+				.@bmenu$ = .@bmenu$ + "[ ] " + getskillname(.@buf_ids[.@i]) + " Lv" + .@buf_lvs[.@i];
+		}
+		.@bmenu$ = .@bmenu$ + ":--- Apply Buffs ---:--- Cancel ---";
+		mes "[Buff Settings]";
+		mes "Toggle buffs to auto-cast:";
+		mes "^0000FF[X]^000000 = active  ^999999[ ]^000000 = inactive";
+		next;
+		.@bpick = select(.@bmenu$);
+		if (.@bpick == .@buf_count + 2) {
+			mes "Cancelled.";
+			close;
+		}
+		if (.@bpick == .@buf_count + 1) {
+			// Apply: add selected buffs as trigger_type=1 (buff check) with scope=party
+			.@added = 0;
+			for (.@i = 0; .@i < .@buf_count; .@i++) {
+				if (.@bsel[.@i]) {
+					atcommand "@autosupport add " + .@buf_ids[.@i] + " 100 1";
+					.@added++;
+				}
+			}
+			mes "[Auto-Support]";
+			mes "^0000FF" + .@added + "^000000 buff skill(s) configured.";
+			close;
+		}
+		// Toggle
+		.@bidx = .@bpick - 1;
+		if (.@bidx >= 0 && .@bidx < .@buf_count)
+			.@bsel[.@bidx] = !.@bsel[.@bidx];
+		goto L_BuffToggle;
+
+	case 3: // Target Settings (Phase 25)
+		mes "[Target Settings]";
+		mes "Who should you support?";
+		next;
+		.@tsub = select("Anyone in Party", "Party Leader Only", "Specific Member", "Back");
+		switch (.@tsub) {
+		case 1:
+			atcommand "@autosupport target all";
+			mes "[Auto-Support]";
+			mes "Target: ^00FF00All party members^000000";
+			close;
+		case 2:
+			atcommand "@autosupport target leader";
+			mes "[Auto-Support]";
+			mes "Target: ^00FF00Party leader only^000000";
+			close;
+		case 3:
+			mes "Enter player name:";
+			next;
+			input(.@pname$);
+			atcommand "@autosupport target " + .@pname$;
+			mes "[Auto-Support]";
+			mes "Target: ^0000FF" + .@pname$ + "^000000";
+			close;
+		case 4:
+			mes "[Auto-Support Capsule]";
+			mes "Select an option:";
+			next;
+			goto L_SupportMain;
+		}
+		break;
+
+	case 4: // Toggle
+		mes "[Auto-Support]";
+		mes "Toggle auto-support mode:";
+		next;
+		.@tog = select("Enable", "Disable");
+		if (.@tog == 1)
+			atcommand "@autosupport on";
+		else
+			atcommand "@autosupport off";
+		mes "[Auto-Support]";
+		mes "Auto-Support: " + ((.@tog == 1) ? "^00FF00ENABLED^000000" : "^FF0000DISABLED^000000");
+		close;
+
+	case 5: // View Status
+		atcommand "@autosupport";
+		atcommand "@autosupport list";
+		atcommand "@autosupport target";
+		mes "[Auto-Support]";
+		mes "Status shown in chat window.";
+		close;
+
+	case 6: // Close
+		close;
+	}
+	end;
+}
+
+// ========================================================
+// Function: F_AutoSupportMenu (called from item 30001)
+// ========================================================
+function	script	F_AutoSupportMenu	{
+	doevent "AutoSupportConfig::OnUseItem";
 	end;
 }
 
@@ -214,23 +643,30 @@ prontera,150,180,4	script	Auto Battle Shop	4_F_KAFRA3,{
 	}
 
 	mes "[Auto-Battle Shop]";
-	mes "Welcome! I sell Auto-Battle Capsule.";
+	mes "Welcome! I sell automation items.";
 	mes " ";
-	mes "^0000FFAuto-Battle Capsule^000000";
-	mes "Price: ^FF0000500 Cash Points^000000";
+	mes "^0000FF1. Auto-Battle Capsule^000000 - 500 CP";
 	if (.@expiry > 0)
-		mes "Duration: ^00FF00" + (.@expiry / 86400) + " days^000000";
+		mes "   Duration: " + (.@expiry / 86400) + " days";
 	else
-		mes "Duration: ^00FF00Permanent^000000";
-	mes " ";
-	mes "Use the pass to open the Auto-Battle";
-	mes "configuration menu.";
+		mes "   Duration: Permanent";
+	mes "^0000FF2. Auto-Support Capsule^000000 - 500 CP";
+	mes "   Party heal/buff automation.";
 	next;
 
-	if (select("Purchase:Cancel") == 2) {
+	.@choice = select("Buy Auto-Battle Capsule", "Buy Auto-Support Capsule", "Cancel");
+	if (.@choice == 3) {
 		mes "[Auto-Battle Shop]";
 		mes "Come back anytime!";
 		close;
+	}
+
+	if (.@choice == 1) {
+		.@buy_id = 30000;
+		.@buy_name$ = "Auto-Battle Capsule";
+	} else {
+		.@buy_id = 30001;
+		.@buy_name$ = "Auto-Support Capsule";
 	}
 
 	if (#CASHPOINTS < 500) {
@@ -240,22 +676,21 @@ prontera,150,180,4	script	Auto Battle Shop	4_F_KAFRA3,{
 		close;
 	}
 
-	// Check if already has one
-	if (countitem(30000) > 0) {
+	if (countitem(.@buy_id) > 0) {
 		mes "[Auto-Battle Shop]";
-		mes "You already have an Auto-Battle Capsule!";
+		mes "You already have a " + .@buy_name$ + "!";
 		close;
 	}
 
 	set #CASHPOINTS, #CASHPOINTS - 500;
 
 	if (.@expiry > 0)
-		rentitem 30000, .@expiry;
+		rentitem .@buy_id, .@expiry;
 	else
-		getitem 30000, 1;
+		getitem .@buy_id, 1;
 
 	mes "[Auto-Battle Shop]";
-	mes "Enjoy your Auto-Battle Capsule!";
+	mes "Enjoy your " + .@buy_name$ + "!";
 	mes "Use it from your inventory to configure.";
 	mes " ";
 	mes "Remaining balance: ^0000FF" + #CASHPOINTS + "^000000";

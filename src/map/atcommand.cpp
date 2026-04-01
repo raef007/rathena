@@ -3042,7 +3042,7 @@ ACMD_FUNC(stat_all)
 				max_status[i] = pc_maxparameter(sd, static_cast<e_params>(i));
 		}
 	}
-	
+
 	count = 0;
 	for (i = PARAM_STR; i < PARAM_POW; i++) {
 		int16 new_value;
@@ -3220,7 +3220,7 @@ ACMD_FUNC(makeegg) {
 
 		// for egg name
 		std::shared_ptr<item_data> item_data = item_db.searchname( message );
-		
+
 		if( item_data != nullptr ){
 			nameid = item_data->nameid;
 		}else{
@@ -3240,10 +3240,10 @@ ACMD_FUNC(makeegg) {
 				res = -2; //char server down
 			}
 		}
-	} 
-	
+	}
+
 	switch(res){
-		case -1:		
+		case -1:
 			clif_displaymessage(fd, msg_txt(sd,180)); // The monster/egg name/id doesn't exist.
 			break;
 		case -2:
@@ -3468,7 +3468,7 @@ ACMD_FUNC(ban)
 		clif_displaymessage(fd, msg_txt(sd,702)); // Time parameter format is +/-<value> to alter. y/a = Year, m = Month, d/j = Day, h = Hour, n/mn = Minute, s = Second.
 		return -1;
 	}
-	
+
 	if( timediff < 0 ){
 		clif_displaymessage(fd,msg_txt(sd,1023)); // You are not allowed to alter the time of a ban.
 		return -1;
@@ -3513,7 +3513,7 @@ ACMD_FUNC(char_ban)
 		clif_displaymessage(fd, msg_txt(sd,702)); // Time parameter format is +/-<value> to alter. y/a = Year, m = Month, d/j = Day, h = Hour, n/mn = Minute, s = Second.
 		return -1;
 	}
-	
+
 	if( timediff < 0 ){
 		clif_displaymessage(fd,msg_txt(sd,1023)); // You are not allowed to alter the time of a ban.
 		return -1;
@@ -5351,7 +5351,7 @@ ACMD_FUNC(loadnpc)
 		clif_displaymessage(fd, msg_txt(sd,1132)); // Please enter a script file name (usage: @loadnpc <file name>).
 		return -1;
 	}
-	
+
 	if (!npc_addsrcfile(message, true)) {
 		clif_displaymessage(fd, msg_txt(sd,261)); // Script could not be loaded.
 		return -1;
@@ -5619,7 +5619,7 @@ ACMD_FUNC(jailfor) {
 	nullpo_retr(-1, sd);
 
 	memset(atcmd_output, '\0', sizeof(atcmd_output));
-	
+
 	if (!message || !*message || sscanf(message, "%255s %23[^\n]",atcmd_output,atcmd_player_name) < 2) {
 		clif_displaymessage(fd, msg_txt(sd,400));	//Usage: @jailfor <time> <character name>
 		return -1;
@@ -6120,7 +6120,7 @@ ACMD_FUNC(npcmove)
 		return -1;
 	}
 
-	if ( npc_movenpc( nd, x, y ) ) 
+	if ( npc_movenpc( nd, x, y ) )
 	{ //actually failed to move
 		clif_displaymessage(fd, msg_txt(sd,1154)); // NPC is not on this map.
 		return -1;	//Not on a map.
@@ -6214,7 +6214,7 @@ ACMD_FUNC(dropall)
 	uint16 i, count = 0, count2 = 0;
 
 	nullpo_retr(-1, sd);
-	
+
 	if( message[0] ) {
 		type = atoi(message);
 		if( type != -1 && type != IT_HEALING && type != IT_USABLE && type != IT_ETC && type != IT_WEAPON &&
@@ -6254,7 +6254,7 @@ ACMD_FUNC(dropall)
 		}
 	}
 	sprintf(atcmd_output, msg_txt(sd,1494), count,count2); // %d items are dropped (%d skipped)!
-	clif_displaymessage(fd, atcmd_output); 
+	clif_displaymessage(fd, atcmd_output);
 	return 0;
 }
 
@@ -6265,7 +6265,7 @@ ACMD_FUNC(dropall)
 ACMD_FUNC(stockall)
 {
 	nullpo_retr(-1, sd);
-	
+
 	if (!pc_iscarton(sd)) {
 		clif_displaymessage(fd, msg_txt(sd,1533)); // You do not have a cart.
 		return -1;
@@ -6314,7 +6314,7 @@ ACMD_FUNC(stockall)
 		}
 	}
 	sprintf(atcmd_output, msg_txt(sd,1535), count,count2); // %d items are transferred (%d skipped)!
-	clif_displaymessage(fd, atcmd_output); 
+	clif_displaymessage(fd, atcmd_output);
 	return 0;
 }
 
@@ -7848,7 +7848,7 @@ ACMD_FUNC(uptime)
 }
 
 /*==========================================
- * @changesex 
+ * @changesex
  * => Changes one's account sex. Switch from male to female or visversa
  *------------------------------------------*/
 ACMD_FUNC(changesex)
@@ -8742,7 +8742,7 @@ ACMD_FUNC(whereis)
 		clif_displaymessage(fd, msg_txt(sd,1288)); // Please enter a monster name/ID (usage: @whereis <monster_name_or_monster_ID>).
 		return -1;
 	}
-	
+
 	int32 i_message = atoi(message);
 	if (mobdb_checkid(i_message)) {
 		// ID given
@@ -8752,7 +8752,7 @@ ACMD_FUNC(whereis)
 		// Name given, get all monster associated whith this name
 		count = mobdb_searchname_array(message, mob_ids, MAX_SEARCH);
 	}
-	
+
 	if (count <= 0) {
 		clif_displaymessage(fd, msg_txt(sd,40)); // Invalid monster ID or name.
 		return -1;
@@ -8771,7 +8771,7 @@ ACMD_FUNC(whereis)
 		if(!mob) continue;
 		snprintf(atcmd_output, sizeof atcmd_output, msg_txt(sd,1289), mob->jname.c_str()); // %s spawns in:
 		clif_displaymessage(fd, atcmd_output);
-		
+
 		const std::vector<spawn_info> spawns = mob_get_spawns(mob_id);
 		if (spawns.size() <= 0) {
 			 // This monster does not spawn normally.
@@ -10090,7 +10090,7 @@ static void atcommand_commands_sub(map_session_data* sd, const int32 fd, AtComma
 		if ( count_bind )
 			clif_displaymessage(fd,line_buff);// last one
 		count += count_bind;
-		
+
 	}
 
 	sprintf(atcmd_output, msg_txt(sd,274), count); // "%d commands found."
@@ -10145,7 +10145,7 @@ ACMD_FUNC(accinfo) {
 
 /**
  * @set <variable name{[index]}>{ <value>}
- * 
+ *
  * Gets or sets a value of a non server variable.
  * If a value is specified it is used to set the variable's value,
  * if not the variable's value is read.
@@ -10633,11 +10633,11 @@ ACMD_FUNC(vip) {
 	char * modif_p;
 	int32 vipdifftime = 0;
 	time_t now=time(nullptr);
-	
+
 	nullpo_retr(-1, sd);
 
 	memset(atcmd_output, '\0', sizeof(atcmd_output));
-	
+
 	if (!message || !*message || sscanf(message, "%255s %23[^\n]",atcmd_output,atcmd_player_name) < 2) {
 		clif_displaymessage(fd, msg_txt(sd,700));	//Usage: @vip <timef> <character name>
 		return -1;
@@ -10670,7 +10670,7 @@ ACMD_FUNC(vip) {
 
 	if(pl_sd->vip.time==0) pl_sd->vip.time=now;
 	pl_sd->vip.time += vipdifftime; //increase or reduce VIP duration
-	
+
 	if (pl_sd->vip.time <= now) {
 		clif_displaymessage(pl_sd->fd, msg_txt(pl_sd,703)); // GM has removed your VIP time.
 
@@ -10681,7 +10681,7 @@ ACMD_FUNC(vip) {
 	} else {
 		int32 year,month,day,hour,minute,second;
 		char timestr[21];
-		
+
 		split_time((int32)(pl_sd->vip.time-now),&year,&month,&day,&hour,&minute,&second);
 		sprintf(atcmd_output,msg_txt(pl_sd,705),year,month,day,hour,minute,second); // Your VIP status is valid for %d years, %d months, %d days, %d hours, %d minutes and %d seconds.
 		clif_displaymessage(pl_sd->fd,atcmd_output);
@@ -10696,7 +10696,7 @@ ACMD_FUNC(vip) {
 			clif_displaymessage(fd,atcmd_output);
 		}
 	}
-	chrif_req_login_operation(pl_sd->status.account_id, pl_sd->status.name, CHRIF_OP_LOGIN_VIP, vipdifftime, 7, 0); 
+	chrif_req_login_operation(pl_sd->status.account_id, pl_sd->status.name, CHRIF_OP_LOGIN_VIP, vipdifftime, 7, 0);
 	return 0;
 #else
 	clif_displaymessage( fd, msg_txt( sd, 774 ) ); // This command is disabled via configuration.
@@ -10726,7 +10726,7 @@ ACMD_FUNC(showrate) {
 ACMD_FUNC(fullstrip) {
 	int32 i;
 	TBL_PC *tsd;
-	
+
 	nullpo_retr(-1,sd);
 
 	memset(atcmd_player_name, '\0', sizeof(atcmd_player_name));
@@ -10740,7 +10740,7 @@ ACMD_FUNC(fullstrip) {
 		clif_displaymessage(fd, msg_txt(sd,3)); // Character not found.
 		return -1;
 	}
-	
+
 	for( i = 0; i < EQI_MAX; i++ ) {
 		if( tsd->equip_index[ i ] >= 0 )
 			pc_unequipitem( tsd , tsd->equip_index[ i ] , 2 );
@@ -11475,7 +11475,7 @@ ACMD_FUNC(macrochecker){
  **/
 ACMD_FUNC(autoattack) {
 	int32 range = sd->autobattle_data.range;
-	
+
 	if (!message || !*message) {
 		// Show status
 		clif_displaymessage(fd, "=== Auto-Battle Status ===");
@@ -11527,6 +11527,30 @@ ACMD_FUNC(autoattack) {
 			clif_displaymessage(fd, atcmd_output);
 		} else {
 			clif_displaymessage(fd, "EXP Penalty: None");
+		}
+		// Auto-Sit status
+		if (sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) {
+			sprintf(atcmd_output, "Auto-Sit: ON (sit HP<%d%% SP<%d%%, stand HP>%d%% SP>%d%%)",
+				sd->autobattle_data.autosit_hp_threshold, sd->autobattle_data.autosit_sp_threshold,
+				sd->autobattle_data.autosit_hp_recover, sd->autobattle_data.autosit_sp_recover);
+			clif_displaymessage(fd, atcmd_output);
+		} else {
+			clif_displaymessage(fd, "Auto-Sit: OFF");
+		}
+		// Auto-Target status
+		if (sd->autobattle_data.target_mob_count > 0) {
+			sprintf(atcmd_output, "Target: %d specific mobs", sd->autobattle_data.target_mob_count);
+			clif_displaymessage(fd, atcmd_output);
+		} else {
+			clif_displaymessage(fd, "Target: All monsters");
+		}
+		// Auto-Skill status
+		if (sd->autobattle_data.attack_skill_id > 0) {
+			sprintf(atcmd_output, "Skill: %d Lv%d (fallback: normal attack)",
+				sd->autobattle_data.attack_skill_id, sd->autobattle_data.attack_skill_lv);
+			clif_displaymessage(fd, atcmd_output);
+		} else {
+			clif_displaymessage(fd, "Skill: Normal attack");
 		}
 		return 0;
 	}
@@ -11658,9 +11682,133 @@ ACMD_FUNC(autoattack) {
 			clif_displaymessage(fd, atcmd_output);
 			return 0;
 		}
+		// Phase 24: Auto-Sit
+		else if (strcmp(arg1, "sit") == 0) {
+			if (argc >= 2 && strcmp(arg2, "off") == 0) {
+				autobattle_toggle_mode(sd, AUTOBATTLE_AUTOSIT, false);
+				sd->autobattle_data.autosit_hp_threshold = 0;
+				sd->autobattle_data.autosit_sp_threshold = 0;
+				sd->autobattle_data.autosit_hp_recover = 0;
+				sd->autobattle_data.autosit_sp_recover = 0;
+				clif_displaymessage(fd, "Auto-sit disabled.");
+				return 0;
+			}
+			if (argc >= 2) {
+				int32 hp_thresh = atoi(arg2);
+				int32 sp_thresh = (argc >= 3) ? atoi(arg3) : 0;
+				if (hp_thresh < 0 || hp_thresh > 90) {
+					clif_displaymessage(fd, "HP threshold must be 0-90 (0=disabled).");
+					return -1;
+				}
+				if (sp_thresh < 0 || sp_thresh > 90) {
+					clif_displaymessage(fd, "SP threshold must be 0-90 (0=disabled).");
+					return -1;
+				}
+				sd->autobattle_data.autosit_hp_threshold = (uint8)hp_thresh;
+				sd->autobattle_data.autosit_sp_threshold = (uint8)sp_thresh;
+				sd->autobattle_data.autosit_hp_recover = (uint8)std::min(hp_thresh + 20, 95);
+				sd->autobattle_data.autosit_sp_recover = (uint8)std::min(sp_thresh + 20, 95);
+				if (hp_thresh > 0 || sp_thresh > 0) {
+					autobattle_toggle_mode(sd, AUTOBATTLE_AUTOSIT, true);
+					sprintf(atcmd_output, "Auto-sit enabled. Sit when HP<%d%% SP<%d%%, stand when HP>%d%% SP>%d%%.",
+						hp_thresh, sp_thresh,
+						sd->autobattle_data.autosit_hp_recover,
+						sd->autobattle_data.autosit_sp_recover);
+				} else {
+					autobattle_toggle_mode(sd, AUTOBATTLE_AUTOSIT, false);
+					sprintf(atcmd_output, "Auto-sit disabled (thresholds set to 0).");
+				}
+				clif_displaymessage(fd, atcmd_output);
+				return 0;
+			}
+			// No args — show current sit config
+			if (sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) {
+				sprintf(atcmd_output, "Auto-Sit: ON (HP<%d%% SP<%d%%, stand HP>%d%% SP>%d%%)",
+					sd->autobattle_data.autosit_hp_threshold, sd->autobattle_data.autosit_sp_threshold,
+					sd->autobattle_data.autosit_hp_recover, sd->autobattle_data.autosit_sp_recover);
+			} else {
+				sprintf(atcmd_output, "Auto-Sit: OFF");
+			}
+			clif_displaymessage(fd, atcmd_output);
+			return 0;
+		}
+		// Phase 22: Auto-Target
+		else if (strcmp(arg1, "target") == 0) {
+			if (argc >= 2 && strcmp(arg2, "all") == 0) {
+				autobattle_clear_target_mobs(sd);
+				clif_displaymessage(fd, "Target filter cleared. Targeting all monsters.");
+				return 0;
+			}
+			if (argc >= 2 && strcmp(arg2, "clear") == 0) {
+				autobattle_clear_target_mobs(sd);
+				clif_displaymessage(fd, "Target whitelist cleared.");
+				return 0;
+			}
+			if (argc >= 2) {
+				uint16 mob_id = (uint16)atoi(arg2);
+				if (mob_id == 0) {
+					clif_displaymessage(fd, "Invalid mob ID.");
+					return -1;
+				}
+				autobattle_toggle_target_mob(sd, mob_id);
+				// Show current list
+				if (sd->autobattle_data.target_mob_count == 0) {
+					clif_displaymessage(fd, "Target whitelist is now empty. Targeting all monsters.");
+				} else {
+					sprintf(atcmd_output, "Target whitelist (%d mobs):", sd->autobattle_data.target_mob_count);
+					clif_displaymessage(fd, atcmd_output);
+					for (int i = 0; i < sd->autobattle_data.target_mob_count; i++) {
+						sprintf(atcmd_output, "  [%d] Mob ID: %d", i+1, sd->autobattle_data.target_mob_ids[i]);
+						clif_displaymessage(fd, atcmd_output);
+					}
+				}
+				return 0;
+			}
+			// No args — show current target filter
+			if (sd->autobattle_data.target_mob_count == 0) {
+				clif_displaymessage(fd, "Target: All monsters");
+			} else {
+				sprintf(atcmd_output, "Target whitelist (%d mobs):", sd->autobattle_data.target_mob_count);
+				clif_displaymessage(fd, atcmd_output);
+				for (int i = 0; i < sd->autobattle_data.target_mob_count; i++) {
+					sprintf(atcmd_output, "  [%d] Mob ID: %d", i+1, sd->autobattle_data.target_mob_ids[i]);
+					clif_displaymessage(fd, atcmd_output);
+				}
+			}
+			return 0;
+		}
+		// Phase 23: Auto-Skill
+		else if (strcmp(arg1, "skill") == 0) {
+			if (argc >= 2 && strcmp(arg2, "off") == 0) {
+				autobattle_set_attack_skill(sd, 0, 0);
+				clif_displaymessage(fd, "Auto-skill disabled. Using normal attack.");
+				return 0;
+			}
+			if (argc >= 2) {
+				uint16 skill_id = (uint16)atoi(arg2);
+				uint8 skill_lv = (argc >= 3) ? (uint8)atoi(arg3) : pc_checkskill(sd, skill_id);
+				if (skill_id == 0) {
+					clif_displaymessage(fd, "Invalid skill ID.");
+					return -1;
+				}
+				if (skill_lv < 1) skill_lv = 1;
+				autobattle_set_attack_skill(sd, skill_id, skill_lv);
+				sprintf(atcmd_output, "Auto-skill set: Skill %d Lv%d. Falls back to normal attack when SP low.", skill_id, skill_lv);
+				clif_displaymessage(fd, atcmd_output);
+				return 0;
+			}
+			// No args — show current skill
+			if (sd->autobattle_data.attack_skill_id > 0) {
+				sprintf(atcmd_output, "Auto-Skill: %d Lv%d", sd->autobattle_data.attack_skill_id, sd->autobattle_data.attack_skill_lv);
+			} else {
+				sprintf(atcmd_output, "Auto-Skill: Normal attack");
+			}
+			clif_displaymessage(fd, atcmd_output);
+			return 0;
+		}
 	}
 
-	clif_displaymessage(fd, "Usage: @autoattack [on|off|range <n>|roam [off]|flywing [off]|loot [off]|pot <id> <hp%%>|sppot <id> <sp%%>|gohome [off]|time|addtime <s>]");
+	clif_displaymessage(fd, "Usage: @autoattack [on|off|range|roam|flywing|loot|pot|sppot|gohome|time|addtime|sit|target|skill]");
 	return -1;
 }
 
@@ -11718,7 +11866,7 @@ ACMD_FUNC(autosupport) {
 			uint16 skill_id = (uint16)atoi(arg2);
 			uint8 hp_threshold = (uint8)atoi(arg3);
 			uint8 scope = (uint8)atoi(arg4);
-			
+
 			if (hp_threshold < 1 || hp_threshold > 100) {
 				clif_displaymessage(fd, "HP threshold must be between 1 and 100.");
 				return -1;
@@ -11727,15 +11875,46 @@ ACMD_FUNC(autosupport) {
 				clif_displaymessage(fd, "Scope must be 0 (self), 1 (party), or 2 (guild).");
 				return -1;
 			}
-			
+
 			autobattle_add_support_skill(sd, skill_id, 5, hp_threshold, scope); // Default skill lv 5
 			sprintf(atcmd_output, "Auto-support skill %d added (HP < %d%%).", skill_id, hp_threshold);
 			clif_displaymessage(fd, atcmd_output);
 			return 0;
 		}
+		// Phase 25: Support target mode
+		else if (strcmp(arg1, "target") == 0) {
+			if (argc >= 2 && strcmp(arg2, "all") == 0) {
+				sd->autobattle_data.support_target_mode = 0;
+				clif_displaymessage(fd, "Support target: All party members.");
+				return 0;
+			}
+			if (argc >= 2 && strcmp(arg2, "leader") == 0) {
+				sd->autobattle_data.support_target_mode = 1;
+				clif_displaymessage(fd, "Support target: Party leader only.");
+				return 0;
+			}
+			if (argc >= 2) {
+				// Treat arg2 as player name
+				sd->autobattle_data.support_target_mode = 2;
+				safestrncpy(sd->autobattle_data.support_target_name, arg2, sizeof(sd->autobattle_data.support_target_name));
+				sprintf(atcmd_output, "Support target: Specific member '%s'.", arg2);
+				clif_displaymessage(fd, atcmd_output);
+				return 0;
+			}
+			// No args — show current target mode
+			switch (sd->autobattle_data.support_target_mode) {
+				case 0: clif_displaymessage(fd, "Support target: All party members"); break;
+				case 1: clif_displaymessage(fd, "Support target: Party leader only"); break;
+				case 2:
+					sprintf(atcmd_output, "Support target: %s", sd->autobattle_data.support_target_name);
+					clif_displaymessage(fd, atcmd_output);
+					break;
+			}
+			return 0;
+		}
 	}
 
-	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|add <id> <hp%> <scope>]");
+	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|add <id> <hp%> <scope>|target [all|leader|<name>]]");
 	return -1;
 }
 

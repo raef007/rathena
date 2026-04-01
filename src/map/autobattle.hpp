@@ -27,6 +27,7 @@ enum e_autobattle_mode {
 	AUTOBATTLE_ROAM = 0x10,        ///< Auto-roam when no enemies in range
 	AUTOBATTLE_AUTOPOT = 0x20,     ///< Auto-use potions when HP/SP low
 	AUTOBATTLE_FLYWING = 0x40,     ///< Use fly wing to teleport when roaming
+	AUTOBATTLE_AUTOSIT = 0x80,     ///< Auto-sit when HP/SP low, stand when recovered
 };
 
 /**
@@ -78,19 +79,19 @@ struct s_autobattle_data {
 	uint8 target_priority;         ///< e_autobattle_priority
 	int32 target_id;               ///< Current target (-1 if none)
 	int32 attack_timer;            ///< Timer ID for attack loop
-	
+
 	// Auto-support configuration
 	uint8 support_skill_count;     ///< Number of configured support skills
 	struct s_autosupport_skill support_skills[10]; ///< Up to 10 support skill configs
-	
+
 	// Skill rotation
 	uint8 current_rotation_slot;   ///< Which of 3 rotation slots is active
 	struct s_skillrotation_slot rotations[3]; ///< 3 configurable rotation slots
-	
+
 	// Auto-loot configuration
 	uint16 loot_range;             ///< Loot pickup range (cells, default=attack_range)
 	uint8 loot_rarity_filter;      ///< 0=all items, 1=white/blue/purple/gold only, 2=rare+ only
-	
+
 	// Auto-pot configuration
 	t_itemid autopot_hp_id;        ///< Item ID for HP potion (0 = disabled)
 	uint8 autopot_hp_threshold;    ///< Use HP pot when HP% below this (default 50)
@@ -98,12 +99,12 @@ struct s_autobattle_data {
 	uint8 autopot_sp_threshold;    ///< Use SP pot when SP% below this (default 30)
 	bool gohome_no_pots;           ///< Butterfly wing / walk home when out of pots
 	t_tick last_pot_tick;           ///< Throttle potion usage
-	
+
 	// Roaming state
 	int16 roam_dest_x;             ///< Current roam destination X
 	int16 roam_dest_y;             ///< Current roam destination Y
 	bool roam_has_dest;            ///< Whether we have an active roam destination
-	
+
 	// State tracking
 	t_tick last_support_tick;      ///< Throttle support casting
 	t_tick last_loot_tick;         ///< Throttle loot checking
@@ -120,6 +121,25 @@ struct s_autobattle_data {
 	// EXP penalty (loaded from DB, fallback to battle_config)
 	int32 exp_penalty_base;        ///< Base EXP penalty % (0=none, 50=half, 100=zero)
 	int32 exp_penalty_job;         ///< Job EXP penalty % (0=none, 50=half, 100=zero)
+
+	// Phase 24: Auto-Sit
+	uint8 autosit_hp_threshold;    ///< Sit when HP% below this (0 = don't sit for HP)
+	uint8 autosit_sp_threshold;    ///< Sit when SP% below this (0 = don't sit for SP)
+	uint8 autosit_hp_recover;      ///< Stand when HP% above this (threshold + 20, cap 95)
+	uint8 autosit_sp_recover;      ///< Stand when SP% above this (threshold + 20, cap 95)
+
+	// Phase 22: Auto-Target (monster whitelist)
+	uint16 target_mob_ids[20];     ///< Whitelist of mob IDs to target (0 = target all)
+	uint8 target_mob_count;        ///< Number of entries in whitelist (0 = target all)
+
+	// Phase 23: Auto-Skill (offensive skill)
+	uint16 attack_skill_id;        ///< Offensive skill to use (0 = normal attack only)
+	uint8 attack_skill_lv;         ///< Skill level to use
+
+	// Phase 25: Auto-Support Enhancement
+	uint8 support_target_mode;     ///< 0=all party, 1=leader, 2=specific member
+	char support_target_name[24];  ///< For specific member mode
+	int32 follow_target_id;        ///< Account ID of current follow target (-1 = none)
 };
 
 /**
@@ -188,7 +208,7 @@ void autobattle_set_range(map_session_data *sd, uint8 range);
  * @param hp_threshold HP% threshold to trigger
  * @param target_scope e_autosupport_scope
  */
-void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id, 
+void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
 	uint8 skill_lv, uint8 hp_threshold, uint8 target_scope);
 
 /**
@@ -204,7 +224,7 @@ void autobattle_clear_support_skills(map_session_data *sd);
  * @param skill_ids Array of skill IDs
  * @param count Number of skills
  */
-void autobattle_set_skillrotation(map_session_data *sd, uint8 slot, 
+void autobattle_set_skillrotation(map_session_data *sd, uint8 slot,
 	uint16 *skill_ids, uint8 count);
 
 /**
@@ -259,5 +279,13 @@ void autobattle_add_time(map_session_data *sd, int32 seconds);
  * @return Remaining seconds
  */
 int32 autobattle_get_remaining_time(map_session_data *sd);
+
+// Phase 22: Auto-Target
+void autobattle_set_target_mobs(map_session_data *sd, uint16 *mob_ids, uint8 count);
+void autobattle_clear_target_mobs(map_session_data *sd);
+void autobattle_toggle_target_mob(map_session_data *sd, uint16 mob_id);
+
+// Phase 23: Auto-Skill
+void autobattle_set_attack_skill(map_session_data *sd, uint16 skill_id, uint8 skill_lv);
 
 #endif // AUTOBATTLE_HPP

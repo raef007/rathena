@@ -12,6 +12,7 @@
 #include "skill.hpp"       // skill_check, skill_can_use
 #include "status.hpp"      // status_get_* functions
 #include "unit.hpp"        // unit_attack, unit_move
+#include "party.hpp"       // party_search, party_isleader (Phase 25)
 #include <common/sql.hpp>  // Sql_Query, mmysql_handle
 #include <common/random.hpp> // rnd_value
 
@@ -48,6 +49,20 @@ static int32 autobattle_search_target_callback(struct block_list* bl, va_list ap
 	if (bl->id == sd->id)
 		return 0;
 
+	// Phase 22: Auto-Target whitelist filter
+	if (bl->type == BL_MOB && sd->autobattle_data.target_mob_count > 0) {
+		struct mob_data *md = (struct mob_data*)bl;
+		bool found = false;
+		for (int i = 0; i < sd->autobattle_data.target_mob_count; i++) {
+			if (sd->autobattle_data.target_mob_ids[i] == md->mob_id) {
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			return 0; // Not in whitelist, skip
+	}
+
 	// Validate target
 	if (!autobattle_can_attack(sd, bl))
 		return 0;
@@ -61,7 +76,7 @@ static int32 autobattle_search_target_callback(struct block_list* bl, va_list ap
 	int32 priority = 0;
 	int32 damage = 0;
 
-	if (sd->autobattle_data.target_priority == PRIORITY_DAMAGE || 
+	if (sd->autobattle_data.target_priority == PRIORITY_DAMAGE ||
 	    sd->autobattle_data.target_priority == PRIORITY_DAMAGE_DISTANCE) {
 		// Estimate damage output from target (use mob ATK as proxy)
 		if (bl->type == BL_MOB) {
@@ -78,7 +93,7 @@ static int32 autobattle_search_target_callback(struct block_list* bl, va_list ap
 	}
 
 	// Apply distance as tiebreaker if needed
-	if (sd->autobattle_data.target_priority == PRIORITY_DISTANCE || 
+	if (sd->autobattle_data.target_priority == PRIORITY_DISTANCE ||
 	    (sd->autobattle_data.target_priority == PRIORITY_DAMAGE_DISTANCE && damage == g_search_context.best_damage)) {
 		priority = dist;
 	}
@@ -232,6 +247,49 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		}
 	}
 
+	// ===== AUTO-SIT (Phase 24) — checked BEFORE attack/roam =====
+	if (sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) {
+		int32 hp_pct = (sd->battle_status.max_hp > 0) ?
+			(sd->battle_status.hp * 100) / sd->battle_status.max_hp : 100;
+		int32 sp_pct = (sd->battle_status.max_sp > 0) ?
+			(sd->battle_status.sp * 100) / sd->battle_status.max_sp : 100;
+
+		bool need_sit = false;
+		if (sd->autobattle_data.autosit_hp_threshold > 0 && hp_pct < sd->autobattle_data.autosit_hp_threshold)
+			need_sit = true;
+		if (sd->autobattle_data.autosit_sp_threshold > 0 && sp_pct < sd->autobattle_data.autosit_sp_threshold)
+			need_sit = true;
+
+		if (need_sit && !pc_issit(sd)) {
+			// Sit down to regen
+			pc_setsit(sd);
+			skill_sit(sd, true);
+			clif_sitting(*(block_list*)sd);
+			// Skip attack/roam — resting
+			goto autobattle_timer_reschedule;
+		}
+
+		if (pc_issit(sd)) {
+			// Check if recovered enough to stand
+			bool can_stand = true;
+			if (sd->autobattle_data.autosit_hp_threshold > 0 && hp_pct < sd->autobattle_data.autosit_hp_recover)
+				can_stand = false;
+			if (sd->autobattle_data.autosit_sp_threshold > 0 && sp_pct < sd->autobattle_data.autosit_sp_recover)
+				can_stand = false;
+
+			if (can_stand) {
+				if (pc_setstand(sd, false)) {
+					skill_sit(sd, false);
+					clif_standing(*(block_list*)sd);
+				}
+				// Recovered — resume normal processing below
+			} else {
+				// Still resting — skip attack/roam
+				goto autobattle_timer_reschedule;
+			}
+		}
+	}
+
 	// ===== AUTO-ATTACK =====
 	if (sd->autobattle_data.mode & AUTOBATTLE_ATTACK) {
 		struct block_list *target = autobattle_search_target(sd);
@@ -241,15 +299,40 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 			sd->autobattle_data.roam_has_dest = false;
 			sd->autobattle_data.target_id = target->id;
 
-			// Check weapon range for melee approach
-			struct status_data *sstatus = status_get_status_data(*sd);
-			int32 weapon_range = sstatus ? sstatus->rhw.range : 1;
+			// Phase 23: Determine effective range (skill range or weapon range)
+			int32 effective_range;
+			bool use_skill = false;
+			if (sd->autobattle_data.attack_skill_id > 0) {
+				int32 skill_range = skill_get_range2((block_list*)sd,
+					sd->autobattle_data.attack_skill_id,
+					sd->autobattle_data.attack_skill_lv, true);
+				if (skill_range < 1) skill_range = 1;
+				effective_range = skill_range;
+				use_skill = true;
+			} else {
+				struct status_data *sstatus = status_get_status_data(*sd);
+				effective_range = sstatus ? sstatus->rhw.range : 1;
+			}
 
-			if (!check_distance_bl((block_list*)sd, target, weapon_range)) {
-				// Target in detection range but out of weapon range - walk towards it
-				unit_walktobl((block_list*)sd, target, weapon_range, 1);
+			if (!check_distance_bl((block_list*)sd, target, effective_range)) {
+				// Target in detection range but out of attack/skill range - walk towards it
+				unit_walktobl((block_list*)sd, target, effective_range, 1);
 			} else if (DIFF_TICK(sd->ud.canact_tick, tick) <= 0) {
-				unit_attack((block_list*)sd, target->id, 1); // 1 = continuous attack
+				// Phase 23: Try skill first, fallback to normal attack
+				bool skill_used = false;
+				if (use_skill) {
+					uint16 sk_id = sd->autobattle_data.attack_skill_id;
+					uint8 sk_lv = sd->autobattle_data.attack_skill_lv;
+					int32 sp_cost = skill_get_sp(sk_id, sk_lv);
+					if ((int32)sd->battle_status.sp >= sp_cost &&
+						skill_check_condition_castbegin(*sd, sk_id, sk_lv)) {
+						unit_skilluse_id((block_list*)sd, target->id, sk_id, sk_lv);
+						skill_used = true;
+					}
+				}
+				if (!skill_used) {
+					unit_attack((block_list*)sd, target->id, 1); // Normal attack fallback
+				}
 			}
 		} else {
 			// No valid target found
@@ -336,7 +419,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 
 			for (int i = 0; i < sd->autobattle_data.support_skill_count; i++) {
 				struct s_autosupport_skill &skill = sd->autobattle_data.support_skills[i];
-				
+
 				if (skill.skill_id == 0)
 					continue;
 
@@ -352,13 +435,59 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						target = sd;
 						break;
 					case AUTOSUPPORT_PARTY:
-						// TODO: Implement party member selection
-						target = sd;
+					case AUTOSUPPORT_GUILD: {
+						// Phase 25: Party member targeting
+						if (sd->status.party_id == 0) {
+							target = sd; // No party, fall back to self
+							break;
+						}
+						struct party_data *p = party_search(sd->status.party_id);
+						if (!p) {
+							target = sd;
+							break;
+						}
+
+						struct map_session_data *best_target = nullptr;
+						int32 lowest_hp_pct = 100;
+
+						for (int pi = 0; pi < MAX_PARTY; pi++) {
+							struct map_session_data *psd = p->data[pi].sd;
+							if (!psd || !psd->prev || psd->m != sd->m)
+								continue; // Offline, not on map, or different map
+							if (status_isdead(*psd))
+								continue;
+
+							// Target mode filter
+							if (sd->autobattle_data.support_target_mode == 1) {
+								// Leader only
+								if (!party_isleader(psd)) continue;
+							} else if (sd->autobattle_data.support_target_mode == 2) {
+								// Specific member by name
+								if (strcmp(psd->status.name, sd->autobattle_data.support_target_name) != 0) continue;
+							}
+							// mode 0 = all party members (no filter)
+
+							int32 psd_hp_pct = (psd->battle_status.max_hp > 0) ?
+								(psd->battle_status.hp * 100) / psd->battle_status.max_hp : 100;
+
+							if (skill.trigger_type == 0) {
+								// HP-based: find party member with lowest HP below threshold
+								if (psd_hp_pct < skill.hp_threshold && psd_hp_pct < lowest_hp_pct) {
+									lowest_hp_pct = psd_hp_pct;
+									best_target = psd;
+								}
+							} else if (skill.trigger_type == 1) {
+								// Buff-based: find party member missing the buff
+								enum sc_type sc = skill_get_sc(skill.skill_id);
+								if (sc != SC_NONE && !psd->sc.hasSCE(sc)) {
+									best_target = psd;
+									break; // First missing member gets the buff
+								}
+							}
+						}
+						target = best_target;
 						break;
-					case AUTOSUPPORT_GUILD:
-						// TODO: Implement guild member selection
-						target = sd;
-						break;
+					}
 					default:
 						target = sd;
 				}
@@ -366,8 +495,21 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 				if (!target)
 					continue;
 
+				// Phase 25: For party targets (not self), check range and walk closer if needed
+				if (target != sd) {
+					int32 skill_range = skill_get_range2((block_list*)sd,
+						skill.skill_id, skill.skill_lv, true);
+					if (skill_range < 1) skill_range = 1;
+					if (!check_distance_bl((block_list*)sd, (block_list*)target, skill_range)) {
+						// Out of range — walk toward target, update follow target
+						sd->autobattle_data.follow_target_id = target->id;
+						unit_walktobl((block_list*)sd, (block_list*)target, skill_range, 1);
+						continue; // Try again next tick after walking closer
+					}
+				}
+
 				// Check HP threshold
-				int hp_percent = (target->battle_status.hp > 0) ? 
+				int hp_percent = (target->battle_status.hp > 0) ?
 					(target->battle_status.hp * 100) / target->battle_status.max_hp : 0;
 
 				if (hp_percent >= skill.hp_threshold)
@@ -386,6 +528,43 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 				unit_skilluse_id((block_list*)sd, ((block_list*)target)->id, skill.skill_id, skill.skill_lv);
 				skill.last_cast_time = tick;
 				break; // Only cast one support skill per frame
+			}
+		}
+	}
+
+	// ===== AUTO-SUPPORT FOLLOW (Phase 25) =====
+	// When support mode is ON with party scope and no attack target, follow the first valid party target
+	if ((sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) &&
+		!(sd->autobattle_data.mode & AUTOBATTLE_ATTACK) &&
+		sd->autobattle_data.target_id == -1 &&
+		sd->status.party_id > 0)
+	{
+		struct party_data *p = party_search(sd->status.party_id);
+		if (p) {
+			// Find first valid follow target based on support_target_mode
+			struct map_session_data *follow_sd = nullptr;
+			for (int pi = 0; pi < MAX_PARTY; pi++) {
+				struct map_session_data *psd = p->data[pi].sd;
+				if (!psd || !psd->prev || psd == sd || psd->m != sd->m)
+					continue;
+				if (status_isdead(*psd))
+					continue;
+
+				if (sd->autobattle_data.support_target_mode == 1) {
+					if (!party_isleader(psd)) continue;
+				} else if (sd->autobattle_data.support_target_mode == 2) {
+					if (strcmp(psd->status.name, sd->autobattle_data.support_target_name) != 0) continue;
+				}
+				follow_sd = psd;
+				break; // Pick first match
+			}
+
+			if (follow_sd) {
+				sd->autobattle_data.follow_target_id = follow_sd->id;
+				// Walk toward follow target if more than 5 cells away
+				if (!check_distance_bl((block_list*)sd, (block_list*)follow_sd, 5)) {
+					unit_walktobl((block_list*)sd, (block_list*)follow_sd, 3, 1);
+				}
 			}
 		}
 	}
@@ -465,6 +644,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 	}
 
 	// Reschedule timer
+autobattle_timer_reschedule:
 	sd->autobattle_data.attack_timer = add_timer(
 		tick + AUTOBATTLE_TIMER_INTERVAL,
 		autobattle_process,
@@ -660,6 +840,25 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config)
 	sd->autobattle_data.time_deduct_accum = 0;
 	sd->autobattle_data.exp_penalty_base = battle_config.autobattle_exp_penalty_base;
 	sd->autobattle_data.exp_penalty_job = battle_config.autobattle_exp_penalty_job;
+
+	// Phase 24: Auto-Sit defaults
+	sd->autobattle_data.autosit_hp_threshold = 0;
+	sd->autobattle_data.autosit_sp_threshold = 0;
+	sd->autobattle_data.autosit_hp_recover = 0;
+	sd->autobattle_data.autosit_sp_recover = 0;
+
+	// Phase 22: Auto-Target defaults
+	memset(sd->autobattle_data.target_mob_ids, 0, sizeof(sd->autobattle_data.target_mob_ids));
+	sd->autobattle_data.target_mob_count = 0;
+
+	// Phase 23: Auto-Skill defaults
+	sd->autobattle_data.attack_skill_id = 0;
+	sd->autobattle_data.attack_skill_lv = 0;
+
+	// Phase 25: Auto-Support Enhancement defaults
+	sd->autobattle_data.support_target_mode = 0;
+	memset(sd->autobattle_data.support_target_name, 0, sizeof(sd->autobattle_data.support_target_name));
+	sd->autobattle_data.follow_target_id = -1;
 
 	// Load daily time data from database (overrides defaults above)
 	autobattle_load_time_db(sd);
@@ -887,3 +1086,73 @@ void autobattle_save_time_db(map_session_data *sd)
 		Sql_ShowDebug(mmysql_handle);
 	}
 }
+
+// ===== Phase 22: Auto-Target Functions =====
+
+/**
+ * Set target mob whitelist
+ */
+void autobattle_set_target_mobs(map_session_data *sd, uint16 *mob_ids, uint8 count)
+{
+	if (!sd)
+		return;
+
+	if (count > 20) count = 20;
+	sd->autobattle_data.target_mob_count = count;
+	for (int i = 0; i < count; i++)
+		sd->autobattle_data.target_mob_ids[i] = mob_ids[i];
+}
+
+/**
+ * Clear target mob whitelist (target all)
+ */
+void autobattle_clear_target_mobs(map_session_data *sd)
+{
+	if (!sd)
+		return;
+
+	memset(sd->autobattle_data.target_mob_ids, 0, sizeof(sd->autobattle_data.target_mob_ids));
+	sd->autobattle_data.target_mob_count = 0;
+}
+
+/**
+ * Toggle a mob ID in the whitelist (add if missing, remove if present)
+ */
+void autobattle_toggle_target_mob(map_session_data *sd, uint16 mob_id)
+{
+	if (!sd || mob_id == 0)
+		return;
+
+	// Check if already in list — remove it
+	for (int i = 0; i < sd->autobattle_data.target_mob_count; i++) {
+		if (sd->autobattle_data.target_mob_ids[i] == mob_id) {
+			// Remove by shifting
+			for (int j = i; j < sd->autobattle_data.target_mob_count - 1; j++)
+				sd->autobattle_data.target_mob_ids[j] = sd->autobattle_data.target_mob_ids[j + 1];
+			sd->autobattle_data.target_mob_count--;
+			sd->autobattle_data.target_mob_ids[sd->autobattle_data.target_mob_count] = 0;
+			return;
+		}
+	}
+
+	// Not in list — add if space
+	if (sd->autobattle_data.target_mob_count < 20) {
+		sd->autobattle_data.target_mob_ids[sd->autobattle_data.target_mob_count] = mob_id;
+		sd->autobattle_data.target_mob_count++;
+	}
+}
+
+// ===== Phase 23: Auto-Skill Function =====
+
+/**
+ * Set offensive skill for auto-attack
+ */
+void autobattle_set_attack_skill(map_session_data *sd, uint16 skill_id, uint8 skill_lv)
+{
+	if (!sd)
+		return;
+
+	sd->autobattle_data.attack_skill_id = skill_id;
+	sd->autobattle_data.attack_skill_lv = skill_lv;
+}
+

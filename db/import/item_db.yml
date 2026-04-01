@@ -33,3 +33,66 @@ Body:
       NoAuction: true
     Script: |
       callfunc "F_AutoBattleMenu";
+
+  - Id: 30001
+    AegisName: Auto_Support_Capsule
+    Name: Auto-Support Capsule
+    Type: Usable
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+      DeadBranch: false
+      Container: false
+      UniqueId: false
+      BindOnEquip: false
+      DropAnnounce: false
+      NoConsume: true
+      DropEffect: None
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc "F_AutoSupportMenu";
+
+  - Id: 30002
+    AegisName: VIP_Pass_30d
+    Name: VIP Pass (30 Days)
+    Type: Usable
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      mes "[VIP System]";
+      mes "This will activate ^0000FF30 days^000000 of VIP membership.";
+      mes " ";
+      mes "VIP Benefits:";
+      mes "- Extra storage slots";
+      mes "- Extra character slots";
+      mes "- Bonus auto-battle time";
+      next;
+      if (select("Activate VIP:Cancel") == 2) {
+        mes "[VIP System]";
+        mes "Cancelled. You can use the pass again later.";
+        close;
+      }
+      mes "[VIP System]";
+      mes "Activating VIP membership...";
+      close2;
+      vip_time 43200;
+      dispbottom "[VIP] 30-day VIP activated! Relog to apply all bonuses.";
+
