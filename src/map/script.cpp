@@ -14590,43 +14590,6 @@ BUILDIN_FUNC(strmobinfo)
 	return SCRIPT_CMD_SUCCESS;
 }
 
-/*==========================================
- * Returns the display name of a skill
- * getskillname(<skill_id>) -> string
- *------------------------------------------*/
-BUILDIN_FUNC(getskillname)
-{
-	uint16 skill_id = script_getnum(st, 2);
-	const char* name = skill_get_name(skill_id);
-
-	script_pushstrcopy(st, name ? name : "");
-	return SCRIPT_CMD_SUCCESS;
-}
-
-/*==========================================
- * Returns skill property information
- * getskillinfo(<skill_id>, <type>) -> int
- *   type 0: skill inf flags (INF_ATTACK_SKILL, etc.)
- *   type 1: 1 if NK_NODAMAGE, 0 otherwise
- *------------------------------------------*/
-BUILDIN_FUNC(getskillinfo)
-{
-	uint16 skill_id = script_getnum(st, 2);
-	int32 type = script_getnum(st, 3);
-
-	switch (type) {
-		case 0:
-			script_pushint(st, skill_get_inf(skill_id));
-			break;
-		case 1:
-			script_pushint(st, skill_get_nk(skill_id, NK_NODAMAGE) ? 1 : 0);
-			break;
-		default:
-			script_pushint(st, 0);
-			break;
-	}
-	return SCRIPT_CMD_SUCCESS;
-}
 
 /*==========================================
  * Summon guardians [Valaris]
@@ -28225,8 +28188,6 @@ struct script_function buildin_func[] = {
 	BUILDIN_DEF(getexp,"ii?"),
 	BUILDIN_DEF(getinventorylist,"?"),
 	BUILDIN_DEF(getskilllist,"?"),
-	BUILDIN_DEF(getskillname,"i"),
-	BUILDIN_DEF(getskillinfo,"ii"),
 	BUILDIN_DEF(clearitem,"?"),
 	BUILDIN_DEF(classchange,"i??"),
 	BUILDIN_DEF(misceffect,"i"),
