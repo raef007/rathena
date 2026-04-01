@@ -26,6 +26,7 @@
 #   Items:                  List of possible items.
 #     - Item                Item name.
 #       Price               Item cost in cash points (#CASHPOINTS).
+#       Duration            Optional rental duration in seconds. If set, item is granted as a rental that expires after this time. (e.g. 2592000 = 30 days)
 ###########################################################################
 
 Header:
@@ -38,10 +39,6 @@ Body:
   # ============================================================
   - Tab: New
     Items:
-      - Item: Auto_Battle_Pass
-        Price: 200
-      - Item: Auto_Support_Capsule
-        Price: 150
       - Item: VIP_Pass_30d
         Price: 500
 
@@ -86,6 +83,18 @@ Body:
     Items:
       - Item: VIP_Pass_30d
         Price: 500
+
+  # ============================================================
+  # RENTAL tab – time-limited automation items (30 days)
+  # ============================================================
+  - Tab: Rental
+    Items:
+      - Item: Auto_Battle_Pass
+        Price: 200
+        Duration: 2592000
+      - Item: Auto_Support_Capsule
+        Price: 150
+        Duration: 2592000
 
 Footer:
   Imports:

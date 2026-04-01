@@ -53,25 +53,17 @@ BUILDIN_FUNC(getskillinfo)
 
 /**
  * getskillname(<skill_id>)
- * Returns the user-friendly display name of a skill by its ID.
- * Uses skill_get_desc() which returns the Description field (e.g. "Bash")
- * instead of skill_get_name() which returns the AegisName (e.g. "SM_BASH").
+ * Returns the display name of a skill by its ID.
  * Returns "" if skill not found.
  */
 BUILDIN_FUNC(getskillname)
 {
 	uint16 skill_id = (uint16)script_getnum(st, 2);
-	const char* desc = skill_get_desc(skill_id);
-	if (desc && desc[0] != '\0')
-		script_pushstrcopy(st, desc);
-	else {
-		// Fallback to AegisName if no description
-		const char* name = skill_get_name(skill_id);
-		if (name)
-			script_pushstrcopy(st, name);
-		else
-			script_pushconststr(st, "");
-	}
+	const char* name = skill_get_name(skill_id);
+	if (name)
+		script_pushstrcopy(st, name);
+	else
+		script_pushconststr(st, "");
 	return SCRIPT_CMD_SUCCESS;
 }
 

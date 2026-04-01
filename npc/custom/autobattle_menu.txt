@@ -252,7 +252,9 @@ L_MainMenu:
 			.@unique_count = 0;
 			for (.@i = 0; .@i < .@mob_count && .@i < 200; .@i++) {
 				if (.@mob_gids[.@i] <= 0) continue;
-				.@class = getunitdata(.@mob_gids[.@i], UMOB_CLASS);
+				// getunitdata fills an array variable; index with UMOB_* constants
+				getunitdata .@mob_gids[.@i], .@unitdata;
+				.@class = .@unitdata[UMOB_CLASS];
 				if (.@class <= 0) continue; // Skip invalid/dead mobs
 				.@dupe = 0;
 				for (.@j = 0; .@j < .@unique_count; .@j++) {
@@ -263,9 +265,8 @@ L_MainMenu:
 				}
 				if (!.@dupe && .@unique_count < 20) {
 					.@unique_ids[.@unique_count] = .@class;
-					.@name$ = getmonsterinfo(2, .@class);
-					if (.@name$ == "") .@name$ = getmonsterinfo(1, .@class);
-					if (.@name$ == "") .@name$ = "Mob#" + .@class;
+					.@name$ = getmonsterinfo(.@class, MOB_NAME);
+					if (.@name$ == "" || .@name$ == "null") .@name$ = "Mob#" + .@class;
 					.@unique_names$[.@unique_count] = .@name$;
 					.@unique_count++;
 				}

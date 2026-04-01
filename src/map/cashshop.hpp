@@ -58,6 +58,7 @@ enum CASHSHOP_BUY_RESULT
 struct s_cash_item{
 	t_itemid nameid;
 	uint32 price;
+	uint32 duration; // Rental duration in seconds (0 = not rental)
 };
 
 struct s_cash_item_tab{

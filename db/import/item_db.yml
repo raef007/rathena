@@ -83,7 +83,7 @@ Body:
       mes "VIP Benefits:";
       mes "- Extra storage slots";
       mes "- Extra character slots";
-      mes "- Bonus auto-battle time";
+      mes "- Bonus experience acquired";
       next;
       if (select("Activate VIP:Cancel") == 2) {
         mes "[VIP System]";

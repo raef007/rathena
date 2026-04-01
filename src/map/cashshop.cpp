@@ -87,6 +87,7 @@ uint64 CashShopDatabase::parseBodyNode( const ryml::NodeRef& node ){
 		if( !cash_item_exists ){
 			cash_item = std::make_shared<s_cash_item>();
 			cash_item->nameid = item->nameid;
+			cash_item->duration = 0;
 		}
 
 		uint32 price;
@@ -106,6 +107,15 @@ uint64 CashShopDatabase::parseBodyNode( const ryml::NodeRef& node ){
 		}
 
 		cash_item->price = price;
+
+		// Optional rental duration in seconds (0 = regular item)
+		if( this->nodeExists( it, "Duration" ) ){
+			uint32 duration;
+
+			if( this->asUInt32( it, "Duration", duration ) ){
+				cash_item->duration = duration;
+			}
+		}
 
 		if( !cash_item_exists ){
 			entry->items.push_back( cash_item );
@@ -228,7 +238,7 @@ static TIMER_FUNC(sale_end_timer){
 	// Remove the timer so the sale end is not sent out again
 	delete_timer( sale_item->timer_end, sale_end_timer );
 	sale_item->timer_end = INVALID_TIMER;
-	
+
 	clif_sale_end( sale_item, nullptr, ALL_CLIENT );
 
 	sale_remove_item( sale_item->nameid );
@@ -279,7 +289,7 @@ enum e_sale_add_result sale_add_item( t_itemid nameid, int32 count, time_t from,
 	if( sale_find_item(nameid, false) ){
 		return SALE_ADD_DUPLICATE;
 	}
-	
+
 	if( SQL_ERROR == Sql_Query(mmysql_handle, "INSERT INTO `%s`(`nameid`,`start`,`end`,`amount`) VALUES ( '%u', FROM_UNIXTIME(%d), FROM_UNIXTIME(%d), '%d' )", sales_table, nameid, (uint32)from, (uint32)to, count) ){
 		Sql_ShowDebug(mmysql_handle);
 		return SALE_ADD_FAILED;
@@ -540,13 +550,14 @@ bool cashshop_buylist( map_session_data* sd, uint32 kafrapoints, int32 n, const 
 	for( i = 0; i < n; ++i ){
 		t_itemid nameid = item_list[i].itemId;
 		uint32 quantity = item_list[i].amount;
-#if PACKETVER_SUPPORTS_SALES
 		uint16 tab = item_list[i].tab;
-#endif
 		struct item_data *id = itemdb_search(nameid);
 
 		if (!id)
 			continue;
+
+		// Look up the cash item entry for rental duration
+		std::shared_ptr<s_cash_item> cash_item_entry = cash_shop_db.findItemInTab( static_cast<e_cash_shop_tab>( tab ), nameid );
 
 		uint16 get_amt = quantity;
 
@@ -581,6 +592,11 @@ bool cashshop_buylist( map_session_data* sd, uint32 kafrapoints, int32 n, const 
 
 				item_tmp.nameid = nameid;
 				item_tmp.identify = 1;
+
+				// Set rental expiry if this cash item has a duration
+				if( cash_item_entry != nullptr && cash_item_entry->duration > 0 ){
+					item_tmp.expire_time = (uint32)( time(nullptr) + cash_item_entry->duration );
+				}
 
 				switch( pc_additem( sd, &item_tmp, get_amt, LOG_TYPE_CASH ) ){
 					case ADDITEM_OVERWEIGHT:
