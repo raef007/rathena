@@ -277,12 +277,21 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 			if (sd->autobattle_data.autosit_sp_threshold > 0 && sp_pct < sd->autobattle_data.autosit_sp_recover)
 				can_stand = false;
 
+			// Fight-back: if a mob is attacking us, stand up and fight even if not fully recovered
+			if (!can_stand && (sd->autobattle_data.mode & AUTOBATTLE_ATTACK)) {
+				// canmove_tick is extended when player takes damage (flinch / walk delay)
+				// If it was set recently, we're being attacked — stand up and fight back
+				if (sd->ud.canmove_tick > tick - 3000) {
+					can_stand = true;
+				}
+			}
+
 			if (can_stand) {
 				if (pc_setstand(sd, false)) {
 					skill_sit(sd, false);
 					clif_standing(*(block_list*)sd);
 				}
-				// Recovered — resume normal processing below
+				// Recovered or fighting back — resume normal processing below
 			} else {
 				// Still resting — skip attack/roam
 				goto autobattle_timer_reschedule;
@@ -430,10 +439,16 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 				// Find target based on scope
 				struct map_session_data *target = nullptr;
 
-				switch (skill.target_scope) {
-					case AUTOSUPPORT_SELF:
-						target = sd;
-						break;
+			switch (skill.target_scope) {
+				case AUTOSUPPORT_SELF:
+					// For buff trigger type on self, check if buff is missing
+					if (skill.trigger_type == 1) {
+						enum sc_type sc = skill_get_sc(skill.skill_id);
+						if (sc != SC_NONE && sd->sc.hasSCE(sc))
+							continue; // Buff still active, skip
+					}
+					target = sd;
+					break;
 					case AUTOSUPPORT_PARTY:
 					case AUTOSUPPORT_GUILD: {
 						// Phase 25: Party member targeting
@@ -508,12 +523,14 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					}
 				}
 
-				// Check HP threshold
+			// Check HP threshold (skip for buff trigger type — they trigger on buff expiry, not HP)
+			if (skill.trigger_type != 1) {
 				int hp_percent = (target->battle_status.hp > 0) ?
 					(target->battle_status.hp * 100) / target->battle_status.max_hp : 0;
 
 				if (hp_percent >= skill.hp_threshold)
 					continue; // HP not below threshold
+			}
 
 				// Check if skill is usable
 				if (!skill_check_condition_castbegin(*sd, skill.skill_id, skill.skill_lv))
@@ -686,7 +703,7 @@ void autobattle_set_range(map_session_data *sd, uint8 range)
  * Add auto-support skill
  */
 void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
-	uint8 skill_lv, uint8 hp_threshold, uint8 target_scope)
+	uint8 skill_lv, uint8 hp_threshold, uint8 target_scope, uint8 trigger_type)
 {
 	if (!sd || sd->autobattle_data.support_skill_count >= 10)
 		return;
@@ -698,6 +715,9 @@ void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
 			sd->autobattle_data.support_skills[i].skill_lv = skill_lv;
 			sd->autobattle_data.support_skills[i].hp_threshold = hp_threshold;
 			sd->autobattle_data.support_skills[i].target_scope = target_scope;
+			sd->autobattle_data.support_skills[i].trigger_type = trigger_type;
+			if (trigger_type == 1)
+				sd->autobattle_data.support_skills[i].buff_id = (uint16)skill_get_sc(skill_id);
 			return;
 		}
 	}
@@ -708,7 +728,10 @@ void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
 	skill.skill_lv = skill_lv;
 	skill.hp_threshold = hp_threshold;
 	skill.target_scope = target_scope;
+	skill.trigger_type = trigger_type;
 	skill.last_cast_time = 0;
+	if (trigger_type == 1)
+		skill.buff_id = (uint16)skill_get_sc(skill_id);
 	sd->autobattle_data.support_skill_count++;
 }
 

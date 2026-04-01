@@ -209,7 +209,7 @@ void autobattle_set_range(map_session_data *sd, uint8 range);
  * @param target_scope e_autosupport_scope
  */
 void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
-	uint8 skill_lv, uint8 hp_threshold, uint8 target_scope);
+	uint8 skill_lv, uint8 hp_threshold, uint8 target_scope, uint8 trigger_type = 0);
 
 /**
  * Clear all auto-support skills

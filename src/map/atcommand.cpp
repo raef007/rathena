@@ -11830,8 +11830,8 @@ ACMD_FUNC(autosupport) {
 		return 0;
 	}
 
-	char arg1[100], arg2[100], arg3[100], arg4[100];
-	int32 argc = sscanf(message, "%99s %99s %99s %99s", arg1, arg2, arg3, arg4);
+	char arg1[100], arg2[100], arg3[100], arg4[100], arg5[100];
+	int32 argc = sscanf(message, "%99s %99s %99s %99s %99s", arg1, arg2, arg3, arg4, arg5);
 
 	if (argc >= 1) {
 		if (strcmp(arg1, "on") == 0) {
@@ -11866,8 +11866,9 @@ ACMD_FUNC(autosupport) {
 			uint16 skill_id = (uint16)atoi(arg2);
 			uint8 hp_threshold = (uint8)atoi(arg3);
 			uint8 scope = (uint8)atoi(arg4);
+			uint8 trigger_type = (argc >= 5) ? (uint8)atoi(arg5) : 0;
 
-			if (hp_threshold < 1 || hp_threshold > 100) {
+			if (trigger_type == 0 && (hp_threshold < 1 || hp_threshold > 100)) {
 				clif_displaymessage(fd, "HP threshold must be between 1 and 100.");
 				return -1;
 			}
@@ -11875,9 +11876,16 @@ ACMD_FUNC(autosupport) {
 				clif_displaymessage(fd, "Scope must be 0 (self), 1 (party), or 2 (guild).");
 				return -1;
 			}
+			if (trigger_type > 1) {
+				clif_displaymessage(fd, "Trigger type must be 0 (HP below) or 1 (buff expired).");
+				return -1;
+			}
 
-			autobattle_add_support_skill(sd, skill_id, 5, hp_threshold, scope); // Default skill lv 5
-			sprintf(atcmd_output, "Auto-support skill %d added (HP < %d%%).", skill_id, hp_threshold);
+			autobattle_add_support_skill(sd, skill_id, 5, hp_threshold, scope, trigger_type);
+			if (trigger_type == 1)
+				sprintf(atcmd_output, "Auto-support buff skill %d added (recast when expired).", skill_id);
+			else
+				sprintf(atcmd_output, "Auto-support skill %d added (HP < %d%%).", skill_id, hp_threshold);
 			clif_displaymessage(fd, atcmd_output);
 			return 0;
 		}
@@ -11914,7 +11922,8 @@ ACMD_FUNC(autosupport) {
 		}
 	}
 
-	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|add <id> <hp%> <scope>|target [all|leader|<name>]]");
+	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|add <id> <hp%> <scope> [trigger]|target [all|leader|<name>]]");
+	clif_displaymessage(fd, "  trigger: 0=HP below (default), 1=buff expired");
 	return -1;
 }
 
