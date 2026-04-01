@@ -246,7 +246,8 @@ L_MainMenu:
 		case 2:
 			// Build list of unique mobs on current map
 			.@mapname$ = strcharinfo(3);
-			.@mob_count = getmapunits(BL_MOB, .@mapname$, .@mob_gids);
+			// Use getareaunits instead of getmapunits — more reliable mob scanning
+			.@mob_count = getareaunits(BL_MOB, .@mapname$, 0, 0, 399, 399, .@mob_gids);
 			// Extract unique mob class IDs
 			.@unique_count = 0;
 			for (.@i = 0; .@i < .@mob_count && .@i < 200; .@i++) {
