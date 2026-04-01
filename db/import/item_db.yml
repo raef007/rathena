@@ -9,7 +9,7 @@ Header:
 Body:
   - Id: 30000
     AegisName: Auto_Battle_Pass
-    Name: Auto-Battle Pass
+    Name: Auto-Battle Capsule
     Type: Usable
     Buy: 0
     Sell: 0
@@ -36,7 +36,7 @@ Body:
 
   - Id: 30001
     AegisName: Auto_Support_Capsule
-    Name: Auto-Support Capsule
+    Name: Auto-Support Orb
     Type: Usable
     Buy: 0
     Sell: 0
@@ -63,7 +63,7 @@ Body:
 
   - Id: 30002
     AegisName: VIP_Pass_30d
-    Name: VIP Pass (30 Days)
+    Name: VIP Black Card (30 Days)
     Type: Usable
     Buy: 0
     Sell: 0
@@ -78,12 +78,24 @@ Body:
       NoAuction: true
     Script: |
       mes "[VIP System]";
-      mes "This will activate ^0000FF30 days^000000 of VIP membership.";
+      if (vip_status(VIP_STATUS_ACTIVE)) {
+        .@remaining = vip_status(VIP_STATUS_REMAINING);
+        .@days = .@remaining / 86400;
+        .@hours = (.@remaining % 86400) / 3600;
+        mes "You are already VIP with ^0000FF" + .@days + " day(s) " + .@hours + " hour(s)^000000 remaining.";
+        mes "This pass will ^00AA00add 30 more days^000000 to your VIP time.";
+      } else {
+        mes "This will activate ^0000FF30 days^000000 of VIP membership.";
+      }
       mes " ";
-      mes "VIP Benefits:";
-      mes "- Extra storage slots";
-      mes "- Extra character slots";
-      mes "- Bonus experience acquired";
+      mes "^0055FFVIP Benefits:^000000";
+      mes "- ^00CC00+50%^000000 Base & Job EXP from mobs";
+      mes "- ^00CC00+50%^000000 Item drop rate";
+      mes "- ^00CC00Enhanced^000000 Battle Manual effects";
+      mes "- ^00CC00No gemstone^000000 requirements";
+      mes "- ^00CC00+300^000000 extra storage slots";
+      mes "- ^00CC00+6^000000 extra character slots";
+      mes "- ^00CC002x^000000 Autobattle daily time";
       next;
       if (select("Activate VIP:Cancel") == 2) {
         mes "[VIP System]";
@@ -92,7 +104,17 @@ Body:
       }
       mes "[VIP System]";
       mes "Activating VIP membership...";
-      close2;
       vip_time 43200;
-      dispbottom "[VIP] 30-day VIP activated! Relog to apply all bonuses.";
+      mes "^00AA00VIP activated successfully!^000000";
+      mes " ";
+      if (vip_status(VIP_STATUS_ACTIVE)) {
+        .@newremaining = vip_status(VIP_STATUS_REMAINING);
+        .@newdays = .@newremaining / 86400;
+        .@newhours = (.@newremaining % 86400) / 3600;
+        mes "Your VIP is now active for ^0000FF" + .@newdays + " day(s) " + .@newhours + " hour(s)^000000.";
+      }
+      mes " ";
+      mes "Most benefits are active immediately.";
+      mes "^FF0000Relog^000000 to apply storage and character slot expansion.";
+      close;
 
