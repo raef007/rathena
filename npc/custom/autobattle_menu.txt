@@ -260,7 +260,7 @@ L_MainMenu:
 				}
 				if (!.@dupe && .@unique_count < 20) {
 					.@unique_ids[.@unique_count] = .@class;
-					.@unique_names$[.@unique_count] = strmobinfo(2, .@class);
+					.@unique_names$[.@unique_count] = getmonsterinfo(2, .@class);
 					.@unique_count++;
 				}
 			}
