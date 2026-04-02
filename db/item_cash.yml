@@ -63,17 +63,17 @@ Body:
   # ============================================================
   - Tab: Consumables
     Items:
-      - Item: Str_Dish10_
+      - Item: Str_Dish10_M
         Price: 20
-      - Item: Agi_Dish10_
+      - Item: Agi_Dish10_M
         Price: 20
-      - Item: Int_Dish10_
+      - Item: Int_Dish10_M
         Price: 20
-      - Item: Dex_Dish10_
+      - Item: Dex_Dish10_M
         Price: 20
-      - Item: Luk_Dish10_
+      - Item: Luk_Dish10_M
         Price: 20
-      - Item: Vit_Dish10_
+      - Item: Vit_Dish10_M
         Price: 20
 
   # ============================================================
