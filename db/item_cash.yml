@@ -57,6 +57,12 @@ Body:
         Price: 50
       - Item: HE_Bubble_Gum
         Price: 100
+      - Item: Job_Manual25
+        Price: 50
+      - Item: Comp_Job_Manual50
+        Price: 40
+      - Item: Job_Manual50
+        Price: 100
 
   # ============================================================
   # CONSUMABLES tab – stat food buffs (+10 all stats, 30 min)

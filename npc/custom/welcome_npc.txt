@@ -1,0 +1,124 @@
+// ==========================================================================
+// Welcome NPC – Pre-Registration Rewards
+// ==========================================================================
+// Sprite   : 4_F_EDEN_MASTER  (Commander Arquien model)
+// Location : Prontera 161,283
+// Window   : April 1 2026 – June 30 2026
+// Limit    : One claim per account (#WELCOME_CLAIMED)
+//
+// Rewards
+//   10x HE Battle Manual   (12478)  +100% Base EXP for 30 min
+//   10x Job Battle Manual   (14592)  +50% Job EXP for 30 min
+//   10x HE Bubble Gum      (12479)  +100% Drop Rate for 30 min
+//   1x  Headgear of choice  (pick one)
+//       - Apple of Archer   (2285)
+//       - Majestic Goat     (2256)
+//       - Angel Wing        (2254)
+//       - Evil Wing         (2255)
+// ==========================================================================
+
+prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
+
+	// ── Promotion window check ──────────────────────────────
+	.@year  = gettime(DT_YEAR);
+	.@month = gettime(DT_MON);
+
+	// Active: 2026-04-01 through 2026-06-30
+	if (.@year > 2026 || (.@year == 2026 && .@month > 6) || .@year < 2026 || (.@year == 2026 && .@month < 4)) {
+		mes "[Asgard Welcomer]";
+		mes "The pre-registration promotion has ended.";
+		mes "Thank you for your interest in ^0000FFAsgard City^000000!";
+		close;
+	}
+
+	// ── Already claimed check ───────────────────────────────
+	if (#WELCOME_CLAIMED) {
+		mes "[Asgard Welcomer]";
+		mes "You have already claimed your";
+		mes "pre-registration rewards!";
+		mes " ";
+		mes "Enjoy your adventure in ^0000FFAsgard City^000000.";
+		close;
+	}
+
+	// ── Introduction ────────────────────────────────────────
+	mes "[Asgard Welcomer]";
+	mes "Welcome to ^0000FFAsgard City^000000, adventurer!";
+	mes " ";
+	mes "As thanks for pre-registering, I have";
+	mes "a special starter package for you:";
+	mes " ";
+	mes "^00FF00- 10x HE Battle Manual^000000 (+100% Base EXP)";
+	mes "^00FF00- 10x Job Battle Manual^000000 (+50% Job EXP)";
+	mes "^00FF00- 10x HE Bubble Gum^000000 (+100% Drop Rate)";
+	mes "^00FF00- 1x Headgear of your choice^000000";
+	next;
+
+	// ── Headgear selection ──────────────────────────────────
+	mes "[Asgard Welcomer]";
+	mes "Please choose your headgear reward:";
+	next;
+
+	.@choice = select(
+		"Apple of Archer (DEX +3)",
+		"Majestic Goat (ATK +5%)",
+		"Angel Wing (LUK +1, MDEF +3)",
+		"Evil Wing (STR +1, MDEF +3)"
+	);
+
+	switch (.@choice) {
+		case 1: .@headgear = 2285; .@hname$ = "Apple of Archer"; break;
+		case 2: .@headgear = 2256; .@hname$ = "Majestic Goat";   break;
+		case 3: .@headgear = 2254; .@hname$ = "Angel Wing";       break;
+		case 4: .@headgear = 2255; .@hname$ = "Evil Wing";        break;
+	}
+
+	// ── Confirmation ────────────────────────────────────────
+	mes "[Asgard Welcomer]";
+	mes "You selected: ^0000FF" + .@hname$ + "^000000";
+	mes " ";
+	mes "This can only be claimed";
+	mes "^FF0000once per account^000000.";
+	mes "Are you sure?";
+	next;
+
+	if (select("Yes, claim my rewards", "No, let me reconsider") == 2) {
+		mes "[Asgard Welcomer]";
+		mes "No problem! Talk to me again";
+		mes "whenever you're ready.";
+		close;
+	}
+
+	// ── Inventory space check ───────────────────────────────
+	// Need 4 free slots (3 consumable stacks + 1 equip)
+	if (checkweight(12478, 10) == 0) {
+		mes "[Asgard Welcomer]";
+		mes "Your inventory is too full!";
+		mes "Please make some room and";
+		mes "talk to me again.";
+		close;
+	}
+
+	// ── Grant items ─────────────────────────────────────────
+	getitem 12478, 10;        // HE Battle Manual
+	getitem 14592, 10;        // Job Battle Manual (Job_Manual50)
+	getitem 12479, 10;        // HE Bubble Gum
+	getitem .@headgear, 1;    // Chosen headgear
+
+	// ── Mark claimed (account-scope permanent variable) ─────
+	set #WELCOME_CLAIMED, 1;
+
+	// ── Receipt ─────────────────────────────────────────────
+	mes "[Asgard Welcomer]";
+	mes "Your rewards have been delivered!";
+	mes " ";
+	mes "^00FF00✦ 10x HE Battle Manual^000000";
+	mes "^00FF00✦ 10x Job Battle Manual^000000";
+	mes "^00FF00✦ 10x HE Bubble Gum^000000";
+	mes "^00FF00✦ 1x " + .@hname$ + "^000000";
+	mes " ";
+	mes "May the gods of Asgard watch";
+	mes "over your journey. Enjoy!";
+	close;
+}
+
