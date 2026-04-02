@@ -49,8 +49,6 @@ Body:
     Items:
       - Item: Battle_Manual
         Price: 50
-      - Item: Comp_Battle_Manual
-        Price: 40
       - Item: HE_Battle_Manual
         Price: 100
       - Item: Bubble_Gum
@@ -59,8 +57,6 @@ Body:
         Price: 100
       - Item: Job_Manual25
         Price: 50
-      - Item: Comp_Job_Manual50
-        Price: 40
       - Item: Job_Manual50
         Price: 100
 

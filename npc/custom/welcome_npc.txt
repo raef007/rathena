@@ -20,43 +20,102 @@
 prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 
 	// ── Promotion window check ──────────────────────────────
+	// NOTE: The constant is DT_MONTH (not DT_MON).
+	//       DT_YEAR returns full 4-digit year (e.g. 2026).
+	//       DT_MONTH returns 1-12.
 	.@year  = gettime(DT_YEAR);
-	.@month = gettime(DT_MON);
+	.@month = gettime(DT_MONTH);
 
 	// Active: 2026-04-01 through 2026-06-30
-	if (.@year > 2026 || (.@year == 2026 && .@month > 6) || .@year < 2026 || (.@year == 2026 && .@month < 4)) {
+	if (.@year != 2026 || .@month < 4 || .@month > 6) {
 		mes "[Asgard Welcomer]";
-		mes "The pre-registration promotion has ended.";
-		mes "Thank you for your interest in ^0000FFAsgard City^000000!";
+		mes "^777777*The woman stands at her post,";
+		mes "gazing quietly at the bustling streets";
+		mes "of Prontera. She notices you approach";
+		mes "and offers a gentle, if weary, smile.*^000000";
+		mes " ";
+		mes "I'm afraid the founding charter has";
+		mes "been sealed. The pre-registration";
+		mes "period for ^0000FFAsgard City^000000 has ended.";
+		mes " ";
+		mes "But the realm still needs brave souls.";
+		mes "Speak with the other guilds — there is";
+		mes "always work for the willing.";
 		close;
 	}
 
 	// ── Already claimed check ───────────────────────────────
 	if (#WELCOME_CLAIMED) {
 		mes "[Asgard Welcomer]";
-		mes "You have already claimed your";
-		mes "pre-registration rewards!";
+		mes "^777777*She tilts her head, studying your";
+		mes "face for a moment, then breaks into";
+		mes "a warm smile of recognition.*^000000";
 		mes " ";
-		mes "Enjoy your adventure in ^0000FFAsgard City^000000.";
+		mes "Ah, " + strcharinfo(0) + "! I remember you.";
+		mes "You've already received your provisions";
+		mes "from the Founding Charter.";
+		mes " ";
+		mes "Go forth — ^0000FFAsgard City^000000 was built";
+		mes "by adventurers like you. Make us proud.";
 		close;
 	}
 
 	// ── Introduction ────────────────────────────────────────
 	mes "[Asgard Welcomer]";
-	mes "Welcome to ^0000FFAsgard City^000000, adventurer!";
+	mes "^777777*A tall woman in Royal regalia";
+	mes "stands before the middle of";
+	mes "Prontera. Her eyes carry the weight of";
+	mes "someone who has seen many adventurers";
+	mes "come and go — but today, she looks at";
+	mes "you with unmistakable hope.*^000000";
+	next;
+
+	mes "[Asgard Welcomer]";
+	mes "Hail, traveller. My name is Astrid,";
+	mes "commander of the Founding Vanguard.";
 	mes " ";
-	mes "As thanks for pre-registering, I have";
-	mes "a special starter package for you:";
+	mes "You stand in ^0000FFProntera City^000000 — a realm";
+	mes "reborn from the ashes of the old world.";
+	mes "The Bifrost has opened once more, and";
+	mes "new heroes are being called to walk";
+	mes "the land of Midgard again.";
+	next;
+
+	mes "[Astrid]";
+	mes "And you, " + strcharinfo(0) + "...";
+	mes "you are one of the ^FF8800First Founders^000000.";
 	mes " ";
-	mes "^00FF00- 10x HE Battle Manual^000000 (+100% Base EXP)";
-	mes "^00FF00- 10x Job Battle Manual^000000 (+50% Job EXP)";
-	mes "^00FF00- 10x HE Bubble Gum^000000 (+100% Drop Rate)";
-	mes "^00FF00- 1x Headgear of your choice^000000";
+	mes "You answered the call before the gates";
+	mes "were even fully open. Before the forges";
+	mes "were lit. Before the first monster had";
+	mes "been slain on these new fields.";
+	mes " ";
+	mes "That kind of courage deserves reward.";
+	next;
+
+	mes "[Astrid]";
+	mes "By order of the High Council, all who";
+	mes "signed the Founding Charter are granted";
+	mes "a ^00FF00Vanguard Supply Package^000000:";
+	mes " ";
+	mes "^00FF00✦ 10x HE Battle Manual^000000";
+	mes "  ^777777(+100% Base EXP, 30 min each)^000000";
+	mes "^00FF00✦ 10x Job Battle Manual^000000";
+	mes "  ^777777(+50% Job EXP, 30 min each)^000000";
+	mes "^00FF00✦ 10x HE Bubble Gum^000000";
+	mes "  ^777777(+100% Drop Rate, 30 min each)^000000";
+	mes "^00FF00✦ 1x Headgear of your choosing^000000";
 	next;
 
 	// ── Headgear selection ──────────────────────────────────
-	mes "[Asgard Welcomer]";
-	mes "Please choose your headgear reward:";
+	mes "[Astrid]";
+	mes "Now then — every founder is permitted";
+	mes "to choose a single piece of headgear";
+	mes "from the Vanguard armoury.";
+	mes " ";
+	mes "Each was forged for a different kind";
+	mes "of warrior. Choose wisely, for this";
+	mes "offer will not come again.";
 	next;
 
 	.@choice = select(
@@ -74,28 +133,40 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	}
 
 	// ── Confirmation ────────────────────────────────────────
-	mes "[Asgard Welcomer]";
-	mes "You selected: ^0000FF" + .@hname$ + "^000000";
+	mes "[Astrid]";
+	mes "^777777*She carefully lifts a";
+	mes "^0000FF" + .@hname$ + "^777777 from the rack";
+	mes "and holds it out to you.*^000000";
 	mes " ";
-	mes "This can only be claimed";
-	mes "^FF0000once per account^000000.";
-	mes "Are you sure?";
+	mes "The ^0000FF" + .@hname$ + "^000000. A fine choice.";
+	mes " ";
+	mes "Once I hand these over, the charter";
+	mes "is signed and sealed — ^FF0000no second";
+	mes "claims, no exceptions^000000.";
+	mes " ";
+	mes "Are you certain, " + strcharinfo(0) + "?";
 	next;
 
-	if (select("Yes, claim my rewards", "No, let me reconsider") == 2) {
-		mes "[Asgard Welcomer]";
-		mes "No problem! Talk to me again";
-		mes "whenever you're ready.";
+	if (select("I'm ready. Hand them over.", "Wait — let me think about this.") == 2) {
+		mes "[Astrid]";
+		mes "^777777*She nods and returns the headgear";
+		mes "to the rack with practiced care.*^000000";
+		mes " ";
+		mes "Take your time. The charter remains";
+		mes "open until the end of the founding";
+		mes "season. I'll be right here.";
 		close;
 	}
 
 	// ── Inventory space check ───────────────────────────────
-	// Need 4 free slots (3 consumable stacks + 1 equip)
 	if (checkweight(12478, 10) == 0) {
-		mes "[Asgard Welcomer]";
-		mes "Your inventory is too full!";
-		mes "Please make some room and";
-		mes "talk to me again.";
+		mes "[Astrid]";
+		mes "^777777*She eyes your overstuffed bags";
+		mes "with a raised eyebrow.*^000000";
+		mes " ";
+		mes "Adventurer, I can't fit a feather in";
+		mes "those packs, let alone a full supply";
+		mes "kit. Clear some space and return.";
 		close;
 	}
 
@@ -109,16 +180,28 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	set #WELCOME_CLAIMED, 1;
 
 	// ── Receipt ─────────────────────────────────────────────
-	mes "[Asgard Welcomer]";
-	mes "Your rewards have been delivered!";
+	mes "[Astrid]";
+	mes "^777777*She presses the supplies firmly";
+	mes "into your hands, then steps back and";
+	mes "gives you a crisp salute.*^000000";
+	mes " ";
+	mes "It's done. Your provisions:";
 	mes " ";
 	mes "^00FF00✦ 10x HE Battle Manual^000000";
 	mes "^00FF00✦ 10x Job Battle Manual^000000";
 	mes "^00FF00✦ 10x HE Bubble Gum^000000";
 	mes "^00FF00✦ 1x " + .@hname$ + "^000000";
+	next;
+
+	mes "[Astrid]";
+	mes "The road ahead is long, " + strcharinfo(0) + ".";
+	mes "Monsters roam the fields. Dungeons";
+	mes "stir with ancient darkness. And the";
+	mes "gods themselves watch from Valhalla.";
 	mes " ";
-	mes "May the gods of Asgard watch";
-	mes "over your journey. Enjoy!";
+	mes "But you are a Founder of ^0000FFAsgard City^000000.";
+	mes "That means something.";
+	mes " ";
+	mes "^777777May the All-Father guide your blade.^000000";
 	close;
 }
-
