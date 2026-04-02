@@ -6,7 +6,7 @@
 
 #define PACKETVER 20250604
 #define PRERE
-//#define ENABLE_CASHSHOP_PREVIEW_PATCH  // Requires matching client patch — disabled until client is patched
+#define ENABLE_CASHSHOP_PREVIEW_PATCH  // Requires matching client patch — disabled until client is patched
 
 /**
  * rAthena configuration file (http://rathena.org)
