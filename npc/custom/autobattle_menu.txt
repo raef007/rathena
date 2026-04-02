@@ -246,16 +246,16 @@ L_MainMenu:
 		case 2:
 			// Build list of unique mobs on current map
 			.@mapname$ = strcharinfo(3);
-			// Use getareaunits instead of getmapunits — more reliable mob scanning
-			.@mob_count = getareaunits(BL_MOB, .@mapname$, 0, 0, 399, 399, .@mob_gids);
+			.@mob_count = getmapunits(BL_MOB, .@mapname$, .@mob_gids);
 			// Extract unique mob class IDs
 			.@unique_count = 0;
 			for (.@i = 0; .@i < .@mob_count && .@i < 200; .@i++) {
 				if (.@mob_gids[.@i] <= 0) continue;
-				// getunitdata fills an array variable; index with UMOB_* constants
 				getunitdata .@mob_gids[.@i], .@unitdata;
 				.@class = .@unitdata[UMOB_CLASS];
 				if (.@class <= 0) continue; // Skip invalid/dead mobs
+				// Skip summons/slaves (homunculus, mercenary, pet AI types)
+				if (.@unitdata[UMOB_AI] > 0) continue;
 				.@dupe = 0;
 				for (.@j = 0; .@j < .@unique_count; .@j++) {
 					if (.@unique_ids[.@j] == .@class) {
@@ -358,9 +358,16 @@ L_TargetToggle:
 				.@slv = @skilllist_lv[.@i];
 				.@inf = getskillinfo(.@sid, 0);
 				.@nodmg = getskillinfo(.@sid, 1);
-				// Offensive: has INF_ATTACK_SKILL flag, or is not nodamage and not pure self-skill
-				if ((.@inf & 1) || (!.@nodmg && !(.@inf & 4 && !(.@inf & 2)))) {
-					if (.@nodmg) continue; // skip pure support/nodamage
+				.@ispassive = getskillinfo(.@sid, 5);
+				.@isquest = getskillinfo(.@sid, 4);
+				// Skip passive skills (inf == 0)
+				if (.@ispassive) continue;
+				// Skip quest skills
+				if (.@isquest) continue;
+				// Skip no-damage / support skills
+				if (.@nodmg) continue;
+				// Accept: attack skills, ground skills, or self-cast damage skills
+				if ((.@inf & 1) || (.@inf & 2) || (.@inf & 4)) {
 					.@off_ids[.@off_count] = .@sid;
 					.@off_lvs[.@off_count] = .@slv;
 					.@off_count++;
@@ -460,9 +467,15 @@ L_SupportMain:
 		for (.@i = 0; .@i < @skilllist_count; .@i++) {
 			.@sid = @skilllist_id[.@i];
 			.@slv = @skilllist_lv[.@i];
+			.@ispassive = getskillinfo(.@sid, 5);
+			.@isquest = getskillinfo(.@sid, 4);
+			// Skip passive skills
+			if (.@ispassive) continue;
+			// Skip quest skills
+			if (.@isquest) continue;
 			.@nodmg = getskillinfo(.@sid, 1);
 			.@inf = getskillinfo(.@sid, 0);
-			// Support skill: nodamage=1, or has INF_SUPPORT_SKILL flag
+			// Support skill: nodamage=1, or has INF_SUPPORT_SKILL (0x10) flag
 			if (.@nodmg || (.@inf & 16)) {
 				.@heal_ids[.@heal_count] = .@sid;
 				.@heal_lvs[.@heal_count] = .@slv;
@@ -515,8 +528,15 @@ L_SupportMain:
 		for (.@i = 0; .@i < @skilllist_count; .@i++) {
 			.@sid = @skilllist_id[.@i];
 			.@slv = @skilllist_lv[.@i];
+			.@ispassive = getskillinfo(.@sid, 5);
+			.@isquest = getskillinfo(.@sid, 4);
+			// Skip passive skills
+			if (.@ispassive) continue;
+			// Skip quest skills
+			if (.@isquest) continue;
 			.@nodmg = getskillinfo(.@sid, 1);
 			.@inf = getskillinfo(.@sid, 0);
+			// Buff/support skill: nodamage=1, or has INF_SUPPORT_SKILL (0x10) flag
 			if (.@nodmg || (.@inf & 16)) {
 				.@buf_ids[.@buf_count] = .@sid;
 				.@buf_lvs[.@buf_count] = .@slv;

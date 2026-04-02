@@ -25,6 +25,8 @@
  * type 1: skill_get_nk() NK_NODAMAGE flag (1=no damage / support, 0=damage)
  * type 2: skill_get_sp() — SP cost at level 1
  * type 3: skill_get_range() — base range
+ * type 4: returns 1 if skill is a quest skill (INF2_ISQUEST), 0 otherwise
+ * type 5: returns 1 if skill is passive (inf == 0 / INF_PASSIVE_SKILL), 0 otherwise
  */
 BUILDIN_FUNC(getskillinfo)
 {
@@ -43,6 +45,12 @@ BUILDIN_FUNC(getskillinfo)
 			break;
 		case 3:
 			script_pushint(st, skill_get_range(skill_id, 1));
+			break;
+		case 4:
+			script_pushint(st, skill_get_inf2(skill_id, INF2_ISQUEST) ? 1 : 0);
+			break;
+		case 5:
+			script_pushint(st, (skill_get_inf(skill_id) == INF_PASSIVE_SKILL) ? 1 : 0);
 			break;
 		default:
 			script_pushint(st, 0);
