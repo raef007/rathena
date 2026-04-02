@@ -1,9 +1,9 @@
 // ==========================================================================
-// Welcome NPC – Pre-Registration Rewards
+// Welcome NPC - Pre-Registration Rewards
 // ==========================================================================
 // Sprite   : 4_F_EDEN_MASTER  (Commander Arquien model)
 // Location : Prontera 161,283
-// Window   : April 1 2026 – June 30 2026
+// Window   : April 1 2026 - June 30 2026
 // Limit    : One claim per account (#WELCOME_CLAIMED)
 //
 // Rewards
@@ -19,7 +19,7 @@
 
 prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 
-	// ── Promotion window check ──────────────────────────────
+	// -- Promotion window check ----------------------------------
 	// NOTE: The constant is DT_MONTH (not DT_MON).
 	//       DT_YEAR returns full 4-digit year (e.g. 2026).
 	//       DT_MONTH returns 1-12.
@@ -39,42 +39,42 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 		mes "period for ^0000FFAsgard City^000000 has ended.";
 		mes " ";
 		mes "But the realm still needs brave souls.";
-		mes "Speak with the other guilds — there is";
+		mes "Speak with the other guilds -- there is";
 		mes "always work for the willing.";
 		close;
 	}
 
-	// ── Already claimed check ───────────────────────────────
+	// -- Already claimed check ------------------------------------
 	if (#WELCOME_CLAIMED) {
 		mes "[Asgard Welcomer]";
 		mes "^777777* She tilts her head, studying your";
 		mes "face for a moment, then breaks into";
-		mes "a warm smile of recognition.*^000000";
+		mes "a warm smile of recognition. *^000000";
 		mes " ";
 		mes "Ah, " + strcharinfo(0) + "! I remember you.";
 		mes "You've already received your provisions";
 		mes "from the Founding Charter.";
 		mes " ";
-		mes "Go forth — ^0000FFAsgard City^000000 was built";
+		mes "Go forth -- ^0000FF Asgard City ^000000 was built";
 		mes "by adventurers like you. Make us proud.";
 		close;
 	}
 
-	// ── Introduction ────────────────────────────────────────
+	// -- Introduction ---------------------------------------------
 	mes "[Asgard Welcomer]";
-	mes "^777777 A tall woman in Royal regalia";
+	mes "^777777* A tall woman in Royal regalia";
 	mes "stands before the middle of";
 	mes "Prontera. Her eyes carry the weight of";
 	mes "someone who has seen many adventurers";
-	mes "come and go — but today, she looks at";
-	mes "you with unmistakable hope.*^000000";
+	mes "come and go -- but today, she looks at";
+	mes "you with unmistakable hope. *^000000";
 	next;
 
 	mes "[Asgard Welcomer]";
 	mes "Hail, traveller. My name is Astrid,";
 	mes "commander of the Founding Vanguard.";
 	mes " ";
-	mes "You stand in ^0000FFProntera City^000000 — a realm";
+	mes "You stand in ^0000FF Prontera City ^000000 -- a realm";
 	mes "reborn from the ashes of the old world.";
 	mes "The Bifrost has opened once more, and";
 	mes "new heroes are being called to walk";
@@ -83,7 +83,7 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 
 	mes "[Astrid]";
 	mes "And you, " + strcharinfo(0) + "...";
-	mes "you are one of the ^FF8800First Founders^000000.";
+	mes "you are one of the ^FF8800 First Founders ^000000.";
 	mes " ";
 	mes "You answered the call before the gates";
 	mes "were even fully open. Before the forges";
@@ -96,20 +96,20 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	mes "[Astrid]";
 	mes "By order of the High Council, all who";
 	mes "signed the Founding Charter are granted";
-	mes "a ^00FF00Vanguard Supply Package^000000:";
+	mes "a ^00FF00 Vanguard Supply Package ^000000:";
 	mes " ";
-	mes "^00FF00 10x HE Battle Manual^000000";
-	mes "  ^777777(+100% Base EXP, 30 min each)^000000";
+	mes "^00FF00* 10x HE Battle Manual^000000";
+	mes "  ^777777 (+100% Base EXP, 30 min each) ^000000";
 	mes "^00FF00 10x Job Battle Manual^000000";
-	mes "  ^777777(+50% Job EXP, 30 min each)^000000";
+	mes "  ^777777 (+50% Job EXP, 30 min each) ^000000";
 	mes "^00FF00 10x HE Bubble Gum^000000";
-	mes "  ^777777(+100% Drop Rate, 30 min each)^000000";
-	mes "^00FF00 1x Headgear of your choosing^000000";
+	mes "  ^777777 (+100% Drop Rate, 30 min each) ^000000";
+	mes "^00FF00* 1x Headgear of your choosing ^000000";
 	next;
 
-	// ── Headgear selection ──────────────────────────────────
+	// -- Headgear selection ---------------------------------------
 	mes "[Astrid]";
-	mes "Now then — every founder is permitted";
+	mes "Now then -- every founder is permitted";
 	mes "to choose a single piece of headgear";
 	mes "from the Vanguard armoury.";
 	mes " ";
@@ -132,25 +132,25 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 		case 4: .@headgear = 2255; .@hname$ = "Evil Wing";        break;
 	}
 
-	// ── Confirmation ────────────────────────────────────────
+	// -- Confirmation ---------------------------------------------
 	mes "[Astrid]";
-	mes "^777777*She carefully lifts a";
+	mes "^777777* She carefully lifts a";
 	mes "^0000FF" + .@hname$ + "^777777 from the rack";
-	mes "and holds it out to you.*^000000";
+	mes "and holds it out to you. *^000000";
 	mes " ";
-	mes "The ^0000FF" + .@hname$ + "^000000. A fine choice.";
+	mes "The ^0000FF " + .@hname$ + " ^000000. A fine choice.";
 	mes " ";
 	mes "Once I hand these over, the charter";
-	mes "is signed and sealed — ^FF0000 no second";
-	mes "claims, no exceptions^000000.";
+	mes "is signed and sealed -- ^FF0000 no second";
+	mes "claims, no exceptions ^000000.";
 	mes " ";
 	mes "Are you certain, " + strcharinfo(0) + "?";
 	next;
 
-	if (select("I'm ready. Hand them over.", "Wait — let me think about this.") == 2) {
+	if (select("I'm ready. Hand them over.", "Wait -- let me think about this.") == 2) {
 		mes "[Astrid]";
-		mes "^777777*She nods and returns the headgear";
-		mes "to the rack with practiced care.*^000000";
+		mes "^777777* She nods and returns the headgear";
+		mes "to the rack with practiced care. *^000000";
 		mes " ";
 		mes "Take your time. The charter remains";
 		mes "open until the end of the founding";
@@ -158,10 +158,10 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 		close;
 	}
 
-	// ── Inventory space check ───────────────────────────────
+	// -- Inventory space check ------------------------------------
 	if (checkweight(12478, 10) == 0) {
 		mes "[Astrid]";
-		mes "^777777*She eyes your overstuffed bags";
+		mes "^777777* She eyes your overstuffed bags";
 		mes "with a raised eyebrow.*^000000";
 		mes " ";
 		mes "Adventurer, I can't fit a feather in";
@@ -170,16 +170,16 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 		close;
 	}
 
-	// ── Grant items ─────────────────────────────────────────
+	// -- Grant items ----------------------------------------------
 	getitem 12411, 10;        // HE Battle Manual
 	getitem 14592, 10;        // Job Battle Manual (Job_Manual50)
 	getitem 12412, 10;        // HE Bubble Gum
 	getitem .@headgear, 1;    // Chosen headgear
 
-	// ── Mark claimed (account-scope permanent variable) ─────
+	// -- Mark claimed (account-scope permanent variable) ---------
 	set #WELCOME_CLAIMED, 1;
 
-	// ── Receipt ─────────────────────────────────────────────
+	// -- Receipt --------------------------------------------------
 	mes "[Astrid]";
 	mes "^777777* She presses the supplies firmly";
 	mes "into your hands, then steps back and";
@@ -187,10 +187,10 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	mes " ";
 	mes "It's done. Your provisions:";
 	mes " ";
-	mes "^00FF00 10x HE Battle Manual^000000";
-	mes "^00FF00 10x Job Battle Manual^000000";
-	mes "^00FF00 10x HE Bubble Gum^000000";
-	mes "^00FF00 1x " + .@hname$ + "^000000";
+	mes "^00FF00 10x HE Battle Manual ^000000";
+	mes "^00FF00 10x Job Battle Manual ^000000";
+	mes "^00FF00 10x HE Bubble Gum ^000000";
+	mes "^00FF00 1x " + .@hname$ + " ^000000";
 	next;
 
 	mes "[Astrid]";
@@ -199,9 +199,9 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	mes "stir with ancient darkness. And the";
 	mes "gods themselves watch from Valhalla.";
 	mes " ";
-	mes "But you are a Founder of ^0000FFAsgard City^000000.";
+	mes "But you are a Founder of ^0000FF Asgard City ^000000.";
 	mes "That means something.";
 	mes " ";
-	mes "^777777May the All-Father guide your blade.^000000";
+	mes "^777777 May the All-Father guide your blade. ^000000";
 	close;
 }
