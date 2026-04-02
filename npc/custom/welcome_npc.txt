@@ -29,7 +29,7 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	// Active: 2026-04-01 through 2026-06-30
 	if (.@year != 2026 || .@month < 4 || .@month > 6) {
 		mes "[Asgard Welcomer]";
-		mes "^777777*The woman stands at her post,";
+		mes "^777777* The woman stands at her post,";
 		mes "gazing quietly at the bustling streets";
 		mes "of Prontera. She notices you approach";
 		mes "and offers a gentle, if weary, smile.*^000000";
@@ -47,7 +47,7 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	// ── Already claimed check ───────────────────────────────
 	if (#WELCOME_CLAIMED) {
 		mes "[Asgard Welcomer]";
-		mes "^777777*She tilts her head, studying your";
+		mes "^777777* She tilts her head, studying your";
 		mes "face for a moment, then breaks into";
 		mes "a warm smile of recognition.*^000000";
 		mes " ";
@@ -62,7 +62,7 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 
 	// ── Introduction ────────────────────────────────────────
 	mes "[Asgard Welcomer]";
-	mes "^777777*A tall woman in Royal regalia";
+	mes "^777777 A tall woman in Royal regalia";
 	mes "stands before the middle of";
 	mes "Prontera. Her eyes carry the weight of";
 	mes "someone who has seen many adventurers";
@@ -98,13 +98,13 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	mes "signed the Founding Charter are granted";
 	mes "a ^00FF00Vanguard Supply Package^000000:";
 	mes " ";
-	mes "^00FF00✦ 10x HE Battle Manual^000000";
+	mes "^00FF00 10x HE Battle Manual^000000";
 	mes "  ^777777(+100% Base EXP, 30 min each)^000000";
-	mes "^00FF00✦ 10x Job Battle Manual^000000";
+	mes "^00FF00 10x Job Battle Manual^000000";
 	mes "  ^777777(+50% Job EXP, 30 min each)^000000";
-	mes "^00FF00✦ 10x HE Bubble Gum^000000";
+	mes "^00FF00 10x HE Bubble Gum^000000";
 	mes "  ^777777(+100% Drop Rate, 30 min each)^000000";
-	mes "^00FF00✦ 1x Headgear of your choosing^000000";
+	mes "^00FF00 1x Headgear of your choosing^000000";
 	next;
 
 	// ── Headgear selection ──────────────────────────────────
@@ -141,7 +141,7 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	mes "The ^0000FF" + .@hname$ + "^000000. A fine choice.";
 	mes " ";
 	mes "Once I hand these over, the charter";
-	mes "is signed and sealed — ^FF0000no second";
+	mes "is signed and sealed — ^FF0000 no second";
 	mes "claims, no exceptions^000000.";
 	mes " ";
 	mes "Are you certain, " + strcharinfo(0) + "?";
@@ -171,9 +171,9 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 	}
 
 	// ── Grant items ─────────────────────────────────────────
-	getitem 12478, 10;        // HE Battle Manual
+	getitem 12411, 10;        // HE Battle Manual
 	getitem 14592, 10;        // Job Battle Manual (Job_Manual50)
-	getitem 12479, 10;        // HE Bubble Gum
+	getitem 12412, 10;        // HE Bubble Gum
 	getitem .@headgear, 1;    // Chosen headgear
 
 	// ── Mark claimed (account-scope permanent variable) ─────
@@ -181,16 +181,16 @@ prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 
 	// ── Receipt ─────────────────────────────────────────────
 	mes "[Astrid]";
-	mes "^777777*She presses the supplies firmly";
+	mes "^777777* She presses the supplies firmly";
 	mes "into your hands, then steps back and";
 	mes "gives you a crisp salute.*^000000";
 	mes " ";
 	mes "It's done. Your provisions:";
 	mes " ";
-	mes "^00FF00✦ 10x HE Battle Manual^000000";
-	mes "^00FF00✦ 10x Job Battle Manual^000000";
-	mes "^00FF00✦ 10x HE Bubble Gum^000000";
-	mes "^00FF00✦ 1x " + .@hname$ + "^000000";
+	mes "^00FF00 10x HE Battle Manual^000000";
+	mes "^00FF00 10x Job Battle Manual^000000";
+	mes "^00FF00 10x HE Bubble Gum^000000";
+	mes "^00FF00 1x " + .@hname$ + "^000000";
 	next;
 
 	mes "[Astrid]";
