@@ -1,0 +1,75 @@
+# Asgard City - Custom Cash Shop (Import)
+# Loaded after db/item_cash.yml, adds our custom shop items.
+#
+# Available tabs: New, Hot, Limited, Rental, Permanent, Scrolls, Consumables, Other, Sale
+# Price is in Cash Points (#CASHPOINTS)
+
+Header:
+  Type: ITEM_CASH_DB
+  Version: 1
+
+Body:
+  # ============================================================
+  # NEW tab – flagship custom items
+  # ============================================================
+  - Tab: New
+    Items:
+      - Item: VIP_Pass_30d
+        Price: 500
+
+  # ============================================================
+  # HOT tab – popular EXP / drop boosts
+  # ============================================================
+  - Tab: Hot
+    Items:
+      - Item: Battle_Manual
+        Price: 50
+      - Item: HE_Battle_Manual
+        Price: 100
+      - Item: Bubble_Gum
+        Price: 50
+      - Item: HE_Bubble_Gum
+        Price: 100
+      - Item: Job_Manual25
+        Price: 50
+      - Item: Job_Manual50
+        Price: 100
+
+  # ============================================================
+  # CONSUMABLES tab – stat food buffs (+10 all stats, 30 min)
+  # ============================================================
+  - Tab: Consumables
+    Items:
+      - Item: Str_Dish10_M
+        Price: 20
+      - Item: Agi_Dish10_M
+        Price: 20
+      - Item: Int_Dish10_M
+        Price: 20
+      - Item: Dex_Dish10_M
+        Price: 20
+      - Item: Luk_Dish10_M
+        Price: 20
+      - Item: Vit_Dish10_M
+        Price: 20
+
+  # ============================================================
+  # PERMANENT tab – VIP passes
+  # ============================================================
+  - Tab: Permanent
+    Items:
+      - Item: VIP_Pass_30d
+        Price: 500
+
+  # ============================================================
+  # RENTAL tab – time-limited automation items (30 days)
+  # ============================================================
+  - Tab: Rental
+    Items:
+      - Item: Auto_Battle_Pass
+        Price: 200
+        Duration: 2592000
+      - Item: Auto_Support_Capsule
+        Price: 150
+        Duration: 2592000
+

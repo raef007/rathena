@@ -64,7 +64,7 @@ Thumbs.db
 /3rdparty/httplib/obj
 
 # /db/
-/db/import
+# /db/import (tracked — contains god item overrides and custom item DB)
 
 # /conf/
 # /conf/import (tracked — contains server-specific custom config)

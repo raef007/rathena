@@ -118,3 +118,263 @@ Body:
       mes "^FF0000Relog^000000 to apply storage and character slot expansion.";
       close;
 
+# -----------------------------------------------------------------------
+# Revo-Classic: God Items disabled
+# Items retain their name/type for DB integrity but are made unobtainable:
+# no script, no equip, no drop, no trade, no sell.
+# -----------------------------------------------------------------------
+
+  # Mjolnir (1530) - Thor's Hammer
+  - Id: 1530
+    AegisName: Mjolnir
+    Name: Mjolnir
+    Type: Weapon
+    SubType: Mace
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Valkyrie Armor (2357)
+  - Id: 2357
+    AegisName: Valkyrie_Armor
+    Name: Valkyrie Armor
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Sleipnir (2410)
+  - Id: 2410
+    AegisName: Sleipnir
+    Name: Sleipnir
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Valkyrie Shoes (2421)
+  - Id: 2421
+    AegisName: Valkyrie_Shoes
+    Name: Valkyrie Shoes
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Valkyrie Manteau (2524)
+  - Id: 2524
+    AegisName: Valkyrie_Manteau
+    Name: Valkyrie Manteau
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Megingjard (2629) - Belt of Thor
+  - Id: 2629
+    AegisName: Megingjard
+    Name: Megingjard
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Brisingamen (2630) - Necklace of Freya
+  - Id: 2630
+    AegisName: Brisingamen
+    Name: Brisingamen
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Valkyrie Helm (5171)
+  - Id: 5171
+    AegisName: Valkyrie_Helm
+    Name: Valkyrie Helm
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Megingjard_C (2830) - copy
+  - Id: 2830
+    AegisName: Megingjard_C
+    Name: Megingjard
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Brisingamen_C (2831) - copy
+  - Id: 2831
+    AegisName: Brisingamen_C
+    Name: Brisingamen
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Valkyrie_Helmet (5826) - wearable version copy
+  - Id: 5826
+    AegisName: Valkyrie_Helmet
+    Name: Valkyrie Helm
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
+  # Mjolnir_C (16007) - copy
+  - Id: 16007
+    AegisName: Mjolnir_C
+    Name: Mjolnir
+    Type: Weapon
+    SubType: Mace
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: false
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Equip:
+      NoEquip: All
+
