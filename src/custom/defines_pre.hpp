@@ -5,7 +5,7 @@
 #define CONFIG_CUSTOM_DEFINES_PRE_HPP
 
 #define PACKETVER 20250604
-#define PRERE
+//#define PRERE
 #define ENABLE_CASHSHOP_PREVIEW_PATCH  // Requires matching client patch — disabled until client is patched
 
 /**

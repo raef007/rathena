@@ -77,3 +77,32 @@ autobattle_roam_interval: 3000
 // Base and Job EXP are independent. Loaded from DB autobattle_settings if rows exist.
 autobattle_exp_penalty_base: 0
 autobattle_exp_penalty_job: 0
+
+//-----------
+// Classic feel tuning (Renewal mode with Pre-RE gameplay)
+//-----------
+
+// Traps always visible (Pre-RE behavior; Renewal default hides traps)
+traps_setting: 0
+
+// Floras/Marine Spheres behave as Pre-RE (can be damaged outside PvP)
+alchemist_summon_setting: 15
+
+// Natural HP/SP recovery stops at 50% weight (Pre-RE value; Renewal default: 70%)
+natural_heal_weight_rate: 50
+
+// Item boxes blocked at 70% weight (Pre-RE value; Renewal default: 90%)
+open_box_weight_rate: 70
+
+// ASPD cap: all job tiers locked to Pre-RE max of 190 (RENEWAL_ASPD is disabled,
+// but these caps ensure 3rd/extended stat entries don't override if ever re-enabled)
+max_third_aspd: 190
+max_extended_aspd: 190
+max_summoner_aspd: 190
+
+// Stat caps: lock 3rd/extended stat caps to 99 (Pre-RE limit) in case they are
+// referenced before a 3rd-job NPC is re-enabled in future
+max_third_parameter: 99
+max_third_trans_parameter: 99
+max_baby_third_parameter: 80
+max_extended_parameter: 99

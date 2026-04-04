@@ -26,52 +26,41 @@
 /// Renewal cast time
 /// (disable by commenting the line)
 ///
-/// Leave this line to enable renewal casting time algorithms and enable fixed cast bonuses.
-/// See also default_fixed_castrate in conf/battle/skill.conf for default fixed cast time (default is 20%).
-/// Cast time is altered be 2 portion, Variable Cast Time (VCT) and Fixed Cast Time (FCT).
-/// By default FCT is 20% of VCT (some skills aren't)
-/// - VCT is decreased by DEX * 2 + INT.
-/// - FCT is NOT reduced by stats, reduced by equips or buffs.
-/// Example:
-///  On a skill whos cast time is 10s, only 8s may be reduced. the other 2s are part of a FCT
-#define RENEWAL_CAST
+/// Disabled for classic Pre-RE feel: cast time uses single DEX-based reduction
+/// (instacast at DEX 150 via castrate_dex_scale). No fixed cast time floor.
+//#define RENEWAL_CAST
 
 /// Renewal drop rate algorithms
 /// (disable by commenting the line)
 ///
-/// Leave this line to enable renewal item drop rate algorithms
-/// While enabled a special modified based on the difference between the player and monster level is applied
-/// Based on the http://irowiki.org/wiki/Drop_System#Level_Factor table
-#define RENEWAL_DROP
+/// Disabled for classic Pre-RE feel: no level-factor drop penalty when
+/// farming monsters weaker than the player.
+//#define RENEWAL_DROP
 
 /// Renewal exp rate algorithms
 /// (disable by commenting the line)
 ///
-/// Leave this line to enable renewal item exp rate algorithms
-/// While enabled a special modified based on the difference between the player and monster level is applied
-#define RENEWAL_EXP
+/// Disabled for classic Pre-RE feel: no level-factor EXP penalty.
+//#define RENEWAL_EXP
 
 /// Renewal level modifier on damage
 /// (disable by commenting the line)
 ///
-// Leave this line to enable renewal base level modifier on skill damage (selected skills only)
-#define RENEWAL_LVDMG
+/// Disabled for classic Pre-RE feel: no base level modifier on skill damage.
+//#define RENEWAL_LVDMG
 
 /// Renewal ASPD [malufett]
 /// (disable by commenting the line)
 ///
-/// Leave this line to enable renewal ASPD
-/// - shield penalty is applied
-/// - AGI has a greater factor in ASPD increase
-/// - there is a change in how skills/items give ASPD
-/// - some skill/item ASPD bonuses won't stack
-#define RENEWAL_ASPD
+/// Disabled for classic Pre-RE feel: Pre-RE ASPD formula, no shield penalty,
+/// AGI-based bonuses, max ASPD 190 for all jobs.
+//#define RENEWAL_ASPD
 
 /// Renewal stat calculations
 /// (disable by commenting the line)
 ///
-/// Leave this line to enable renewal calculation for increasing status/parameter points
-#define RENEWAL_STAT
+/// Disabled for classic Pre-RE feel: uniform stat point cost table (Pre-RE).
+//#define RENEWAL_STAT
 
 #endif
 

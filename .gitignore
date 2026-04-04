@@ -67,7 +67,7 @@ Thumbs.db
 /db/import
 
 # /conf/
-/conf/import
+# /conf/import (tracked — contains server-specific custom config)
 /conf/msg_conf/import
 
 # /lib

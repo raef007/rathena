@@ -1,0 +1,7 @@
+server_name: AsgardCity
+login_ip: 127.0.0.1
+bind_ip: 0.0.0.0
+char_ip: 178.128.94.187
+char_del_option: 2
+// Novice only (no Summoner/Doram); Renewal default would be 3
+allowed_job_flag: 1
