@@ -775,6 +775,29 @@ void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
 }
 
 /**
+ * Remove a specific support skill by skill_id
+ * @return true if found and removed, false otherwise
+ */
+bool autobattle_remove_support_skill(map_session_data *sd, uint16 skill_id)
+{
+	if (!sd)
+		return false;
+
+	for (int i = 0; i < sd->autobattle_data.support_skill_count; i++) {
+		if (sd->autobattle_data.support_skills[i].skill_id == skill_id) {
+			// Shift remaining entries down
+			for (int j = i; j < sd->autobattle_data.support_skill_count - 1; j++)
+				sd->autobattle_data.support_skills[j] = sd->autobattle_data.support_skills[j + 1];
+			sd->autobattle_data.support_skill_count--;
+			// Zero out the now-unused last slot
+			memset(&sd->autobattle_data.support_skills[sd->autobattle_data.support_skill_count], 0, sizeof(struct s_autosupport_skill));
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
  * Clear all support skills
  */
 void autobattle_clear_support_skills(map_session_data *sd)

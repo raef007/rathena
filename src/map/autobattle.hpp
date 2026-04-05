@@ -218,6 +218,14 @@ void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
 void autobattle_clear_support_skills(map_session_data *sd);
 
 /**
+ * Remove a specific support skill by skill_id
+ * @param sd Player session data
+ * @param skill_id Skill ID to remove
+ * @return true if found and removed, false otherwise
+ */
+bool autobattle_remove_support_skill(map_session_data *sd, uint16 skill_id);
+
+/**
  * Configure skill rotation slot
  * @param sd Player session data
  * @param slot Rotation slot (0-2)

@@ -572,7 +572,8 @@ L_BuffToggle:
 			close;
 		}
 		if (.@bpick == .@buf_count + 1) {
-			// Apply: add selected buffs as trigger_type=1 (recast when buff expires) with scope=party
+			// Apply: clear existing buff skills only (preserve heals), then add selected ones
+			atcommand "@autosupport clearbuffs";
 			.@added = 0;
 			for (.@i = 0; .@i < .@buf_count; .@i++) {
 				if (.@bsel[.@i]) {

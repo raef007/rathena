@@ -11546,8 +11546,8 @@ ACMD_FUNC(autoattack) {
 		}
 		// Auto-Skill status
 		if (sd->autobattle_data.attack_skill_id > 0) {
-			sprintf(atcmd_output, "Skill: %d Lv%d (fallback: normal attack)",
-				sd->autobattle_data.attack_skill_id, sd->autobattle_data.attack_skill_lv);
+			sprintf(atcmd_output, "Skill: %s Lv%d (fallback: normal attack)",
+				skill_get_desc(sd->autobattle_data.attack_skill_id), sd->autobattle_data.attack_skill_lv);
 			clif_displaymessage(fd, atcmd_output);
 		} else {
 			clif_displaymessage(fd, "Skill: Normal attack");
@@ -11793,13 +11793,13 @@ ACMD_FUNC(autoattack) {
 				}
 				if (skill_lv < 1) skill_lv = 1;
 				autobattle_set_attack_skill(sd, skill_id, skill_lv);
-				sprintf(atcmd_output, "Auto-skill set: Skill %d Lv%d. Falls back to normal attack when SP low.", skill_id, skill_lv);
+				sprintf(atcmd_output, "Auto-skill set: %s Lv%d. Falls back to normal attack when SP low.", skill_get_desc(skill_id), skill_lv);
 				clif_displaymessage(fd, atcmd_output);
 				return 0;
 			}
 			// No args — show current skill
 			if (sd->autobattle_data.attack_skill_id > 0) {
-				sprintf(atcmd_output, "Auto-Skill: %d Lv%d", sd->autobattle_data.attack_skill_id, sd->autobattle_data.attack_skill_lv);
+				sprintf(atcmd_output, "Auto-Skill: %s Lv%d", skill_get_desc(sd->autobattle_data.attack_skill_id), sd->autobattle_data.attack_skill_lv);
 			} else {
 				sprintf(atcmd_output, "Auto-Skill: Normal attack");
 			}
@@ -11852,8 +11852,12 @@ ACMD_FUNC(autosupport) {
 				clif_displaymessage(fd, "=== Auto-Support Skills ===");
 				for (int i = 0; i < sd->autobattle_data.support_skill_count; i++) {
 					struct s_autosupport_skill &skill = sd->autobattle_data.support_skills[i];
-					sprintf(atcmd_output, "[%d] Skill: %d (Lv%d), HP Threshold: %d%%, Scope: %d",
-						i+1, skill.skill_id, skill.skill_lv, skill.hp_threshold, skill.target_scope);
+					const char *scope_str = (skill.target_scope == 0) ? "Self" :
+						(skill.target_scope == 1) ? "Party" : "Guild";
+					const char *trigger_str = (skill.trigger_type == 1) ? "Buff expired" : "HP below";
+					sprintf(atcmd_output, "[%d] %s (Lv%d) | Trigger: %s %d%% | Scope: %s",
+						i+1, skill_get_desc(skill.skill_id), skill.skill_lv,
+						trigger_str, skill.hp_threshold, scope_str);
 					clif_displaymessage(fd, atcmd_output);
 				}
 			}
@@ -11861,6 +11865,44 @@ ACMD_FUNC(autosupport) {
 		} else if (strcmp(arg1, "clear") == 0) {
 			autobattle_clear_support_skills(sd);
 			clif_displaymessage(fd, "All auto-support skills cleared.");
+			return 0;
+		} else if (strcmp(arg1, "clearbuffs") == 0) {
+			// Remove only buff-type skills (trigger_type=1), keep heals
+			int removed = 0;
+			for (int i = sd->autobattle_data.support_skill_count - 1; i >= 0; i--) {
+				if (sd->autobattle_data.support_skills[i].trigger_type == 1) {
+					autobattle_remove_support_skill(sd, sd->autobattle_data.support_skills[i].skill_id);
+					removed++;
+				}
+			}
+			sprintf(atcmd_output, "Cleared %d buff skill(s). Heal skills unchanged.", removed);
+			clif_displaymessage(fd, atcmd_output);
+			return 0;
+		} else if (strcmp(arg1, "clearheals") == 0) {
+			// Remove only heal-type skills (trigger_type=0), keep buffs
+			int removed = 0;
+			for (int i = sd->autobattle_data.support_skill_count - 1; i >= 0; i--) {
+				if (sd->autobattle_data.support_skills[i].trigger_type == 0) {
+					autobattle_remove_support_skill(sd, sd->autobattle_data.support_skills[i].skill_id);
+					removed++;
+				}
+			}
+			sprintf(atcmd_output, "Cleared %d heal skill(s). Buff skills unchanged.", removed);
+			clif_displaymessage(fd, atcmd_output);
+			return 0;
+		} else if (strcmp(arg1, "remove") == 0 && argc >= 2) {
+			uint16 skill_id = (uint16)atoi(arg2);
+			if (skill_id == 0) {
+				clif_displaymessage(fd, "Invalid skill ID.");
+				return -1;
+			}
+			if (autobattle_remove_support_skill(sd, skill_id)) {
+				sprintf(atcmd_output, "Removed %s from auto-support.", skill_get_desc(skill_id));
+				clif_displaymessage(fd, atcmd_output);
+			} else {
+				sprintf(atcmd_output, "%s is not in your auto-support list.", skill_get_desc(skill_id));
+				clif_displaymessage(fd, atcmd_output);
+			}
 			return 0;
 		} else if (strcmp(arg1, "add") == 0 && argc >= 4) {
 			uint16 skill_id = (uint16)atoi(arg2);
@@ -11883,9 +11925,9 @@ ACMD_FUNC(autosupport) {
 
 			autobattle_add_support_skill(sd, skill_id, 5, hp_threshold, scope, trigger_type);
 			if (trigger_type == 1)
-				sprintf(atcmd_output, "Auto-support buff skill %d added (recast when expired).", skill_id);
+				sprintf(atcmd_output, "Auto-support buff: %s added (recast when expired).", skill_get_desc(skill_id));
 			else
-				sprintf(atcmd_output, "Auto-support skill %d added (HP < %d%%).", skill_id, hp_threshold);
+				sprintf(atcmd_output, "Auto-support skill: %s added (HP < %d%%).", skill_get_desc(skill_id), hp_threshold);
 			clif_displaymessage(fd, atcmd_output);
 			return 0;
 		}
@@ -11922,7 +11964,8 @@ ACMD_FUNC(autosupport) {
 		}
 	}
 
-	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|add <id> <hp%> <scope> [trigger]|target [all|leader|<name>]]");
+	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|clearbuffs|clearheals|remove <id>]");
+	clif_displaymessage(fd, "       @autosupport [add <id> <hp%> <scope> [trigger]|target [all|leader|<name>]]");
 	clif_displaymessage(fd, "  trigger: 0=HP below (default), 1=buff expired");
 	return -1;
 }
