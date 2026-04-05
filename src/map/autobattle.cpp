@@ -8,6 +8,7 @@
 #include "map.hpp"         // map_id2bl, map_getcell, map_foreachinarea
 #include "mob.hpp"         // mob data
 #include "npc.hpp"         // npc_check_areanpc
+#include "path.hpp"        // path_search (roam path validation)
 #include "pc.hpp"          // map_session_data, pc_*
 #include "skill.hpp"       // skill_check, skill_can_use
 #include "status.hpp"      // status_get_* functions
@@ -381,6 +382,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						if (mapdata) {
 							// Pick random destination within ~20 cells of player (within MAX_WALKPATH=32 limit)
 							const int16 ROAM_RANGE = 20;
+							const int16 ROAM_MIN_DIST = 8; // Minimum distance to prevent tiny back-and-forth
 							int32 edge = battle_config.map_edge_size;
 							int16 rx, ry;
 							int32 attempts = 0;
@@ -392,7 +394,10 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 								if (ry < edge) ry = edge;
 								if (rx >= mapdata->xs - edge) rx = mapdata->xs - edge - 1;
 								if (ry >= mapdata->ys - edge) ry = mapdata->ys - edge - 1;
-							} while (map_getcell(sd->m, rx, ry, CELL_CHKNOPASS) && (++attempts) < 100);
+							} while ((map_getcell(sd->m, rx, ry, CELL_CHKNOPASS) ||
+								(abs(rx - sd->x) + abs(ry - sd->y)) < ROAM_MIN_DIST ||
+								!path_search(nullptr, sd->m, sd->x, sd->y, rx, ry, 0, CELL_CHKNOPASS))
+								&& (++attempts) < 100);
 
 							if (attempts < 100) {
 								sd->autobattle_data.roam_dest_x = rx;
@@ -512,14 +517,29 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 
 				// Phase 25: For party targets (not self), check range and walk closer if needed
 				if (target != sd) {
+					// If target is on different map, teleport there first
+					if (target->m != sd->m) {
+						struct map_data *target_mapdata = map_getmapdata(target->m);
+						if (target_mapdata) {
+							sd->autobattle_data.follow_target_id = target->id;
+							pc_setpos(sd, target_mapdata->index, target->x, target->y, CLR_TELEPORT);
+						}
+						continue;
+					}
 					int32 skill_range = skill_get_range2((block_list*)sd,
 						skill.skill_id, skill.skill_lv, true);
 					if (skill_range < 1) skill_range = 1;
 					if (!check_distance_bl((block_list*)sd, (block_list*)target, skill_range)) {
-						// Out of range — walk toward target, update follow target
 						sd->autobattle_data.follow_target_id = target->id;
-						unit_walktobl((block_list*)sd, (block_list*)target, skill_range, 1);
-						continue; // Try again next tick after walking closer
+						int16 dist = distance_bl((block_list*)sd, (block_list*)target);
+						if (dist > 15) {
+							// Teleport next to target for fast catch-up
+							pc_setpos(sd, map_getmapdata(target->m)->index, target->x, target->y, CLR_TELEPORT);
+						} else {
+							// Walk toward target
+							unit_walktobl((block_list*)sd, (block_list*)target, skill_range, 1);
+						}
+						continue; // Try again next tick after moving closer
 					}
 				}
 
@@ -559,10 +579,11 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		struct party_data *p = party_search(sd->status.party_id);
 		if (p) {
 			// Find first valid follow target based on support_target_mode
+			// NOTE: Allow cross-map targets (don't filter by psd->m != sd->m)
 			struct map_session_data *follow_sd = nullptr;
 			for (int pi = 0; pi < MAX_PARTY; pi++) {
 				struct map_session_data *psd = p->data[pi].sd;
-				if (!psd || !psd->prev || psd == sd || psd->m != sd->m)
+				if (!psd || !psd->prev || psd == sd)
 					continue;
 				if (status_isdead(*psd))
 					continue;
@@ -578,9 +599,27 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 
 			if (follow_sd) {
 				sd->autobattle_data.follow_target_id = follow_sd->id;
-				// Walk toward follow target if more than 5 cells away
-				if (!check_distance_bl((block_list*)sd, (block_list*)follow_sd, 5)) {
-					unit_walktobl((block_list*)sd, (block_list*)follow_sd, 3, 1);
+
+				// Cross-map follow: teleport to target's map if on different map
+				if (follow_sd->m != sd->m) {
+					struct map_data *target_mapdata = map_getmapdata(follow_sd->m);
+					if (target_mapdata) {
+						pc_setpos(sd, target_mapdata->index, follow_sd->x, follow_sd->y, CLR_TELEPORT);
+					}
+				}
+				// Same map: teleport if very far (>15 cells), walk if moderately far (>3 cells)
+				else {
+					int16 dist = distance_bl((block_list*)sd, (block_list*)follow_sd);
+					if (dist > 15) {
+						// Long-distance catch-up: teleport next to target
+						pc_setpos(sd, map_getmapdata(follow_sd->m)->index, follow_sd->x, follow_sd->y, CLR_TELEPORT);
+					} else if (dist > 3) {
+						// Walk toward follow target
+						unit_walktobl((block_list*)sd, (block_list*)follow_sd, 2, 1);
+					} else if (dist > 2 && sd->ud.walktimer == INVALID_TIMER) {
+						// Re-issue walk if stopped but still not close enough (target moved)
+						unit_walktobl((block_list*)sd, (block_list*)follow_sd, 2, 1);
+					}
 				}
 			}
 		}
