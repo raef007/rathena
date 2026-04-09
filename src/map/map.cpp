@@ -36,6 +36,7 @@
 #include "clif.hpp"
 #include "duel.hpp"
 #include "elemental.hpp"
+#include "fakeplayer.hpp"
 #include "guild.hpp"
 #include "homunculus.hpp"
 #include "instance.hpp"
@@ -226,7 +227,7 @@ int32 map_getusers(void)
  *------------------------------------------*/
 int32 map_usercount(void)
 {
-	return pc_db->size(pc_db);
+	return pc_db->size(pc_db) + (battle_config.fakeplayer_online_count ? fakeplayer_count() : 0);
 }
 
 void map_destroyblock( block_list* bl ){
@@ -5043,6 +5044,7 @@ void MapServer::finalize(){
 
 	do_final_atcommand();
 	do_final_battle();
+	fakeplayer_final();
 	do_final_chrif();
 	do_final_clan();
 #ifndef MAP_GENERATOR
@@ -5448,6 +5450,7 @@ bool MapServer::initialize( int32 argc, char *argv[] ){
 	do_init_duel();
 	do_init_vending();
 	do_init_buyingstore();
+	fakeplayer_init();
 
 	npc_event_do_oninit();	// Init npcs (OnInit)
 

@@ -33,6 +33,7 @@
 #include "clif.hpp"
 #include "duel.hpp"
 #include "elemental.hpp"
+#include "fakeplayer.hpp" // Fake player system
 #include "guild.hpp"
 #include "homunculus.hpp"
 #include "instance.hpp"

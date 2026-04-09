@@ -8210,6 +8210,16 @@ int32 battle_check_target( const block_list* src, const block_list* target, int3
 			if( md->guardian_data && md->guardian_data->guild_id && !mapdata_flag_gvg(mapdata) )
 				return 0; // Disable guardians/emperium owned by Guilds on non-woe times.
 
+			// Fake players treat regular mobs as enemies
+			if( md->special_state.fakeplayer && t_bl->type == BL_MOB ) {
+				const mob_data* tmd = static_cast<const mob_data*>(t_bl);
+				if( !tmd->special_state.fakeplayer )
+					state |= BCT_ENEMY;
+				else
+					state |= BCT_PARTY; // Don't fight other fake players
+				break;
+			}
+
 			if( !md->special_state.ai )
 			{ //Normal mobs
 				if(

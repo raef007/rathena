@@ -418,6 +418,12 @@ Body:
     Help: |
       Params: <name>
       Changes your name to your choice temporarily.
+  - Command: fakeplayers
+    Help: |
+      Params: [count]
+      No args shows current fake player count.
+      count > 0 removes existing and spawns new fake players.
+      count = 0 removes all fake players.
   - Command: feelreset
     Help: |
       Resets a Star Gladiator's marked maps.

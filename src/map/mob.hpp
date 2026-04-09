@@ -346,6 +346,7 @@ struct mob_data : public block_list {
 		uint32 size : 2; //Small/Big monsters.
 		enum mob_ai ai; //Special ai for summoned monsters.
 		uint32 clone : 1;/* is clone? 1:0 */
+		uint32 fakeplayer : 1;/* is fake player? 1:0 */
 	} special_state; //Special mob information that does not needs to be zero'ed on mob respawn.
 	struct s_MobState {
 		uint32 aggressive : 1; //Signals whether the mob AI is in aggressive mode or reactive mode. [Skotlex]

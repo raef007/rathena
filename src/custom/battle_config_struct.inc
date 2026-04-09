@@ -19,3 +19,7 @@ int32 autobattle_roam_interval;      // Milliseconds between roam attempts when 
 int32 autobattle_exp_penalty_base;   // Base EXP penalty % during auto-battle (0=none, 100=zero)
 int32 autobattle_exp_penalty_job;    // Job EXP penalty % during auto-battle (0=none, 100=zero)
 
+int32 fakeplayer_enabled;            // Enable/disable fake player system (0: disabled, 1: enabled)
+int32 fakeplayer_respawn_interval;   // How often to respawn dead fake players (seconds)
+int32 fakeplayer_online_count;       // Add fake player count to displayed online count (0/1)
+

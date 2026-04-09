@@ -18,3 +18,7 @@
 { "autobattle_exp_penalty_base",   &battle_config.autobattle_exp_penalty_base,   0,     0,    100 },
 { "autobattle_exp_penalty_job",    &battle_config.autobattle_exp_penalty_job,    0,     0,    100 },
 
+{ "fakeplayer_enabled",            &battle_config.fakeplayer_enabled,            1,     0,    1      },
+{ "fakeplayer_respawn_interval",   &battle_config.fakeplayer_respawn_interval,   60,    10,   3600   },
+{ "fakeplayer_online_count",       &battle_config.fakeplayer_online_count,       1,     0,    1      },
+
