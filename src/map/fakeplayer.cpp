@@ -415,13 +415,32 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	status->aspd_rate = 1000;
 	status->amotion = 1872; // default animation motion
 	status->dmotion = 576;  // damage motion
-	status->size = SZ_MEDIUM;
+	status->size = SZ_SMALL; // SZ_SMALL(0) = normal size; SZ_MEDIUM(1) = small; SZ_BIG(2) = large
 	status->race = RC_DEMIHUMAN;
 	status->ele_lv = 1;
 	status->def_ele = ELE_NEUTRAL;
 
-	// AI modes: aggressive, move, attack, assist
-	status->mode = static_cast<enum e_mode>(MD_CANMOVE | MD_AGGRESSIVE | MD_CANATTACK | MD_ASSIST);
+	// Randomized behavior:
+	// 40% Hunters (seek and fight mobs)
+	// 30% Walkers (wander around, no combat)
+	// 20% Idlers  (stand in place)
+	// 10% Sitters (sit down)
+	int32 behavior_roll = rnd() % 100;
+	int32 behavior_type; // 0=hunter, 1=walker, 2=idler, 3=sitter
+	if (behavior_roll < 40) {
+		status->mode = static_cast<enum e_mode>(MD_CANMOVE | MD_AGGRESSIVE | MD_CANATTACK);
+		behavior_type = 0;
+	} else if (behavior_roll < 70) {
+		status->mode = static_cast<enum e_mode>(MD_CANMOVE);
+		behavior_type = 1;
+	} else if (behavior_roll < 90) {
+		status->mode = static_cast<enum e_mode>(MD_NORANDOMWALK);
+		behavior_type = 2;
+	} else {
+		status->mode = static_cast<enum e_mode>(MD_NORANDOMWALK);
+		behavior_type = 3;
+		db->vd.dead_sit = 2; // Sitting pose
+	}
 
 	// View/chase range
 	db->range2 = AREA_SIZE; // view range
@@ -436,7 +455,7 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	map_search_freecell(nullptr, m, &x, &y, -1, -1, 1);
 
 	// Spawn using mob_once_spawn_sub
-	mob_data *md = mob_once_spawn_sub(nullptr, m, x, y, name, mob_id, "", SZ_MEDIUM, AI_NONE);
+	mob_data *md = mob_once_spawn_sub(nullptr, m, x, y, name, mob_id, "", SZ_SMALL, AI_NONE);
 	if (!md) {
 		mob_db.erase(mob_id);
 		return 0;

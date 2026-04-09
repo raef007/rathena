@@ -8200,6 +8200,8 @@ int32 battle_check_target( const block_list* src, const block_list* target, int3
 			}
 			if( !sd->status.guild_id && t_bl->type == BL_MOB && static_cast<const mob_data*>(t_bl)->mob_id == MOBID_EMPERIUM && mapdata_flag_gvg(mapdata) )
 				return 0; //If you don't belong to a guild, can't target emperium.
+			if( t_bl->type == BL_MOB && static_cast<const mob_data*>(t_bl)->special_state.fakeplayer )
+				return 0; // Players cannot target fake players at all
 			if( t_bl->type != BL_PC )
 				state |= BCT_ENEMY; //Natural enemy.
 			break;
@@ -8210,19 +8212,25 @@ int32 battle_check_target( const block_list* src, const block_list* target, int3
 			if( md->guardian_data && md->guardian_data->guild_id && !mapdata_flag_gvg(mapdata) )
 				return 0; // Disable guardians/emperium owned by Guilds on non-woe times.
 
-			// Fake players treat regular mobs as enemies
-			if( md->special_state.fakeplayer && t_bl->type == BL_MOB ) {
-				const mob_data* tmd = static_cast<const mob_data*>(t_bl);
-				if( !tmd->special_state.fakeplayer )
-					state |= BCT_ENEMY;
-				else
-					state |= BCT_PARTY; // Don't fight other fake players
+			// Fake players: only attack regular mobs, ignore everything else
+			if( md->special_state.fakeplayer ) {
+				if( t_bl->type == BL_MOB ) {
+					const mob_data* tmd = static_cast<const mob_data*>(t_bl);
+					if( !tmd->special_state.fakeplayer )
+						state |= BCT_ENEMY;  // Attack regular mobs
+					else
+						state |= BCT_PARTY;  // Don't fight other fake players
+				} else {
+					return 0; // Ignore players, homunculi, mercs, elementals
+				}
 				break;
 			}
 
 			if( !md->special_state.ai )
 			{ //Normal mobs
-				if(
+				if( t_bl->type == BL_MOB && static_cast<const mob_data*>(t_bl)->special_state.fakeplayer )
+					state |= BCT_ENEMY; // Normal mobs fight fake players
+				else if(
 					( target->type == BL_MOB && t_bl->type == BL_PC && !battle_get_exception_ai(*target) ) ||
 					( t_bl->type == BL_MOB && (static_cast<const mob_data*>(t_bl)->special_state.ai == AI_NONE || static_cast<const mob_data*>(t_bl)->special_state.ai == AI_WAVEMODE ))
 				  )
