@@ -41,10 +41,10 @@ item_group_rate: 100
 //-----------
 
 // Rate at which exp. is given. (Note 2)
-base_exp_rate: 300
+base_exp_rate: 2000
 
 // Rate at which job exp. is given. (Note 2)
-job_exp_rate: 300
+job_exp_rate: 2000
 
 //-----------
 // feature.conf

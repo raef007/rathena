@@ -119,45 +119,76 @@ enum e_weapon_class {
 	WCLASS_MACE,
 	WCLASS_AXE,
 	WCLASS_DAGGER,
+	WCLASS_KATAR,
+	WCLASS_KNUCKLE,
+	WCLASS_MUSICAL,
+	WCLASS_WHIP,
+	WCLASS_BOOK,
+	WCLASS_SPEAR,
 	WCLASS_NONE,
 };
 
+// Weapon pools use actual item nameids — the client resolves weapon sprites
+// from the item ID (or view_id), NOT from weapon type constants.
+// Most weapons have view_id=0 in item_db, so the nameid IS the LOOK_WEAPON value.
 struct s_weapon_pool {
 	int32 sprites[10];
 	int32 count;
 };
 
 static const s_weapon_pool weapon_pools[] = {
-	// WCLASS_SWORD  — Swordsman/Knight/Crusader/LK/Paladin
-	{ { 1, 2, 3, 4, 5, 6, 7, 8, 0, 0 }, 8 },
+	// WCLASS_SWORD  — Swordsman/Knight/Crusader/LK/Paladin (1hSwords + 2hSwords)
+	{ { 1101, 1104, 1107, 1108, 1116, 1117, 1119, 0, 0, 0 }, 7 },
 	// WCLASS_STAFF  — Mage/Wizard/Sage/HW/Professor
-	{ { 10, 11, 12, 13, 15, 16, 17, 0, 0, 0 }, 7 },
+	{ { 1601, 1602, 1604, 1605, 1606, 1607, 0, 0, 0, 0 }, 6 },
 	// WCLASS_BOW    — Archer/Hunter/Sniper
-	{ { 11, 12, 13, 14, 0, 0, 0, 0, 0, 0 }, 4 },
+	{ { 1701, 1702, 1703, 1704, 1705, 1706, 0, 0, 0, 0 }, 6 },
 	// WCLASS_MACE   — Acolyte/Priest/Monk/HP/Champion
-	{ { 1, 2, 3, 4, 0, 0, 0, 0, 0, 0 }, 4 },
+	{ { 1501, 1502, 1503, 1504, 1505, 1506, 0, 0, 0, 0 }, 6 },
 	// WCLASS_AXE    — Merchant/Blacksmith/Alchemist/WS/Creator
-	{ { 6, 7, 8, 9, 0, 0, 0, 0, 0, 0 }, 4 },
-	// WCLASS_DAGGER — Thief/Assassin/Rogue/SinX/Stalker
-	{ { 1, 2, 3, 4, 5, 0, 0, 0, 0, 0 }, 5 },
+	{ { 1301, 1302, 1303, 1304, 1305, 1306, 0, 0, 0, 0 }, 6 },
+	// WCLASS_DAGGER — Thief/Rogue/Stalker
+	{ { 1201, 1204, 1207, 1210, 1213, 1222, 0, 0, 0, 0 }, 6 },
+	// WCLASS_KATAR  — Assassin/Assassin Cross
+	{ { 1250, 1251, 1252, 1253, 1254, 1255, 0, 0, 0, 0 }, 6 },
+	// WCLASS_KNUCKLE — Monk/Champion
+	{ { 1801, 1802, 1803, 1804, 1805, 0, 0, 0, 0, 0 }, 5 },
+	// WCLASS_MUSICAL — Bard/Clown
+	{ { 1901, 1902, 1903, 1904, 1905, 0, 0, 0, 0, 0 }, 5 },
+	// WCLASS_WHIP    — Dancer/Gypsy
+	{ { 1950, 1951, 1952, 1953, 1954, 0, 0, 0, 0, 0 }, 5 },
+	// WCLASS_BOOK   — Sage/Professor
+	{ { 1550, 1551, 1552, 1553, 1554, 0, 0, 0, 0, 0 }, 5 },
+	// WCLASS_SPEAR  — Crusader/Paladin/Knight/LK (1hSpear)
+	{ { 1401, 1402, 1403, 1404, 1405, 0, 0, 0, 0, 0 }, 5 },
 	// WCLASS_NONE   — Novice (fists)
 	{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 1 },
 };
 
 static e_weapon_class fakeplayer_get_weapon_class(int32 job) {
 	switch (job) {
-		case 1: case 7: case 14: case 4008: case 4015:
+		case 1: case 7: case 14: case 4008: case 4015:  // Swordsman/Knight/Crusader/LK/Paladin
 			return WCLASS_SWORD;
-		case 2: case 9: case 16: case 4010: case 4017:
+		case 2: case 9: case 4010:                       // Mage/Wizard/HW
 			return WCLASS_STAFF;
-		case 3: case 11: case 4012:
+		case 16: case 4017:                              // Sage/Professor
+			return WCLASS_BOOK;
+		case 3: case 11: case 4012:                      // Archer/Hunter/Sniper
 			return WCLASS_BOW;
-		case 4: case 8: case 15: case 4009: case 4016:
+		case 4: case 8: case 4009:                       // Acolyte/Priest/HP
 			return WCLASS_MACE;
-		case 5: case 10: case 18: case 4011: case 4019:
+		case 15: case 4016:                              // Monk/Champion
+			return WCLASS_KNUCKLE;
+		case 5: case 10: case 18: case 4011: case 4019:  // Merchant/BS/Alch/WS/Creator
 			return WCLASS_AXE;
-		case 6: case 12: case 17: case 4013: case 4018:
+		case 6: case 17: case 4018:                      // Thief/Rogue/Stalker
 			return WCLASS_DAGGER;
+		case 12: case 4013:                              // Assassin/SinX
+			return WCLASS_KATAR;
+		case 19: case 4020:                              // Bard/Clown
+			return WCLASS_MUSICAL;
+		case 20: case 4021:                              // Dancer/Gypsy
+			return WCLASS_WHIP;
 		default:
 			return WCLASS_NONE;
 	}
@@ -329,8 +360,9 @@ static void fakeplayer_generate_viewdata(struct view_data *vd, int32 job) {
 	const s_weapon_pool &pool = weapon_pools[wclass];
 	vd->look[LOOK_WEAPON] = pool.sprites[rnd() % pool.count];
 
-	// Shield for melee jobs (~40% chance)
-	if (wclass == WCLASS_SWORD || wclass == WCLASS_MACE || wclass == WCLASS_AXE) {
+	// Shield for melee 1H weapon jobs (~40% chance)
+	if (wclass == WCLASS_SWORD || wclass == WCLASS_MACE || wclass == WCLASS_AXE ||
+	    wclass == WCLASS_SPEAR || wclass == WCLASS_DAGGER) {
 		if (rnd() % 100 < 40)
 			vd->look[LOOK_SHIELD] = 1 + (rnd() % 4);
 	}
@@ -608,6 +640,24 @@ bool fakeplayer_is_fakeplayer(int32 id) {
 	if (bl != nullptr && bl->type == BL_MOB) {
 		mob_data *md = (mob_data *)bl;
 		return md->special_state.fakeplayer != 0;
+	}
+	return false;
+}
+
+/**
+ * Check if a name belongs to a currently alive fake player.
+ */
+bool fakeplayer_is_fakeplayer_name(const char* name) {
+	if (name == nullptr)
+		return false;
+
+	for (int32 gid : fakeplayer_ids) {
+		block_list *bl = map_id2bl(gid);
+		if (bl != nullptr && bl->type == BL_MOB) {
+			mob_data *md = (mob_data *)bl;
+			if (md->special_state.fakeplayer && strcmp(md->name, name) == 0)
+				return true;
+		}
 	}
 	return false;
 }

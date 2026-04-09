@@ -11937,6 +11937,12 @@ void clif_parse_WisMessage(int32 fd, map_session_data* sd)
 	// searching destination character
 	dstsd = map_nick2sd(target,false);
 
+	// If target is a fake player, silently pretend the message was delivered
+	if ((dstsd == nullptr || strcmp(dstsd->status.name, target) != 0) && fakeplayer_is_fakeplayer_name(target)) {
+		clif_wis_end( *sd, ACKWHISPER_SUCCESS );
+		return;
+	}
+
 	if (dstsd == nullptr || strcmp(dstsd->status.name, target) != 0) {
 		// player is not on this map-server
 		// At this point, don't send wisp/page if it's not exactly the same name, because (example)
