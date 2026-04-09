@@ -11626,6 +11626,9 @@ void clif_parse_Emotion(int32 fd, map_session_data *sd){
 		return;
 	}
 
+#if PACKETVER_MAIN_NUM >= 20230705
+	emotion_type emoticon = static_cast<emotion_type>(RFIFOB(fd, packet_db[RFIFOW(fd, 0)].pos[0]));
+#else
 	const PACKET_CZ_REQ_EMOTION* p = reinterpret_cast<PACKET_CZ_REQ_EMOTION*>( RFIFOP( fd, 0 ) );
 
 	if( p->emotion_type >= ET_MAX ){
@@ -11633,6 +11636,7 @@ void clif_parse_Emotion(int32 fd, map_session_data *sd){
 	}
 	
 	emotion_type emoticon = static_cast<emotion_type>( p->emotion_type );
+#endif
 
 	if (battle_config.basic_skill_check == 0 || pc_checkskill(sd, NV_BASIC) >= 2 || pc_checkskill(sd, SU_BASIC_SKILL) >= 1) {
 		if (emoticon == ET_CHAT_PROHIBIT) {// prevent use of the mute emote [Valaris]
