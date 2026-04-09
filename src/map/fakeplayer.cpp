@@ -307,12 +307,9 @@ static void fakeplayer_generate_name(char *out, int32 max_len) {
 // ============================================================
 // Generate random view_data (appearance)
 // ============================================================
-static void fakeplayer_generate_viewdata(struct view_data *vd, int32 *out_job) {
+static void fakeplayer_generate_viewdata(struct view_data *vd, int32 job) {
 	memset(vd, 0, sizeof(struct view_data));
 
-	// Random job
-	int32 job = fakeplayer_jobs[rnd() % fakeplayer_job_count];
-	*out_job = job;
 	vd->look[LOOK_BASE] = job;
 
 	// Random gender
@@ -379,6 +376,10 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	int32 level = 10 + (rnd() % 45) + (rnd() % 45); // peaks around 55
 	db->lv = level;
 
+	// Pick job class early so we can set range and stats accordingly
+	int32 job_class = fakeplayer_jobs[rnd() % fakeplayer_job_count];
+	e_weapon_class wclass = fakeplayer_get_weapon_class(job_class);
+
 	// Stats — scaled to be combat-capable
 	struct status_data *status = &db->status;
 	memset(status, 0, sizeof(struct status_data));
@@ -391,7 +392,19 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	// ATK based on level (base values, status_calc_misc will refine)
 	status->rhw.atk = level * 2;
 	status->rhw.atk2 = level * 4;
-	status->rhw.range = 1;
+
+	// Attack range based on weapon class
+	switch (wclass) {
+		case WCLASS_BOW:
+			status->rhw.range = 9; // Bow range
+			break;
+		case WCLASS_STAFF:
+			status->rhw.range = 1; // Melee
+			break;
+		default:
+			status->rhw.range = 1; // Melee
+			break;
+	}
 
 	// DEF based on level
 	status->def = level / 2;
@@ -471,8 +484,7 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	// Create per-mob viewdata and generate appearance
 	// This ensures the viewdata is directly on the mob instance, not shared via db->vd
 	mob_set_dynamic_viewdata(md);
-	int32 job_class = 0;
-	fakeplayer_generate_viewdata(md->vd, &job_class);
+	fakeplayer_generate_viewdata(md->vd, job_class);
 	md->vd->look[LOOK_BODY2] = job_class; // Required by modern clients
 
 	// Set sitter pose on per-mob viewdata
@@ -586,6 +598,18 @@ void fakeplayer_remove_all(void) {
  */
 int32 fakeplayer_count(void) {
 	return (int32)fakeplayer_ids.size();
+}
+
+/**
+ * Check if a block_list ID belongs to a fake player.
+ */
+bool fakeplayer_is_fakeplayer(int32 id) {
+	block_list *bl = map_id2bl(id);
+	if (bl != nullptr && bl->type == BL_MOB) {
+		mob_data *md = (mob_data *)bl;
+		return md->special_state.fakeplayer != 0;
+	}
+	return false;
 }
 
 /**

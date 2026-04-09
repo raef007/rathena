@@ -12,5 +12,6 @@ void fakeplayer_final(void);
 int32 fakeplayer_spawn(int32 count);
 void fakeplayer_remove_all(void);
 int32 fakeplayer_count(void);
+bool fakeplayer_is_fakeplayer(int32 id);
 
 #endif /* FAKEPLAYER_HPP */

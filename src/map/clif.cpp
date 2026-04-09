@@ -36,6 +36,7 @@
 #include "clan.hpp"
 #include "clif.hpp"
 #include "elemental.hpp"
+#include "fakeplayer.hpp"
 #include "guild.hpp"
 #include "homunculus.hpp"
 #include "instance.hpp"
@@ -12492,7 +12493,14 @@ void clif_parse_TradeRequest(int32 fd,map_session_data *sd)
 {
 	map_session_data *t_sd;
 
-	t_sd = map_id2sd(RFIFOL(fd,packet_db[RFIFOW(fd,0)].pos[0]));
+	int32 target_id = RFIFOL(fd,packet_db[RFIFOW(fd,0)].pos[0]);
+	t_sd = map_id2sd(target_id);
+
+	// Block interaction with fake players
+	if (!t_sd && fakeplayer_is_fakeplayer(target_id)) {
+		clif_traderesponse(*sd, TRADE_ACK_BUSY);
+		return;
+	}
 
 	if(!sd->chatID && pc_cant_act(sd))
 		return; //You can trade while in a chatroom.
@@ -13849,6 +13857,10 @@ void clif_parse_PartyInvite( int32 fd, map_session_data *sd ){
 
 	const PACKET_CZ_REQ_JOIN_GROUP* p = reinterpret_cast<PACKET_CZ_REQ_JOIN_GROUP*>( RFIFOP( fd, 0 ) );
 
+	// Block interaction with fake players
+	if (fakeplayer_is_fakeplayer(p->AID))
+		return;
+
 	party_invite( *sd, map_id2sd( p->AID ) );
 }
 
@@ -14516,6 +14528,10 @@ void clif_parse_GuildInvite( int32 fd,map_session_data *sd ){
 	}
 
 	const PACKET_CZ_REQ_JOIN_GUILD* p = reinterpret_cast<PACKET_CZ_REQ_JOIN_GUILD*>( RFIFOP( fd, 0 ) );
+
+	// Block interaction with fake players
+	if (fakeplayer_is_fakeplayer(p->AID))
+		return;
 
 	guild_invite( *sd, map_id2sd( p->AID ) );
 }
