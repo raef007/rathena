@@ -321,11 +321,11 @@ static void fakeplayer_generate_viewdata(struct view_data *vd, int32 *out_job) {
 	// Hair style (1-27)
 	vd->look[LOOK_HAIR] = 1 + (rnd() % 27);
 
-	// Hair color (0-8)
-	vd->look[LOOK_HAIR_COLOR] = rnd() % 9;
+	// Hair color (0-3)
+	vd->look[LOOK_HAIR_COLOR] = rnd() % 4;
 
-	// Clothes color (0-4)
-	vd->look[LOOK_CLOTHES_COLOR] = rnd() % 5;
+	// Clothes color (0-3)
+	vd->look[LOOK_CLOTHES_COLOR] = rnd() % 4;
 
 	// Weapon sprite based on job class
 	e_weapon_class wclass = fakeplayer_get_weapon_class(job);
