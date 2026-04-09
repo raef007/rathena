@@ -16,6 +16,7 @@
 #include <common/timer.hpp>
 
 #include "battle.hpp"
+#include "clif.hpp"
 #include "map.hpp"
 #include "mob.hpp"
 #include "status.hpp"
