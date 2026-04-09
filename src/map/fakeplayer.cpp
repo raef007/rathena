@@ -368,10 +368,6 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	std::shared_ptr<s_mob_db> db = std::make_shared<s_mob_db>();
 	mob_db.put(mob_id, db);
 
-	// Generate appearance
-	int32 job_class = 0;
-	fakeplayer_generate_viewdata(&db->vd, &job_class);
-
 	// Generate name
 	char name[NAME_LENGTH];
 	fakeplayer_generate_name(name, NAME_LENGTH);
@@ -383,32 +379,31 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	int32 level = 10 + (rnd() % 45) + (rnd() % 45); // peaks around 55
 	db->lv = level;
 
-	// Stats
+	// Stats — scaled to be combat-capable
 	struct status_data *status = &db->status;
 	memset(status, 0, sizeof(struct status_data));
 
-	status->max_hp = 500 + level * 50;
+	status->max_hp = 1000 + level * 80;
 	status->hp = status->max_hp;
-	status->max_sp = 50 + level * 5;
+	status->max_sp = 100 + level * 10;
 	status->sp = status->max_sp;
 
-	// ATK based on level
-	status->rhw.atk = level;
-	status->rhw.atk2 = level * 2;
+	// ATK based on level (base values, status_calc_misc will refine)
+	status->rhw.atk = level * 2;
+	status->rhw.atk2 = level * 4;
 	status->rhw.range = 1;
-	status->batk = level;
 
 	// DEF based on level
-	status->def = level / 3;
-	status->mdef = level / 4;
+	status->def = level / 2;
+	status->mdef = level / 3;
 
-	// Base stats
-	status->str = 10 + level / 3;
-	status->agi = 10 + level / 4;
-	status->vit = 10 + level / 4;
-	status->int_ = 10 + level / 4;
-	status->dex = 10 + level / 3;
-	status->luk = 10 + level / 5;
+	// Base stats — stronger so they can actually fight
+	status->str = 20 + level;
+	status->agi = 20 + level * 2 / 3;
+	status->vit = 15 + level / 2;
+	status->int_ = 15 + level / 2;
+	status->dex = 20 + level;
+	status->luk = 10 + level / 3;
 
 	// Movement & size
 	status->speed = DEFAULT_WALK_SPEED;
@@ -439,7 +434,15 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	} else {
 		status->mode = static_cast<enum e_mode>(MD_NORANDOMWALK);
 		behavior_type = 3;
-		db->vd.dead_sit = 2; // Sitting pose
+	}
+
+	// Compute derived stats (hit, flee, cri, def2, mdef2, batk)
+	// This mirrors what MobDatabase::loadingFinished() does for regular mobs
+	{
+		mob_data dummy = {};
+		dummy.type = BL_MOB;
+		dummy.level = level;
+		status_calc_misc(&dummy, status, level);
 	}
 
 	// View/chase range
@@ -464,6 +467,17 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	// Mark as fakeplayer
 	md->special_state.clone = 1;
 	md->special_state.fakeplayer = 1;
+
+	// Create per-mob viewdata and generate appearance
+	// This ensures the viewdata is directly on the mob instance, not shared via db->vd
+	mob_set_dynamic_viewdata(md);
+	int32 job_class = 0;
+	fakeplayer_generate_viewdata(md->vd, &job_class);
+	md->vd->look[LOOK_BODY2] = job_class; // Required by modern clients
+
+	// Set sitter pose on per-mob viewdata
+	if (behavior_type == 3)
+		md->vd->dead_sit = 2;
 
 	// Spawn on map
 	mob_spawn(md);
