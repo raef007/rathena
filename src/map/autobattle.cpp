@@ -364,60 +364,92 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						}
 					}
 				}
-				// Walk mode: pick a random destination within walkable distance and walk there
+				// Walk mode: pick a random far destination on the map and walk there in stages
 				else {
-					// Pick a new destination if we don't have one or we've arrived
+					// Check if we need a new ultimate destination
 					bool need_new_dest = !sd->autobattle_data.roam_has_dest;
 					if (sd->autobattle_data.roam_has_dest) {
 						int16 dx = sd->x - sd->autobattle_data.roam_dest_x;
 						int16 dy = sd->y - sd->autobattle_data.roam_dest_y;
-						if (dx >= -2 && dx <= 2 && dy >= -2 && dy <= 2)
-							need_new_dest = true; // Close enough to destination
+						if (abs(dx) <= 3 && abs(dy) <= 3)
+							need_new_dest = true; // Arrived at ultimate destination
 					}
 
-					// Skip roam interval when arrived (continuous roaming); keep interval only for stuck retries
 					if (need_new_dest) {
 						sd->autobattle_data.last_roam_tick = tick;
 						struct map_data *mapdata = map_getmapdata(sd->m);
 						if (mapdata) {
-							// Pick random destination within ~20 cells of player (within MAX_WALKPATH=32 limit)
-							const int16 ROAM_RANGE = 20;
-							const int16 ROAM_MIN_DIST = 8; // Minimum distance to prevent tiny back-and-forth
+							// Pick random walkable cell anywhere on the map, far from player
 							int32 edge = battle_config.map_edge_size;
+							int16 map_w = mapdata->xs - (int16)(edge * 2);
+							int16 map_h = mapdata->ys - (int16)(edge * 2);
+							int16 min_dist = ((map_w < map_h) ? map_w : map_h) / 4;
+							if (min_dist < 10) min_dist = 10;
+							if (min_dist > 40) min_dist = 40;
 							int16 rx, ry;
 							int32 attempts = 0;
 							do {
-								rx = sd->x + rnd_value<int16>(-ROAM_RANGE, ROAM_RANGE);
-								ry = sd->y + rnd_value<int16>(-ROAM_RANGE, ROAM_RANGE);
-								// Clamp to map bounds
-								if (rx < edge) rx = edge;
-								if (ry < edge) ry = edge;
-								if (rx >= mapdata->xs - edge) rx = mapdata->xs - edge - 1;
-								if (ry >= mapdata->ys - edge) ry = mapdata->ys - edge - 1;
+								rx = rnd_value<int16>((int16)edge, (int16)(mapdata->xs - edge - 1));
+								ry = rnd_value<int16>((int16)edge, (int16)(mapdata->ys - edge - 1));
 							} while ((map_getcell(sd->m, rx, ry, CELL_CHKNOPASS) ||
-								(abs(rx - sd->x) + abs(ry - sd->y)) < ROAM_MIN_DIST ||
-								!path_search(nullptr, sd->m, sd->x, sd->y, rx, ry, 0, CELL_CHKNOPASS))
-								&& (++attempts) < 100);
+								(abs(rx - sd->x) + abs(ry - sd->y)) < min_dist)
+								&& (++attempts) < 200);
 
-							if (attempts < 100) {
+							if (attempts < 200) {
 								sd->autobattle_data.roam_dest_x = rx;
 								sd->autobattle_data.roam_dest_y = ry;
 								sd->autobattle_data.roam_has_dest = true;
-								unit_walktoxy((block_list*)sd, rx, ry, 0);
 							}
 						}
 					}
-					// Re-issue walk command if stopped but haven't arrived
-					else if (sd->autobattle_data.roam_has_dest && sd->ud.walktimer == INVALID_TIMER) {
-						// If walk failed (stuck), abandon this destination and pick a new one next tick
-						int16 dx = sd->x - sd->autobattle_data.roam_dest_x;
-						int16 dy = sd->y - sd->autobattle_data.roam_dest_y;
-						if (dx >= -2 && dx <= 2 && dy >= -2 && dy <= 2) {
-							sd->autobattle_data.roam_has_dest = false;
-						} else if (unit_walktoxy((block_list*)sd, sd->autobattle_data.roam_dest_x, sd->autobattle_data.roam_dest_y, 0) == 0) {
-							// Walk command failed — path unreachable, pick new dest
-							sd->autobattle_data.roam_has_dest = false;
-							sd->autobattle_data.last_roam_tick = tick; // Allow immediate re-pick
+
+					// Walk toward destination in stages (stay within max_walk_path limits)
+					if (sd->autobattle_data.roam_has_dest && sd->ud.walktimer == INVALID_TIMER) {
+						int16 dest_x = sd->autobattle_data.roam_dest_x;
+						int16 dest_y = sd->autobattle_data.roam_dest_y;
+						int16 dx = dest_x - sd->x;
+						int16 dy = dest_y - sd->y;
+						int32 dist_sq = (int32)dx * dx + (int32)dy * dy;
+						const int16 STEP_RANGE = 12; // Safe step under max_walk_path / OFFICIAL_WALKPATH
+
+						int16 walk_x, walk_y;
+						if (dist_sq <= (int32)STEP_RANGE * STEP_RANGE) {
+							walk_x = dest_x;
+							walk_y = dest_y;
+						} else {
+							// Intermediate waypoint ~STEP_RANGE cells toward destination
+							int32 adx = abs(dx), ady = abs(dy);
+							int32 approx_dist = (adx > ady) ? (adx + ady / 2) : (ady + adx / 2);
+							if (approx_dist < 1) approx_dist = 1;
+							walk_x = sd->x + (int16)((int32)dx * STEP_RANGE / approx_dist);
+							walk_y = sd->y + (int16)((int32)dy * STEP_RANGE / approx_dist);
+							// Clamp to map bounds
+							struct map_data *mapdata = map_getmapdata(sd->m);
+							if (mapdata) {
+								int32 edge = battle_config.map_edge_size;
+								if (walk_x < edge) walk_x = (int16)edge;
+								if (walk_y < edge) walk_y = (int16)edge;
+								if (walk_x >= mapdata->xs - edge) walk_x = (int16)(mapdata->xs - edge - 1);
+								if (walk_y >= mapdata->ys - edge) walk_y = (int16)(mapdata->ys - edge - 1);
+							}
+						}
+
+						if (unit_walktoxy((block_list*)sd, walk_x, walk_y, 0) == 0) {
+							// Walk failed — try nearby cells with random offset
+							bool walked = false;
+							for (int32 retry = 0; retry < 5; retry++) {
+								int16 rx = walk_x + rnd_value<int16>(-3, 3);
+								int16 ry = walk_y + rnd_value<int16>(-3, 3);
+								if (unit_walktoxy((block_list*)sd, rx, ry, 0) != 0) {
+									walked = true;
+									break;
+								}
+							}
+							if (!walked) {
+								// Completely stuck — abandon destination, pick new next tick
+								sd->autobattle_data.roam_has_dest = false;
+								sd->autobattle_data.last_roam_tick = tick;
+							}
 						}
 					}
 				}
