@@ -232,10 +232,12 @@ L_Cfg_Target:
 		goto L_ConfigAttack;
 	}
 	.@mapname$ = strcharinfo(3);
-	.@mob_count = getmapunits(BL_MOB, .@mapname$, .@mob_gids);
+	.@mob_count = getmapunits(BL_MOB, .@mapname$, .@mob_gids[0]);
 	.@unique_count = 0;
+	freeloop(1);
 	for (.@i = 0; .@i < .@mob_count && .@i < 200; .@i++) {
 		if (.@mob_gids[.@i] <= 0) continue;
+		if (!unitexists(.@mob_gids[.@i])) continue;
 		getunitdata .@mob_gids[.@i], .@unitdata;
 		.@class = .@unitdata[UMOB_CLASS];
 		if (.@class <= 0) continue;
@@ -255,6 +257,7 @@ L_Cfg_Target:
 			.@unique_count++;
 		}
 	}
+	freeloop(0);
 	if (.@unique_count == 0) {
 		mes "[Target Filter]";
 		mes "No monsters found on this map.";
