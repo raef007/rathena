@@ -68,6 +68,8 @@ Body:
     Buy: 0
     Sell: 0
     Weight: 0
+    Flags:
+      NoConsume: true
     Trade:
       NoDrop: true
       NoTrade: true
@@ -104,6 +106,7 @@ Body:
       }
       mes "[VIP System]";
       mes "Activating VIP membership...";
+      delitem 30002,1;
       vip_time 43200;
       mes "^00AA00VIP activated successfully!^000000";
       mes " ";

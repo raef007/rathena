@@ -1,0 +1,23 @@
+// ==========================================================================
+// VIP Login Indicator
+// ==========================================================================
+// Shows VIP status and remaining time to the player on login.
+// Only the player can see the message (dispbottom).
+// ==========================================================================
+
+-	script	VIP_Login_Indicator	-1,{
+	end;
+
+OnPCLoginEvent:
+	if (vip_status(VIP_STATUS_ACTIVE)) {
+		.@remaining = vip_status(VIP_STATUS_REMAINING);
+		.@days  = .@remaining / 86400;
+		.@hours = (.@remaining % 86400) / 3600;
+		.@mins  = (.@remaining % 3600) / 60;
+		dispbottom "────────────────────────────────────";
+		dispbottom "★ VIP Status: ACTIVE";
+		dispbottom "  Time remaining: " + .@days + "d " + .@hours + "h " + .@mins + "m";
+		dispbottom "────────────────────────────────────";
+	}
+	end;
+}
