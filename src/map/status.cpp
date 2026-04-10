@@ -181,8 +181,8 @@ uint64 RefineDatabase::parseBodyNode( const ryml::NodeRef& node ){
 					}
 
 					if( refine_level == 0 || refine_level > MAX_REFINE ){
-						this->invalidWarning( refineLevelNode["Level"], "Refine level %hu is above MAX_REFINE (%d), skipping.\n", refine_level, MAX_REFINE );
-						continue;
+						this->invalidWarning( refineLevelNode["Level"], "Refine level %hu is invalid, skipping.\n", refine_level );
+						return 0;
 					}
 
 					// Database is 1 based, code is 0 based
@@ -686,8 +686,8 @@ uint64 EnchantgradeDatabase::parseBodyNode( const ryml::NodeRef& node ){
 					}
 
 					if( refine > MAX_REFINE ){
-						this->invalidWarning( chanceNode["Refine"], "Refine %hu is above MAX_REFINE (%hu), skipping.\n", refine, MAX_REFINE );
-						continue;
+						this->invalidWarning( chanceNode["Refine"], "Refine %hu is too high. Maximum: %hu.\n", refine, MAX_REFINE );
+						return 0;
 					}
 
 					uint16 chance;
