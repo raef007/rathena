@@ -1,0 +1,667 @@
+// ==========================================================================
+// Mimir — Quest-Free Job Advancement NPC
+// ==========================================================================
+// Sprite   : 4_CH1_GRAY_VALKYRIE
+// Location : Prontera 163,283  (next to Asgard Welcomer)
+// Scope    : Novice through Transcendent 2nd Class (no 3rd/4th)
+//
+// Supports:
+//   Novice         → 1st Class (incl. Super Novice, Taekwon, Ninja, Gunslinger)
+//   1st Class      → 2nd Class (2-1 / 2-2 branch)
+//   2nd Class      → Rebirth
+//   Novice High    → Transcendent 1st Class
+//   Trans 1st      → Transcendent 2nd Class
+//   Ninja          → Kagerou / Oboro
+//   Gunslinger     → Rebellion
+//   Baby paths     → up to Baby 2nd Class
+// ==========================================================================
+
+prontera,163,283,4	script	Mimir	4_CH1_GRAY_VALKYRIE,{
+
+	function Check_Riding;
+	function Check_SkillPoints;
+	function Require_Level;
+	function Do_JobChange;
+	function Confirm_Change;
+
+	// ============================================================
+	// Greeting
+	// ============================================================
+	mes .NPCName$;
+	mes "^777777* A grey-armoured figure stands beside";
+	mes "a shimmering basin of water, his gaze fixed";
+	mes "on something far beyond the surface. As you";
+	mes "draw near, he speaks without looking up. *^000000";
+	next;
+
+	mes .NPCName$;
+	mes "I am ^8800FFMimir^000000, Seer of the Well.";
+	mes "I have watched the fates of every warrior";
+	mes "who ever walked these roads.";
+	mes " ";
+	mes "I see yours now, " + strcharinfo(0) + ".";
+	mes "Shall I guide your next step?";
+	next;
+
+	// ============================================================
+	// Pre-checks
+	// ============================================================
+	Check_Riding();
+	Check_SkillPoints();
+
+	.@eac = eaclass();
+	.@base_eac = .@eac & EAJ_BASEMASK;
+	.@second_eac = .@eac & EAJ_UPPERMASK;
+
+	// ============================================================
+	// Tier detection  (highest → lowest)
+	// ============================================================
+
+	// --- Already 3rd, 4th, or expanded 3rd/4th → out of scope ---
+	if (.@eac & (EAJL_THIRD | EAJL_FOURTH)) {
+		mes .NPCName$;
+		mes "^777777* He studies the water for a long";
+		mes "moment, then shakes his head slowly. *^000000";
+		mes " ";
+		mes "Your thread has passed beyond my sight.";
+		mes "The path you walk now is one of higher";
+		mes "trials -- seek the masters of the ^FF00003rd^000000";
+		mes "and ^FF00004th^000000 awakenings.";
+		mes " ";
+		mes "My well cannot guide you further.";
+		close;
+	}
+
+	// --- Expanded "end-tier" 2nd classes (Kagerou/Oboro, Rebellion) ---
+	if (.@eac == EAJ_KAGEROUOBORO || .@eac == EAJ_REBELLION) {
+		mes .NPCName$;
+		mes "^777777* He traces a slow circle on the";
+		mes "water's surface. *^000000";
+		mes " ";
+		mes "You have walked the path of the";
+		mes "^0055FF" + jobname(Class) + "^000000 -- a road";
+		mes "few dare to travel.";
+		mes " ";
+		mes "What lies beyond is not within my";
+		mes "sight. Seek the higher trials elsewhere.";
+		close;
+	}
+
+	// --- Star Gladiator / Soul Linker (2nd class, no rebirth path) ---
+	if (.@second_eac == EAJ_STAR_GLADIATOR || .@second_eac == EAJ_SOUL_LINKER) {
+		mes .NPCName$;
+		mes "^777777* The water swirls with distant";
+		mes "starlight as he regards you. *^000000";
+		mes " ";
+		mes "You walk a singular path, ^0055FF" + jobname(Class) + "^000000.";
+		mes "The road ahead demands trials beyond";
+		mes "my well. Seek the masters who can";
+		mes "guide your next awakening.";
+		close;
+	}
+
+	// --- Super Novice (2nd-tier equivalent, no further changes here) ---
+	if (.@second_eac == EAJ_SUPER_NOVICE) {
+		mes .NPCName$;
+		mes "^777777* He peers into the water with";
+		mes "an amused smile. *^000000";
+		mes " ";
+		mes "A ^0055FFSuper Novice^000000... one who chose";
+		mes "to master all things rather than one.";
+		mes "What lies ahead for you is beyond my";
+		mes "sight. Seek the higher trials.";
+		close;
+	}
+
+	// --- Transcendent 2nd Class → max for this NPC ---
+	if ((.@eac & (EAJL_2 | EAJL_UPPER)) == (EAJL_2 | EAJL_UPPER)) {
+		mes .NPCName$;
+		mes "^777777* He lifts his gaze from the water";
+		mes "and meets your eyes for the first time.";
+		mes "There is respect in his expression. *^000000";
+		mes " ";
+		mes "You stand as " + callfunc("F_InsertArticle", jobname(Class)) + ".";
+		mes "Reborn and forged anew.";
+		mes " ";
+		mes "The well shows me no further thread";
+		mes "that I may weave for you. Your next";
+		mes "awakening demands ^FF0000greater trials^000000.";
+		mes " ";
+		mes "Seek the masters of the ^0055FF3rd class^000000.";
+		mes "They alone can guide what comes next.";
+		close;
+	}
+
+	// --- Non-transcendent 2nd Class → offer Rebirth ---
+	if ((.@eac & EAJL_2) && !(.@eac & (EAJL_UPPER | EAJL_BABY))) {
+		Require_Level(.Req_Rebirth[0], .Req_Rebirth[1]);
+		mes .NPCName$;
+		mes "You stand as " + callfunc("F_InsertArticle", jobname(Class)) + ".";
+		mes " ";
+		mes "^777777* He dips his hand into the well.";
+		mes "The water glows with pale fire. *^000000";
+		mes " ";
+		mes "I see a door in the water -- the path";
+		mes "of ^0055FFRebirth^000000. You would return to";
+		mes "the beginning, but carry the strength";
+		mes "of everything you have learned.";
+		mes " ";
+		mes "It is not death. It is ^8800FFtranscendence^000000.";
+		next;
+		Confirm_Change(Job_Novice_High);
+		close;
+	}
+
+	// --- Baby 2nd Class → max for babies ---
+	if ((.@eac & (EAJL_2 | EAJL_BABY)) == (EAJL_2 | EAJL_BABY)) {
+		mes .NPCName$;
+		mes "You have grown as far as the well";
+		mes "can guide you, little one.";
+		mes "Your thread has reached its end here.";
+		close;
+	}
+
+	// --- Ninja → Kagerou / Oboro ---
+	if ((.@eac & ~EAJL_BABY) == EAJ_NINJA) {
+		Require_Level(.Req_Exp_NJ_GS[0], .Req_Exp_NJ_GS[1]);
+		mes .NPCName$;
+		mes "The shadow arts have shaped you well,";
+		mes "^0055FF" + jobname(Class) + "^000000.";
+		mes " ";
+		.@target = roclass(.@eac | EAJL_2_1);
+		if (.@target < 0) {
+			mes "But the water shows me nothing more.";
+			close;
+		}
+		mes "^777777* Mist rises from the well, curling";
+		mes "into shapes of blades and moonlight. *^000000";
+		mes " ";
+		mes "The well reveals your next form:";
+		mes "^0055FF" + jobname(.@target) + "^000000.";
+		next;
+		Confirm_Change(.@target);
+		close;
+	}
+
+	// --- Gunslinger → Rebellion ---
+	if ((.@eac & ~EAJL_BABY) == EAJ_GUNSLINGER) {
+		Require_Level(.Req_Exp_NJ_GS[0], .Req_Exp_NJ_GS[1]);
+		mes .NPCName$;
+		mes "The thunder of your guns echoes in the";
+		mes "water, ^0055FF" + jobname(Class) + "^000000.";
+		mes " ";
+		.@target = roclass(.@eac | EAJL_2_1);
+		if (.@target < 0) {
+			mes "But the water shows me nothing more.";
+			close;
+		}
+		mes "^777777* The surface of the well flashes";
+		mes "with brief, violent light. *^000000";
+		mes " ";
+		mes "The well reveals your next form:";
+		mes "^0055FF" + jobname(.@target) + "^000000.";
+		next;
+		Confirm_Change(.@target);
+		close;
+	}
+
+	// --- Summoner → out of scope (Spirit Handler is 4th-tier) ---
+	if ((.@eac & ~EAJL_BABY) == EAJ_SUMMONER) {
+		mes .NPCName$;
+		mes "Your kind walks a path the well cannot";
+		mes "see clearly. Seek your own masters,";
+		mes "^0055FF" + jobname(Class) + "^000000.";
+		close;
+	}
+
+	// --- Transcendent 1st Class → Trans 2nd (2-1 / 2-2 choice) ---
+	if ((.@eac & EAJL_UPPER) && !(.@eac & EAJL_2) && Class != Job_Novice_High) {
+		Require_Level(.Req_Second[0], .Req_Second[1]);
+		mes .NPCName$;
+		mes "You have been reborn and walk again as";
+		mes "^0055FF" + jobname(Class) + "^000000.";
+		mes " ";
+		mes "^777777* The water parts, revealing two";
+		mes "distinct currents flowing in different";
+		mes "directions. *^000000";
+		mes " ";
+		mes "Two paths lie before you.";
+		next;
+
+		// If lastJob is set, enforce linear path
+		if (.LastJob && lastJob) {
+			.@target = lastJob + Job_Novice_High;
+			mes .NPCName$;
+			mes "The well remembers your former life.";
+			mes "Your thread leads to:";
+			mes "^0055FF" + jobname(.@target) + "^000000.";
+			next;
+			Confirm_Change(.@target);
+			close;
+		}
+
+		.@c1 = roclass(.@eac | EAJL_2_1);
+		.@c2 = roclass(.@eac | EAJL_2_2);
+
+		if (.@c1 > 0 && .@c2 > 0) {
+			mes .NPCName$;
+			mes "Choose your path:";
+			.@sel = select(
+				" ~ " + jobname(.@c1),
+				" ~ " + jobname(.@c2),
+				" ~ ^777777I need more time^000000"
+			);
+			if (.@sel == 3) {
+				mes .NPCName$;
+				mes "The well is patient. Return when";
+				mes "you have decided.";
+				close;
+			}
+			next;
+			.@target = (.@sel == 1) ? .@c1 : .@c2;
+			Confirm_Change(.@target);
+			close;
+		} else if (.@c1 > 0) {
+			Confirm_Change(.@c1);
+			close;
+		} else if (.@c2 > 0) {
+			Confirm_Change(.@c2);
+			close;
+		}
+		mes .NPCName$;
+		mes "The water is still. No path reveals itself.";
+		close;
+	}
+
+	// --- Standard 1st Class → 2nd Class (2-1 / 2-2 choice) ---
+	if (!(.@eac & (EAJL_2 | EAJL_UPPER | EAJL_BABY | EAJL_THIRD | EAJL_FOURTH)) && .@base_eac > 0) {
+		Require_Level(.Req_Second[0], .Req_Second[1]);
+		mes .NPCName$;
+		mes "You walk as " + callfunc("F_InsertArticle", jobname(Class)) + ".";
+		mes " ";
+		mes "^777777* Two currents stir beneath the";
+		mes "water's surface. *^000000";
+		mes " ";
+		mes "The well shows me two threads for you.";
+		next;
+
+		.@c1 = roclass(.@eac | EAJL_2_1);
+		.@c2 = roclass(.@eac | EAJL_2_2);
+
+		if (.@c1 > 0 && .@c2 > 0) {
+			mes .NPCName$;
+			mes "Choose your path:";
+			.@sel = select(
+				" ~ " + jobname(.@c1),
+				" ~ " + jobname(.@c2),
+				" ~ ^777777I need more time^000000"
+			);
+			if (.@sel == 3) {
+				mes .NPCName$;
+				mes "The well is patient. Return when";
+				mes "you have decided.";
+				close;
+			}
+			next;
+			.@target = (.@sel == 1) ? .@c1 : .@c2;
+			Confirm_Change(.@target);
+			close;
+		} else if (.@c1 > 0) {
+			Confirm_Change(.@c1);
+			close;
+		} else if (.@c2 > 0) {
+			Confirm_Change(.@c2);
+			close;
+		}
+		mes .NPCName$;
+		mes "The water is still. No path reveals itself.";
+		close;
+	}
+
+	// --- Baby 1st Class → Baby 2nd (2-1 / 2-2 choice) ---
+	if ((.@eac & EAJL_BABY) && !(.@eac & EAJL_2) && .@base_eac > 0 && Class != Job_Baby) {
+		Require_Level(.Req_Second[0], .Req_Second[1]);
+		mes .NPCName$;
+		mes "Even the smallest threads can be woven";
+		mes "into something greater, little one.";
+		next;
+
+		.@c1 = roclass(.@eac | EAJL_2_1);
+		.@c2 = roclass(.@eac | EAJL_2_2);
+
+		if (.@c1 > 0 && .@c2 > 0) {
+			mes .NPCName$;
+			mes "Choose your path:";
+			.@sel = select(
+				" ~ " + jobname(.@c1),
+				" ~ " + jobname(.@c2),
+				" ~ ^777777I need more time^000000"
+			);
+			if (.@sel == 3) {
+				mes .NPCName$;
+				mes "Return when you are ready.";
+				close;
+			}
+			next;
+			.@target = (.@sel == 1) ? .@c1 : .@c2;
+			Confirm_Change(.@target);
+			close;
+		} else if (.@c1 > 0) {
+			Confirm_Change(.@c1);
+			close;
+		} else if (.@c2 > 0) {
+			Confirm_Change(.@c2);
+			close;
+		}
+		mes .NPCName$;
+		mes "The water is still. No path reveals itself.";
+		close;
+	}
+
+	// --- Novice High → Transcendent 1st Class ---
+	if (Class == Job_Novice_High) {
+		Require_Level(.Req_First[0], .Req_First[1]);
+		mes .NPCName$;
+		mes "You have been reborn. The slate is";
+		mes "wiped clean, but the well remembers.";
+		next;
+
+		// Enforce linear path if lastJob is set
+		if (.LastJob && lastJob) {
+			.@target = roclass((eaclass(lastJob) & EAJ_BASEMASK) | EAJL_UPPER);
+			mes .NPCName$;
+			mes "Your former life echoes in the water.";
+			mes "The thread leads to:";
+			mes "^0055FF" + jobname(.@target) + "^000000.";
+			next;
+			Confirm_Change(.@target);
+			close;
+		}
+
+		mes .NPCName$;
+		mes "Choose the path you will walk anew:";
+		.@sel = select(
+			" ~ " + jobname(Job_Swordman_High),
+			" ~ " + jobname(Job_Mage_High),
+			" ~ " + jobname(Job_Archer_High),
+			" ~ " + jobname(Job_Acolyte_High),
+			" ~ " + jobname(Job_Merchant_High),
+			" ~ " + jobname(Job_Thief_High),
+			" ~ ^777777I need more time^000000"
+		);
+		if (.@sel == 7) {
+			mes .NPCName$;
+			mes "The well is patient.";
+			close;
+		}
+		next;
+		switch (.@sel) {
+			case 1: .@target = Job_Swordman_High; break;
+			case 2: .@target = Job_Mage_High; break;
+			case 3: .@target = Job_Archer_High; break;
+			case 4: .@target = Job_Acolyte_High; break;
+			case 5: .@target = Job_Merchant_High; break;
+			case 6: .@target = Job_Thief_High; break;
+		}
+		Confirm_Change(.@target);
+		close;
+	}
+
+	// --- Novice → 1st Class ---
+	if (Class == Job_Novice) {
+		Require_Level(.Req_First[0], .Req_First[1]);
+		mes .NPCName$;
+		mes "^777777* He gestures toward the basin.";
+		mes "Images flicker across the surface --";
+		mes "swords, staves, bows, holy light,";
+		mes "merchant caravans, shadowed daggers. *^000000";
+		mes " ";
+		mes "Every journey begins with a single";
+		mes "choice. Choose wisely.";
+		next;
+
+		mes .NPCName$;
+		mes "Choose the path you will walk:";
+		.@sel = select(
+			" ~ Swordman",
+			" ~ Mage",
+			" ~ Archer",
+			" ~ Acolyte",
+			" ~ Merchant",
+			" ~ Thief",
+			" ~ Super Novice",
+			" ~ Taekwon",
+			" ~ Gunslinger",
+			" ~ Ninja",
+			" ~ ^777777I need more time^000000"
+		);
+
+		if (.@sel == 11) {
+			mes .NPCName$;
+			mes "The well is patient.";
+			close;
+		}
+		next;
+
+		switch (.@sel) {
+			case 1: .@target = Job_Swordman; break;
+			case 2: .@target = Job_Mage; break;
+			case 3: .@target = Job_Archer; break;
+			case 4: .@target = Job_Acolyte; break;
+			case 5: .@target = Job_Merchant; break;
+			case 6: .@target = Job_Thief; break;
+			case 7: .@target = Job_Super_Novice; break;
+			case 8: .@target = Job_Taekwon; break;
+			case 9: .@target = Job_Gunslinger; break;
+			case 10: .@target = Job_Ninja; break;
+		}
+
+		// Super Novice has a special base level requirement
+		if (.@target == Job_Super_Novice && BaseLevel < .SNovice) {
+			mes .NPCName$;
+			mes "The path of the ^0055FFSuper Novice^000000";
+			mes "demands a base level of ^bb0000" + .SNovice + "^000000.";
+			mes "You are not yet ready.";
+			close;
+		}
+
+		Confirm_Change(.@target);
+		close;
+	}
+
+	// --- Baby Novice → Baby 1st Class ---
+	if (Class == Job_Baby) {
+		Require_Level(.Req_First[0], .Req_First[1]);
+		mes .NPCName$;
+		mes "Even the smallest must choose a path.";
+		next;
+
+		mes .NPCName$;
+		mes "Choose your path, little one:";
+		.@sel = select(
+			" ~ Baby Swordman",
+			" ~ Baby Mage",
+			" ~ Baby Archer",
+			" ~ Baby Acolyte",
+			" ~ Baby Merchant",
+			" ~ Baby Thief",
+			" ~ ^777777I need more time^000000"
+		);
+		if (.@sel == 7) {
+			mes .NPCName$;
+			mes "Return when you are ready.";
+			close;
+		}
+		next;
+		switch (.@sel) {
+			case 1: .@target = Job_Baby_Swordman; break;
+			case 2: .@target = Job_Baby_Mage; break;
+			case 3: .@target = Job_Baby_Archer; break;
+			case 4: .@target = Job_Baby_Acolyte; break;
+			case 5: .@target = Job_Baby_Merchant; break;
+			case 6: .@target = Job_Baby_Thief; break;
+		}
+		Confirm_Change(.@target);
+		close;
+	}
+
+	// --- Fallback ---
+	mes .NPCName$;
+	mes "^777777* He stares into the water, frowning";
+	mes "as though the surface has gone dark. *^000000";
+	mes " ";
+	mes "Your form is... unfamiliar to the well.";
+	mes "I cannot weave what I do not understand.";
+	close;
+
+// ================================================================
+// Functions
+// ================================================================
+
+function Check_Riding {
+	if (checkfalcon() || checkcart() || checkriding() || ismounting()) {
+		mes .NPCName$;
+		mes "Set aside your " +
+			((checkfalcon()) ? "falcon" : "") +
+			((checkcart()) ? "cart" : "") +
+			((checkriding()) ? "mount" : "") +
+			((ismounting()) ? "mount" : "") +
+			" before I may alter your fate.";
+		close;
+	}
+	return;
+}
+
+function Check_SkillPoints {
+	if (.SkillPointCheck && SkillPoint) {
+		mes .NPCName$;
+		mes "Your current thread is unfinished.";
+		mes "Spend your remaining ^FF0000skill points^000000";
+		mes "before I weave a new path.";
+		close;
+	}
+	return;
+}
+
+function Require_Level {
+	if (BaseLevel < getarg(0) || JobLevel < getarg(1)) {
+		.@blvl = getarg(0) - BaseLevel;
+		.@jlvl = getarg(1) - JobLevel;
+		mes .NPCName$;
+		mes "^777777* The water dims, refusing to";
+		mes "show you the way forward. *^000000";
+		mes " ";
+		mes "The well demands you reach:";
+		mes ((getarg(0) > 1) ?
+			"^bb0000" + getarg(0) + "^000000 (^bb0000Base Level^000000)" +
+			((getarg(1) > 1) ? " and " : "") : "") +
+			((getarg(1) > 1) ?
+			"^00bb00" + getarg(1) + "^000000 (^00bb00Job Level^000000)" : "");
+		mes " ";
+		mes "You still need " +
+			((.@blvl > 0) ? "^bb0000" + .@blvl + "^000000 more base levels " +
+				((.@jlvl > 0) ? "and " : "") : "") +
+			((.@jlvl > 0) ? "^00bb00" + .@jlvl + "^000000 more job levels" : "") +
+			".";
+		close;
+	}
+	return;
+}
+
+function Confirm_Change {
+	.@class = getarg(0);
+	if (.@class < 0 || eaclass(.@class) == -1) {
+		mes .NPCName$;
+		mes "An error has occurred.";
+		close;
+	}
+
+	mes .NPCName$;
+	if (.@class == Job_Novice_High) {
+		mes "You stand at the threshold of";
+		mes "^0055FFRebirth^000000.";
+		mes " ";
+		mes "You will return to level 1, but the";
+		mes "strength of your past life will remain";
+		mes "woven into your soul.";
+	} else {
+		mes "The well shows your next thread:";
+		mes "^0055FF" + jobname(.@class) + "^000000.";
+	}
+	mes " ";
+	mes "Do you wish to walk this path?";
+
+	if (.@class == Job_Novice_High)
+		.@opt$ = " ~ Embrace Rebirth";
+	else
+		.@opt$ = " ~ Become " + jobname(.@class);
+
+	if (select(.@opt$ + ": ~ ^777777Not yet^000000") == 2) {
+		mes .NPCName$;
+		mes "The well is patient. Return when you";
+		mes "are certain.";
+		close;
+	}
+	Do_JobChange(.@class);
+	return;
+}
+
+function Do_JobChange {
+	.@to_cls = getarg(0);
+	.@previous_class = Class;
+
+	// Save lastJob for rebirth path
+	if (.@to_cls == Job_Novice_High && .LastJob)
+		lastJob = Class;
+
+	jobchange .@to_cls;
+
+	if (.@to_cls == Job_Novice_High)
+		resetlvl(1);
+
+	// Visual effects
+	specialeffect2 EF_BLESSING;
+	specialeffect2 EF_ASSUMPTIO2;
+	specialeffect2 EF_ANGEL2;
+
+	// Platinum skills
+	if (.@previous_class != Class && .Platinum)
+		callfunc "F_GetPlatinumSkills";
+
+	next;
+	mes .NPCName$;
+	if (.@to_cls == Job_Novice_High) {
+		mes "^777777* The water erupts in a pillar of";
+		mes "pale light. When it fades, you feel";
+		mes "lighter -- as though reborn. *^000000";
+		mes " ";
+		mes "It is done. You have been ^0055FFreborn^000000.";
+		mes "Walk the path once more, stronger";
+		mes "than before.";
+	} else {
+		mes "^777777* Light rises from the basin and";
+		mes "settles over you like a mantle of";
+		mes "silver threads. *^000000";
+		mes " ";
+		mes "It is done. You are now";
+		mes callfunc("F_InsertArticle", jobname(Class)) + ".";
+		mes " ";
+		mes "Walk well, " + strcharinfo(0) + ".";
+	}
+	close;
+}
+
+OnInit:
+	.NPCName$ = "[Mimir]";
+	.SkillPointCheck = true;
+	.Platinum = true;
+	.LastJob = true;
+
+	// Level Requirements  [BaseLevel, JobLevel]
+	setarray .Req_First[0], 1, 10;			// Novice → 1st Class
+	setarray .Req_Second[0], 1, 40;			// 1st → 2nd Class
+	setarray .Req_Rebirth[0], 99, 50;		// 2nd → Rebirth
+	setarray .Req_Exp_NJ_GS[0], 99, 70;	// Ninja/Gunslinger → Expanded 2nd
+	.SNovice = 45;							// Min base level for Super Novice
+	end;
+}
