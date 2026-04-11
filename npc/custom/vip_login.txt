@@ -26,16 +26,20 @@ OnPCLoginEvent:
 // VIP Pass activation dialog (called from item 30002 Script via callfunc)
 // Must be a function script so mes/next/select work from an item context.
 // ==========================================================================
+// NOTE: item script context cannot resume after `next` or `select` (fake NPC GID —
+// client response packet cannot be routed back to the script session).
+// Only `mes` + `close` are safe here. `close` terminates without waiting for client.
+// Activation happens inline — using the item IS the confirmation.
 function	script	F_VIPPassMenu	{
 	mes "[VIP System]";
 	if (vip_status(VIP_STATUS_ACTIVE)) {
 		.@remaining = vip_status(VIP_STATUS_REMAINING);
 		.@days = .@remaining / 86400;
 		.@hours = (.@remaining % 86400) / 3600;
-		mes "You are already VIP with ^0000FF" + .@days + " day(s) " + .@hours + " hour(s)^000000 remaining.";
-		mes "This pass will ^00AA00add 30 more days^000000 to your VIP time.";
+		mes "You already have ^0000FF" + .@days + "d " + .@hours + "h^000000 of VIP remaining.";
+		mes "This pass will ^00AA00add 30 more days^000000 to your time.";
 	} else {
-		mes "This will activate ^0000FF30 days^000000 of VIP membership.";
+		mes "Activating ^0000FF30 days^000000 of VIP membership...";
 	}
 	mes " ";
 	mes "^0055FFVIP Benefits:^000000";
@@ -46,26 +50,15 @@ function	script	F_VIPPassMenu	{
 	mes "- ^00CC00+300^000000 extra storage slots";
 	mes "- ^00CC00+6^000000 extra character slots";
 	mes "- ^00CC002x^000000 Autobattle daily time";
-	next;
-	if (select("Activate VIP:Cancel") == 2) {
-		mes "[VIP System]";
-		mes "Cancelled. You can use the pass again later.";
-		close;
-	}
-	mes "[VIP System]";
-	mes "Activating VIP membership...";
-	delitem 30002,1;
+	mes " ";
+	delitem 30002, 1;
 	vip_time 43200;
-	mes "^00AA00VIP activated successfully!^000000";
-	mes " ";
 	if (vip_status(VIP_STATUS_ACTIVE)) {
-		.@newremaining = vip_status(VIP_STATUS_REMAINING);
-		.@newdays = .@newremaining / 86400;
-		.@newhours = (.@newremaining % 86400) / 3600;
-		mes "Your VIP is now active for ^0000FF" + .@newdays + " day(s) " + .@newhours + " hour(s)^000000.";
+		.@r = vip_status(VIP_STATUS_REMAINING);
+		.@d = .@r / 86400;
+		.@h = (.@r % 86400) / 3600;
+		mes "^00AA00VIP activated! Active for " + .@d + "d " + .@h + "h.^000000";
 	}
-	mes " ";
-	mes "Most benefits are active immediately.";
 	mes "^FF0000Relog^000000 to apply storage and character slot expansion.";
 	close;
 }

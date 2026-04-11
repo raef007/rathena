@@ -37,6 +37,15 @@ item_rate_adddrop: 100
 item_group_rate: 100
 
 //-----------
+// client.conf
+//-----------
+// Will tuxedo and wedding dresses be shown when worn? (Note 1)
+wedding_modifydisplay: yes
+
+// Show rAthena version to users when the login?
+display_version: no
+
+//-----------
 // exp.conf
 //-----------
 
