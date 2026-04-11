@@ -31,7 +31,7 @@ class status_change;
  * Max Refine available to your server
  **/
 #ifdef RENEWAL
-#	define MAX_REFINE 20
+#	define MAX_REFINE 10
 #else
 #	define MAX_REFINE 10
 #endif
@@ -1089,7 +1089,7 @@ enum sc_type : int16 {
 	SC_EP16_2_BUFF_SS,
 	SC_EP16_2_BUFF_SC,
 	SC_EP16_2_BUFF_AC,
-	
+
 	// Job Improvement Bundle
 	SC_OVERBRANDREADY,
 	SC_POISON_MIST,
@@ -1312,7 +1312,7 @@ enum sc_type : int16 {
 
 	SC_RUSH_QUAKE1,
 	SC_RUSH_QUAKE2,
-	
+
 	SC_G_LIFEPOTION,
 
 	// Hyper Novice

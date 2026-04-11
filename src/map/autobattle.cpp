@@ -305,8 +305,7 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		struct block_list *target = autobattle_search_target(sd);
 
 		if (target) {
-			// Found an enemy — cancel roam destination
-			sd->autobattle_data.roam_has_dest = false;
+			// Found an enemy — preserve roam destination so character resumes it after combat
 			sd->autobattle_data.target_id = target->id;
 
 			// Phase 23: Determine effective range (skill range or weapon range)
@@ -366,6 +365,12 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 				}
 				// Walk mode: pick a random far destination on the map and walk there in stages
 				else {
+					// Destination timeout: if we haven't arrived in 60s, it's likely unreachable — pick a new one
+					if (sd->autobattle_data.roam_has_dest &&
+						DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) > 60000) {
+						sd->autobattle_data.roam_has_dest = false;
+					}
+
 					// Check if we need a new ultimate destination
 					bool need_new_dest = !sd->autobattle_data.roam_has_dest;
 					if (sd->autobattle_data.roam_has_dest) {
@@ -409,18 +414,17 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						int16 dest_y = sd->autobattle_data.roam_dest_y;
 						int16 dx = dest_x - sd->x;
 						int16 dy = dest_y - sd->y;
-						int32 dist_sq = (int32)dx * dx + (int32)dy * dy;
-						const int16 STEP_RANGE = 12; // Safe step under max_walk_path / OFFICIAL_WALKPATH
+						int32 adx = abs(dx), ady = abs(dy);
+						int32 approx_dist = (adx > ady) ? (adx + ady / 2) : (ady + adx / 2);
+						if (approx_dist < 1) approx_dist = 1;
+						const int32 STEP_RANGE = 12; // Safe step under max_walk_path
 
+						// Compute first waypoint toward destination
 						int16 walk_x, walk_y;
-						if (dist_sq <= (int32)STEP_RANGE * STEP_RANGE) {
+						if (approx_dist <= STEP_RANGE) {
 							walk_x = dest_x;
 							walk_y = dest_y;
 						} else {
-							// Intermediate waypoint ~STEP_RANGE cells toward destination
-							int32 adx = abs(dx), ady = abs(dy);
-							int32 approx_dist = (adx > ady) ? (adx + ady / 2) : (ady + adx / 2);
-							if (approx_dist < 1) approx_dist = 1;
 							walk_x = sd->x + (int16)((int32)dx * STEP_RANGE / approx_dist);
 							walk_y = sd->y + (int16)((int32)dy * STEP_RANGE / approx_dist);
 							// Clamp to map bounds
@@ -434,16 +438,25 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 							}
 						}
 
-						if (unit_walktoxy((block_list*)sd, walk_x, walk_y, 0) == 0) {
-							// Walk failed — try nearby cells with random offset
-							bool walked = false;
-							for (int32 retry = 0; retry < 5; retry++) {
-								int16 rx = walk_x + rnd_value<int16>(-3, 3);
-								int16 ry = walk_y + rnd_value<int16>(-3, 3);
-								if (unit_walktoxy((block_list*)sd, rx, ry, 0) != 0) {
-									walked = true;
-									break;
-								}
+						bool walked = (unit_walktoxy((block_list*)sd, walk_x, walk_y, 0) != 0);
+
+						if (!walked) {
+							// Direct step blocked — try progressively shorter steps toward destination.
+							// This helps navigate narrow corridors where the 12-cell waypoint lands in a wall
+							// but a 3- or 1-cell step finds the corridor entrance.
+							static const int32 fallback_steps[] = {6, 3, 1};
+							for (int32 si = 0; si < 3 && !walked; si++) {
+								int32 st = fallback_steps[si];
+								if (approx_dist <= st) continue; // Already tried direct dest above
+								int16 tx = sd->x + (int16)((int32)dx * st / approx_dist);
+								int16 ty = sd->y + (int16)((int32)dy * st / approx_dist);
+								walked = (unit_walktoxy((block_list*)sd, tx, ty, 0) != 0);
+							}
+							// Last resort: random cells near current position (not near the blocked waypoint)
+							for (int32 retry = 0; retry < 5 && !walked; retry++) {
+								int16 rx = sd->x + rnd_value<int16>(-2, 2);
+								int16 ry = sd->y + rnd_value<int16>(-2, 2);
+								walked = (unit_walktoxy((block_list*)sd, rx, ry, 0) != 0);
 							}
 							if (!walked) {
 								// Completely stuck — abandon destination, pick new next tick
@@ -502,10 +515,27 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						struct map_session_data *best_target = nullptr;
 						int32 lowest_hp_pct = 100;
 
+						// Always check self first — a dead support is a useless support.
+						// Self bypasses the target mode filter so the healer survives regardless of role.
+						if (!status_isdead(*sd)) {
+							int32 self_hp_pct = (sd->battle_status.max_hp > 0) ?
+								(sd->battle_status.hp * 100) / sd->battle_status.max_hp : 100;
+							if (skill.trigger_type == 0) {
+								if (self_hp_pct < skill.hp_threshold) {
+									lowest_hp_pct = self_hp_pct;
+									best_target = sd;
+								}
+							} else if (skill.trigger_type == 1) {
+								enum sc_type sc = skill_get_sc(skill.skill_id);
+								if (sc != SC_NONE && !sd->sc.hasSCE(sc))
+									best_target = sd; // Tentative — party members checked next
+							}
+						}
+
 						for (int pi = 0; pi < MAX_PARTY; pi++) {
 							struct map_session_data *psd = p->data[pi].sd;
-							if (!psd || !psd->prev || psd->m != sd->m)
-								continue; // Offline, not on map, or different map
+							if (!psd || psd == sd || !psd->prev || psd->m != sd->m)
+								continue; // Skip self (already checked above), offline, not on map, different map
 							if (status_isdead(*psd))
 								continue;
 
@@ -523,17 +553,17 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 								(psd->battle_status.hp * 100) / psd->battle_status.max_hp : 100;
 
 							if (skill.trigger_type == 0) {
-								// HP-based: find party member with lowest HP below threshold
+								// HP-based: lowest HP% wins (self already seeded above, party competes)
 								if (psd_hp_pct < skill.hp_threshold && psd_hp_pct < lowest_hp_pct) {
 									lowest_hp_pct = psd_hp_pct;
 									best_target = psd;
 								}
 							} else if (skill.trigger_type == 1) {
-								// Buff-based: find party member missing the buff
+								// Buff-based: first party member missing the buff takes priority over self
 								enum sc_type sc = skill_get_sc(skill.skill_id);
 								if (sc != SC_NONE && !psd->sc.hasSCE(sc)) {
 									best_target = psd;
-									break; // First missing member gets the buff
+									break;
 								}
 							}
 						}
