@@ -10,7 +10,7 @@ allowed_job_flag: 1
 start_point: new_1-1,53,111:new_2-1,53,111:new_3-1,53,111:new_4-1,53,111:new_5-1,53,111
 
 // Starting items for new characters
-start_items: 30000,300001,1201,1,2:2301,1,16:23484,1,0
+start_items: 30000,1,0:30001,1,0:1201,1,2:2301,1,16:23484,1,0
 
 // Starting zeny for new characters
 start_zeny: 10000
