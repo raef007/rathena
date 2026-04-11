@@ -2117,10 +2117,10 @@ uint64 ItemReformDatabase::parseBodyNode( const ryml::NodeRef& node ){
 				}
 
 				if( refine > MAX_REFINE ){
-					this->invalidWarning( baseNode["MaximumRefine"], "Refine change %hu is too high, capping to MAX_REFINE...\n", refine );
+					this->invalidWarning( baseNode["ChangeRefine"], "Refine change %hu is too high, capping to MAX_REFINE...\n", refine );
 					refine = MAX_REFINE;
 				}else if( refine < -MAX_REFINE ){
-					this->invalidWarning( baseNode["MaximumRefine"], "Refine change %hu is too low, capping to -MAX_REFINE...\n", refine );
+					this->invalidWarning( baseNode["ChangeRefine"], "Refine change %hu is too low, capping to -MAX_REFINE...\n", refine );
 					refine = -MAX_REFINE;
 				}
 
