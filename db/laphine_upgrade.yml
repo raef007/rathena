@@ -40,7 +40,7 @@ Header:
   Version: 1
 
 Footer:
-  Imports:
-  - Path: db/re/laphine_upgrade.yml
-    Mode: Renewal
-  - Path: db/import/laphine_upgrade.yml
+#  Imports:
+#  - Path: db/re/laphine_upgrade.yml
+#    Mode: Renewal
+#  - Path: db/import/laphine_upgrade.yml

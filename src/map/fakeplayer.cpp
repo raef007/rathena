@@ -232,6 +232,18 @@ static std::vector<int32> fakeplayer_ids;       // GIDs of spawned fake player m
 static int32 fakeplayer_respawn_timer_id = INVALID_TIMER;
 
 // ============================================================
+// Roam state for walker fake players (same system as auto-battle)
+// ============================================================
+struct s_fakeplayer_roam {
+	int16 roam_dest_x, roam_dest_y;
+	bool roam_has_dest;
+	t_tick last_roam_tick;
+};
+
+static std::map<int32, s_fakeplayer_roam> fakeplayer_roam_state;
+static int32 fakeplayer_walk_timer_id = INVALID_TIMER;
+
+// ============================================================
 // Map eligibility check
 // ============================================================
 static bool fakeplayer_map_eligible(int16 m) {
@@ -526,7 +538,146 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	// Spawn on map
 	mob_spawn(md);
 
+	// Initialize roam state for walker-type fake players
+	if (behavior_type == 1) { // Walker type
+		s_fakeplayer_roam roam = {};
+		roam.roam_dest_x = 0;
+		roam.roam_dest_y = 0;
+		roam.roam_has_dest = false;
+		roam.last_roam_tick = gettick();
+		fakeplayer_roam_state[md->id] = roam;
+	}
+
 	return md->id;
+}
+
+// ============================================================
+// Walker movement timer — update destinations and movement for walker-type fake players
+// ============================================================
+static TIMER_FUNC(fakeplayer_walk_update) {
+	if (!battle_config.fakeplayer_enabled)
+		return 0;
+
+	// Update each walker fake player
+	for (auto it = fakeplayer_roam_state.begin(); it != fakeplayer_roam_state.end(); ) {
+		int32 gid = it->first;
+		s_fakeplayer_roam &roam = it->second;
+
+		block_list *bl = map_id2bl(gid);
+		if (bl == nullptr || bl->type != BL_MOB) {
+			it = fakeplayer_roam_state.erase(it);
+			continue;
+		}
+
+		mob_data *md = (mob_data *)bl;
+		if (!md->special_state.fakeplayer || status_get_hp(bl) <= 0) {
+			it = fakeplayer_roam_state.erase(it);
+			continue;
+		}
+
+		// === Destination timeout ===
+		if (roam.roam_has_dest && DIFF_TICK(gettick(), roam.last_roam_tick) > 60000) {
+			roam.roam_has_dest = false;
+		}
+
+		// === Check if we need a new destination ===
+		bool need_new_dest = !roam.roam_has_dest;
+		if (roam.roam_has_dest) {
+			int16 dx = md->x - roam.roam_dest_x;
+			int16 dy = md->y - roam.roam_dest_y;
+			if (abs(dx) <= 3 && abs(dy) <= 3)
+				need_new_dest = true; // Arrived at destination
+		}
+
+		// === Pick new destination if needed ===
+		if (need_new_dest) {
+			roam.last_roam_tick = gettick();
+			struct map_data *mapdata = map_getmapdata(md->m);
+			if (mapdata) {
+				// Pick random walkable cell on map, respecting edge bounds
+				int32 edge = battle_config.map_edge_size;
+				int16 map_w = mapdata->xs - (int16)(edge * 2);
+				int16 map_h = mapdata->ys - (int16)(edge * 2);
+				int16 min_dist = ((map_w < map_h) ? map_w : map_h) / 4;
+				if (min_dist < 10) min_dist = 10;
+				if (min_dist > 40) min_dist = 40;
+
+				int16 rx, ry;
+				int32 attempts = 0;
+				do {
+					rx = rnd_value<int16>((int16)edge, (int16)(mapdata->xs - edge - 1));
+					ry = rnd_value<int16>((int16)edge, (int16)(mapdata->ys - edge - 1));
+				} while ((map_getcell(md->m, rx, ry, CELL_CHKNOPASS) ||
+					(abs(rx - md->x) + abs(ry - md->y)) < min_dist) && (++attempts) < 200);
+
+				if (attempts < 200) {
+					roam.roam_dest_x = rx;
+					roam.roam_dest_y = ry;
+					roam.roam_has_dest = true;
+				}
+			}
+		}
+
+		// === Walk toward destination in stages (same approach as auto-battle) ===
+		if (roam.roam_has_dest && md->ud.walktimer == INVALID_TIMER) {
+			int16 dest_x = roam.roam_dest_x;
+			int16 dest_y = roam.roam_dest_y;
+			int16 dx = dest_x - md->x;
+			int16 dy = dest_y - md->y;
+			int32 adx = abs(dx), ady = abs(dy);
+			int32 approx_dist = (adx > ady) ? (adx + ady / 2) : (ady + adx / 2);
+			if (approx_dist < 1) approx_dist = 1;
+			const int32 STEP_RANGE = 12;
+
+			// Compute first waypoint
+			int16 walk_x, walk_y;
+			if (approx_dist <= STEP_RANGE) {
+				walk_x = dest_x;
+				walk_y = dest_y;
+			} else {
+				walk_x = md->x + (int16)((int32)dx * STEP_RANGE / approx_dist);
+				walk_y = md->y + (int16)((int32)dy * STEP_RANGE / approx_dist);
+				// Clamp to map bounds
+				struct map_data *mapdata = map_getmapdata(md->m);
+				if (mapdata) {
+					int32 edge = battle_config.map_edge_size;
+					if (walk_x < edge) walk_x = (int16)edge;
+					if (walk_y < edge) walk_y = (int16)edge;
+					if (walk_x >= mapdata->xs - edge) walk_x = (int16)(mapdata->xs - edge - 1);
+					if (walk_y >= mapdata->ys - edge) walk_y = (int16)(mapdata->ys - edge - 1);
+				}
+			}
+
+			bool walked = (unit_walktoxy((block_list*)md, walk_x, walk_y, 0) != 0);
+
+			if (!walked) {
+				// Try shorter steps toward destination
+				static const int32 fallback_steps[] = {6, 3, 1};
+				for (int32 si = 0; si < 3 && !walked; si++) {
+					int32 st = fallback_steps[si];
+					if (approx_dist <= st) continue;
+					int16 tx = md->x + (int16)((int32)dx * st / approx_dist);
+					int16 ty = md->y + (int16)((int32)dy * st / approx_dist);
+					walked = (unit_walktoxy((block_list*)md, tx, ty, 0) != 0);
+				}
+				// Last resort: random nearby cells
+				for (int32 retry = 0; retry < 5 && !walked; retry++) {
+					int16 rx = md->x + rnd_value<int16>(-2, 2);
+					int16 ry = md->y + rnd_value<int16>(-2, 2);
+					walked = (unit_walktoxy((block_list*)md, rx, ry, 0) != 0);
+				}
+				if (!walked) {
+					// Stuck — abandon destination
+					roam.roam_has_dest = false;
+					roam.last_roam_tick = gettick();
+				}
+			}
+		}
+
+		++it;
+	}
+
+	return 0;
 }
 
 // ============================================================
@@ -621,6 +772,8 @@ void fakeplayer_remove_all(void) {
 					mob_db.erase(mid);
 			}
 		}
+		// Clean up roam state
+		fakeplayer_roam_state.erase(gid);
 	}
 	fakeplayer_ids.clear();
 }
@@ -667,6 +820,7 @@ bool fakeplayer_is_fakeplayer_name(const char* name) {
  */
 void fakeplayer_init(void) {
 	fakeplayer_ids.clear();
+	fakeplayer_roam_state.clear();
 
 	// Set up periodic respawn check
 	int32 interval = battle_config.fakeplayer_respawn_interval * 1000; // config is in seconds
@@ -680,7 +834,15 @@ void fakeplayer_init(void) {
 		interval
 	);
 
-	ShowStatus("Fake Player system initialized (respawn check every %ds).\n", interval / 1000);
+	// Set up walker movement update timer (500ms like auto-battle)
+	fakeplayer_walk_timer_id = add_timer_interval(
+		gettick() + 500,
+		fakeplayer_walk_update,
+		0, 0,
+		500
+	);
+
+	ShowStatus("Fake Player system initialized (respawn every %ds, walker movement every 500ms).\n", interval / 1000);
 }
 
 /**
@@ -693,6 +855,13 @@ void fakeplayer_final(void) {
 		delete_timer(fakeplayer_respawn_timer_id, fakeplayer_respawn_check);
 		fakeplayer_respawn_timer_id = INVALID_TIMER;
 	}
+
+	if (fakeplayer_walk_timer_id != INVALID_TIMER) {
+		delete_timer(fakeplayer_walk_timer_id, fakeplayer_walk_update);
+		fakeplayer_walk_timer_id = INVALID_TIMER;
+	}
+
+	fakeplayer_roam_state.clear();
 
 	ShowStatus("Fake Player system finalized.\n");
 }
