@@ -371,6 +371,18 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						sd->autobattle_data.roam_has_dest = false;
 					}
 
+					// Stuck detection: if walk timer is idle AND position unchanged since last tick,
+					// we're wedged against a wall — abandon dest immediately so we don't stare at it.
+					if (sd->autobattle_data.roam_has_dest && sd->ud.walktimer == INVALID_TIMER) {
+						if (sd->x == sd->autobattle_data.roam_last_x &&
+							sd->y == sd->autobattle_data.roam_last_y) {
+							sd->autobattle_data.roam_has_dest = false;
+						}
+					}
+					// Always snapshot position so next tick can detect no-movement
+					sd->autobattle_data.roam_last_x = sd->x;
+					sd->autobattle_data.roam_last_y = sd->y;
+
 					// Check if we need a new ultimate destination
 					bool need_new_dest = !sd->autobattle_data.roam_has_dest;
 					if (sd->autobattle_data.roam_has_dest) {
@@ -976,6 +988,8 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config)
 	sd->autobattle_data.roam_dest_x = 0;
 	sd->autobattle_data.roam_dest_y = 0;
 	sd->autobattle_data.roam_has_dest = false;
+	sd->autobattle_data.roam_last_x = 0;
+	sd->autobattle_data.roam_last_y = 0;
 	sd->autobattle_data.last_support_tick = 0;
 	sd->autobattle_data.last_loot_tick = 0;
 	sd->autobattle_data.last_roam_tick = 0;

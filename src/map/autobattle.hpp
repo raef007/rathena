@@ -104,6 +104,8 @@ struct s_autobattle_data {
 	int16 roam_dest_x;             ///< Current roam destination X
 	int16 roam_dest_y;             ///< Current roam destination Y
 	bool roam_has_dest;            ///< Whether we have an active roam destination
+	int16 roam_last_x;             ///< Position at previous roam tick (stuck detection)
+	int16 roam_last_y;             ///< Position at previous roam tick (stuck detection)
 
 	// State tracking
 	t_tick last_support_tick;      ///< Throttle support casting
