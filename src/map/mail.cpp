@@ -313,7 +313,8 @@ bool mail_setattachment(map_session_data *sd, struct mail_message *msg)
 	if( sd->mail.zeny < 0 || ( sd->mail.zeny + sd->mail.zeny * battle_config.mail_zeny_fee / 100 + amount * battle_config.mail_attachment_price ) > sd->status.zeny )
 		return false;
 
-	msg->zeny = sd->mail.zeny;
+	// Apply P2P tax: recipient gets 80% (20% sink)
+	msg->zeny = (int32)(sd->mail.zeny * TAX_P2P_RATE);
 
 	// Removes the attachment from sender
 	for( i = 0; i < MAIL_MAX_ITEM; i++ ){

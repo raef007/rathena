@@ -2304,8 +2304,9 @@ void clif_selllist( const map_session_data& sd){
 		}
 
 		packet->items[c].index = client_index(i);
-		packet->items[c].price = price;
-		packet->items[c].overcharge = pc_modifysellvalue( &sd, price );
+		packet->items[c].price = (int32)(price * TAX_NPC_SELL_RATE);
+		packet->items[c].price = std::max(1, packet->items[c].price);  // Ensure minimum 1 zeny
+		packet->items[c].overcharge = pc_modifysellvalue( &sd, packet->items[c].price );
 
 		packet->packetLength += sizeof( packet->items[0] );
 		c++;

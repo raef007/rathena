@@ -1,0 +1,22 @@
+# 7th Heaven Tavern Items
+# Heaven's Recall Scroll — warps user to 7th Heaven
+
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+  - Id: 50010
+    AegisName: Heavens_Recall_Scroll
+    Name: Heaven's Recall Scroll
+    Type: Consumable
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoStorage: true
+      NoGuildStorage: true
+    Script: |
+      warp "7thheaven", 100, 100;
+
+Footer:

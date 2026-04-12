@@ -1,207 +1,103 @@
 // ==========================================================================
-// Welcome NPC - Pre-Registration Rewards
+// Welcome NPC - Tavern Welcome & Scroll Distribution
 // ==========================================================================
 // Sprite   : 4_F_EDEN_MASTER  (Commander Arquien model)
-// Location : Prontera 161,283
-// Window   : April 1 2026 - June 30 2026
-// Limit    : One claim per account (#WELCOME_CLAIMED)
-//
-// Rewards
-//   10x HE Battle Manual   (12478)  +100% Base EXP for 30 min
-//   10x Job Battle Manual   (14592)  +50% Job EXP for 30 min
-//   10x HE Bubble Gum      (12479)  +100% Drop Rate for 30 min
-//   1x  Headgear of choice  (pick one)
-//       - Apple of Archer   (2285)
-//       - Majestic Goat     (2256)
-//       - Angel Wing        (2254)
-//       - Evil Wing         (2255)
+// Location : 7th Heaven Tavern
+// Purpose  : Welcome adventurers and provide Heaven's Recall Scroll
+// Limit    : One scroll per day per account
 // ==========================================================================
 
-prontera,161,283,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
+7thheaven,100,105,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 
-	// -- Promotion window check ----------------------------------
-	// NOTE: The constant is DT_MONTH (not DT_MON).
-	//       DT_YEAR returns full 4-digit year (e.g. 2026).
-	//       DT_MONTH returns 1-12.
-	.@year  = gettime(DT_YEAR);
-	.@month = gettime(DT_MONTH);
+	// -- Welcome message for new visitors --
 
-	// Active: 2026-04-01 through 2026-06-30
-	if (.@year != 2026 || .@month < 4 || .@month > 6) {
-		mes "[Asgard Welcomer]";
-		mes "^777777* The woman stands at her post,";
-		mes "gazing quietly at the bustling streets";
-		mes "of Prontera. She notices you approach";
-		mes "and offers a gentle, if weary, smile.*^000000";
-		mes " ";
-		mes "I'm afraid the founding charter has";
-		mes "been sealed. The pre-registration";
-		mes "period for ^0000FFAsgard City^000000 has ended.";
-		mes " ";
-		mes "But the realm still needs brave souls.";
-		mes "Speak with the other guilds -- there is";
-		mes "always work for the willing.";
-		close;
-	}
-
-	// -- Already claimed check ------------------------------------
-	if (#WELCOME_CLAIMED) {
-		mes "[Asgard Welcomer]";
-		mes "^777777* She tilts her head, studying your";
-		mes "face for a moment, then breaks into";
-		mes "a warm smile of recognition. *^000000";
-		mes " ";
-		mes "Ah, " + strcharinfo(0) + "! I remember you.";
-		mes "You've already received your provisions";
-		mes "from the Founding Charter.";
-		mes " ";
-		mes "Go forth -- ^0000FF Asgard City ^000000 was built";
-		mes "by adventurers like you. Make us proud.";
-		close;
-	}
-
-	// -- Introduction ---------------------------------------------
-	mes "[Asgard Welcomer]";
+	mes "[Astrid]";
 	mes "^777777* A tall woman in Royal regalia";
-	mes "stands before the middle of";
-	mes "Prontera. Her eyes carry the weight of";
+	mes "stands at the heart of the tavern.";
+	mes "Her eyes carry the weight of";
 	mes "someone who has seen many adventurers";
 	mes "come and go -- but today, she looks at";
-	mes "you with unmistakable hope. *^000000";
-	next;
-
-	mes "[Asgard Welcomer]";
-	mes "Hail, traveller. My name is Astrid,";
-	mes "commander of the Founding Vanguard.";
-	mes " ";
-	mes "You stand in ^0000FF Prontera City ^000000 -- a realm";
-	mes "reborn from the ashes of the old world.";
-	mes "The Bifrost has opened once more, and";
-	mes "new heroes are being called to walk";
-	mes "the land of Midgard again.";
+	mes "you with a warm, knowing smile. *^000000";
 	next;
 
 	mes "[Astrid]";
-	mes "And you, " + strcharinfo(0) + "...";
-	mes "you are one of the ^FF8800 First Founders ^000000.";
+	mes "Welcome, " + strcharinfo(0) + ".";
 	mes " ";
-	mes "You answered the call before the gates";
-	mes "were even fully open. Before the forges";
-	mes "were lit. Before the first monster had";
-	mes "been slain on these new fields.";
+	mes "You've found your way to the 7th Heaven,";
+	mes "heart of ^0000FF Asgard City ^000000. Here, adventurers";
+	mes "of all walks gather to rest, resupply,";
+	mes "and prepare for the trials ahead.";
 	mes " ";
-	mes "That kind of courage deserves reward.";
-	next;
-
-	mes "[Astrid]";
-	mes "By order of the High Council, all who";
-	mes "signed the Founding Charter are granted";
-	mes "a ^00FF00 Vanguard Supply Package ^000000:";
-	mes " ";
-	mes "^00FF00* 10x HE Battle Manual^000000";
-	mes "  ^777777 (+100% Base EXP, 30 min each) ^000000";
-	mes "^00FF00 10x Job Battle Manual^000000";
-	mes "  ^777777 (+50% Job EXP, 30 min each) ^000000";
-	mes "^00FF00 10x HE Bubble Gum^000000";
-	mes "  ^777777 (+100% Drop Rate, 30 min each) ^000000";
-	mes "^00FF00* 1x Headgear of your choosing ^000000";
-	next;
-
-	// -- Headgear selection ---------------------------------------
-	mes "[Astrid]";
-	mes "Now then -- every founder is permitted";
-	mes "to choose a single piece of headgear";
-	mes "from the Vanguard armoury.";
-	mes " ";
-	mes "Each was forged for a different kind";
-	mes "of warrior. Choose wisely, for this";
-	mes "offer will not come again.";
+	mes "I am Astrid. I tend to this tavern and";
+	mes "those who pass through its doors.";
 	next;
 
 	.@choice = select(
-		"Apple of Archer (DEX +3)",
-		"Majestic Goat (ATK +5%)",
-		"Angel Wing (LUK +1, MDEF +3)",
-		"Evil Wing (STR +1, MDEF +3)"
+		"Give me a Heaven's Recall Scroll",
+		"Tell me about this place",
+		"I'm just passing through"
 	);
 
 	switch (.@choice) {
-		case 1: .@headgear = 2285; .@hname$ = "Apple of Archer"; break;
-		case 2: .@headgear = 2256; .@hname$ = "Majestic Goat";   break;
-		case 3: .@headgear = 2254; .@hname$ = "Angel Wing";       break;
-		case 4: .@headgear = 2255; .@hname$ = "Evil Wing";        break;
+		case 1:
+			// Check if already received one today (account-wide, daily)
+			if (gettime(DT_YDAY) == #HEAVEN_SCROLL_DATE) {
+				mes "[Astrid]";
+				mes "You've already received a scroll today.";
+				mes "Return tomorrow if you need another.";
+				close;
+			}
+
+			if (checkweight(50010, 1) == 0) {
+				mes "[Astrid]";
+				mes "Your inventory is too full for a scroll.";
+				mes "Make some space and return.";
+				close;
+			}
+
+			getitem 50010, 1;
+			set #HEAVEN_SCROLL_DATE, gettime(DT_YDAY);
+
+			mes "[Astrid]";
+			mes "^777777* She reaches beneath the counter";
+			mes "and produces a shimmering scroll. *^000000";
+			mes " ";
+			mes "Here you are -- a Heaven's Recall Scroll.";
+			mes " ";
+			mes "Use it anytime you wish to return";
+			mes "to the 7th Heaven, no matter where";
+			mes "your adventures take you.";
+			mes " ";
+			mes "May it guide you home.";
+			close;
+
+		case 2:
+			mes "[Astrid]";
+			mes "The 7th Heaven is many things:";
+			mes " ";
+			mes "^00FF00 A sanctuary from the wilds ^000000";
+			mes "  — Rest and restore yourself";
+			mes " ";
+			mes "^00FF00 A place of commerce ^000000";
+			mes "  — Buy, sell, and trade freely";
+			mes " ";
+			mes "^00FF00 A gathering place ^000000";
+			mes "  — Meet others who share your goals";
+			mes " ";
+			mes "^00FF00 A beginning for all adventurers ^000000";
+			mes "  — New and veteran explorers alike";
+			mes " ";
+			mes "Whether you seek supplies, companionship,";
+			mes "or simply a respite from danger,";
+			mes "you will find it here.";
+			close;
+
+		case 3:
+			mes "[Astrid]";
+			mes "Safe travels, then.";
+			mes " ";
+			mes "If you find yourself lost or weary,";
+			mes "the 7th Heaven will always be here.";
+			close;
 	}
-
-	// -- Confirmation ---------------------------------------------
-	mes "[Astrid]";
-	mes "^777777* She carefully lifts a";
-	mes "^0000FF" + .@hname$ + "^777777 from the rack";
-	mes "and holds it out to you. *^000000";
-	mes " ";
-	mes "The ^0000FF " + .@hname$ + " ^000000. A fine choice.";
-	mes " ";
-	mes "Once I hand these over, the charter";
-	mes "is signed and sealed -- ^FF0000 no second";
-	mes "claims, no exceptions ^000000.";
-	mes " ";
-	mes "Are you certain, " + strcharinfo(0) + "?";
-	next;
-
-	if (select("I'm ready. Hand them over.", "Wait -- let me think about this.") == 2) {
-		mes "[Astrid]";
-		mes "^777777* She nods and returns the headgear";
-		mes "to the rack with practiced care. *^000000";
-		mes " ";
-		mes "Take your time. The charter remains";
-		mes "open until the end of the founding";
-		mes "season. I'll be right here.";
-		close;
-	}
-
-	// -- Inventory space check ------------------------------------
-	if (checkweight(12478, 10) == 0) {
-		mes "[Astrid]";
-		mes "^777777* She eyes your overstuffed bags";
-		mes "with a raised eyebrow.*^000000";
-		mes " ";
-		mes "Adventurer, I can't fit a feather in";
-		mes "those packs, let alone a full supply";
-		mes "kit. Clear some space and return.";
-		close;
-	}
-
-	// -- Grant items ----------------------------------------------
-	getitem 12411, 10;        // HE Battle Manual
-	getitem 14592, 10;        // Job Battle Manual (Job_Manual50)
-	getitem 12412, 10;        // HE Bubble Gum
-	getitem .@headgear, 1;    // Chosen headgear
-
-	// -- Mark claimed (account-scope permanent variable) ---------
-	set #WELCOME_CLAIMED, 1;
-
-	// -- Receipt --------------------------------------------------
-	mes "[Astrid]";
-	mes "^777777* She presses the supplies firmly";
-	mes "into your hands, then steps back and";
-	mes "gives you a crisp salute.*^000000";
-	mes " ";
-	mes "It's done. Your provisions:";
-	mes " ";
-	mes "^00FF00 10x HE Battle Manual ^000000";
-	mes "^00FF00 10x Job Battle Manual ^000000";
-	mes "^00FF00 10x HE Bubble Gum ^000000";
-	mes "^00FF00 1x " + .@hname$ + " ^000000";
-	next;
-
-	mes "[Astrid]";
-	mes "The road ahead is long, " + strcharinfo(0) + ".";
-	mes "Monsters roam the fields. Dungeons";
-	mes "stir with ancient darkness. And the";
-	mes "gods themselves watch from Valhalla.";
-	mes " ";
-	mes "But you are a Founder of ^0000FF Asgard City ^000000.";
-	mes "That means something.";
-	mes " ";
-	mes "^777777 May the All-Father guide your blade. ^000000";
-	close;
 }

@@ -1,0 +1,10 @@
+// ==========================================================================
+// 7th Heaven Tavern Map Flags
+// ==========================================================================
+
+7thheaven	mapflag	nosave		SavePoint
+7thheaven	mapflag	nomemo
+7thheaven	mapflag	noteleport
+7thheaven	mapflag	nowarpto
+7thheaven	mapflag	nobranch
+7thheaven	mapflag	nopenalty

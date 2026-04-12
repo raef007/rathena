@@ -654,14 +654,16 @@ void trade_tradecommit(map_session_data *sd)
 
 	if( sd->deal.zeny ) {
 		pc_payzeny(sd ,sd->deal.zeny, LOG_TYPE_TRADE, tsd->status.char_id);
-		pc_getzeny(tsd,sd->deal.zeny,LOG_TYPE_TRADE, sd->status.char_id);
+		// Apply P2P tax: recipient gets 80% (20% sink)
+		pc_getzeny(tsd,(int32)(sd->deal.zeny * TAX_P2P_RATE),LOG_TYPE_TRADE, sd->status.char_id);
 		sd->deal.zeny = 0;
 
 	}
 
 	if ( tsd->deal.zeny) {
 		pc_payzeny(tsd,tsd->deal.zeny,LOG_TYPE_TRADE, sd->status.char_id);
-		pc_getzeny(sd ,tsd->deal.zeny,LOG_TYPE_TRADE, tsd->status.char_id);
+		// Apply P2P tax: recipient gets 80% (20% sink)
+		pc_getzeny(sd ,(int32)(tsd->deal.zeny * TAX_P2P_RATE),LOG_TYPE_TRADE, tsd->status.char_id);
 		tsd->deal.zeny = 0;
 	}
 

@@ -81,6 +81,10 @@ void map_msg_reload(void);
 #define MAX_VENDING 12
 #define MAX_MAP_SIZE 512*512 	// Wasn't there something like this already? Can't find it.. [Shinryo]
 
+// Taxation System
+#define TAX_NPC_SELL_RATE   0.30  // Players receive 30% when selling to NPCs (70% tax)
+#define TAX_P2P_RATE        0.80  // Recipients receive 80% in player-to-player transactions (20% tax sink)
+
 //The following system marks a different job ID system used by the map server,
 //which makes a lot more sense than the normal one. [Skotlex]
 //

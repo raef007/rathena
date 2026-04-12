@@ -3076,8 +3076,11 @@ uint8 npc_selllist(map_session_data* sd, int32 list_length, const PACKET_CZ_PC_S
 
 		if (battle_config.rental_item_novalue && sd->inventory.u.items_inventory[idx].expire_time)
 			value = 0;
-		else
-			value = pc_modifysellvalue(sd, sd->inventory_data[idx]->value_sell);
+		else {
+			int32 taxed_value = (int32)(sd->inventory_data[idx]->value_sell * TAX_NPC_SELL_RATE);
+			taxed_value = std::max(1, taxed_value);  // Ensure minimum 1 zeny
+			value = pc_modifysellvalue(sd, taxed_value);
+		}
 
 		z+= (double)value*amount;
 	}

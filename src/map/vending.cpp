@@ -108,6 +108,9 @@ static double vending_calc_tax(map_session_data *sd, double zeny)
 	if (battle_config.vending_tax && zeny >= battle_config.vending_tax_min)
 		zeny -= zeny * (battle_config.vending_tax / 10000.);
 
+	// Apply P2P transaction tax: seller receives 80% (20% sink)
+	zeny = zeny * TAX_P2P_RATE;
+
 	return zeny;
 }
 

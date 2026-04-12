@@ -1,0 +1,88 @@
+// ============================================================
+// Treasure Hunt Event Controller
+// ============================================================
+// Spawns a Treasure Box boss on a random field map every 12 hours
+// Map becomes PK-enabled for 30 minutes
+// Boss gives 200 Cash Points when killed
+// ============================================================
+
+-	script	TreasureHunt	-1,{
+
+OnInit:
+	// Field map pool - customize as needed
+	setarray .maps$[0],
+		"pay_fild01", "pay_fild02", "pay_fild03", "pay_fild04",
+		"pay_fild05", "pay_fild06", "pay_fild07", "pay_fild08",
+		"mjolnir_01", "mjolnir_02", "mjolnir_03", "mjolnir_04",
+		"gef_fild00", "gef_fild01", "gef_fild02", "gef_fild03",
+		"prt_fild01", "prt_fild02", "prt_fild03", "prt_fild04",
+		"prt_fild05", "prt_fild06", "prt_fild07", "prt_fild08",
+		"prt_fild09", "prt_fild10", "prt_fild11",
+		"alberta_e", "moc_fild01", "moc_fild02", "moc_fild03",
+		"cmd_fild01", "cmd_fild02", "cmd_fild03";
+	.map_count = 33;
+	end;
+
+OnClock0800:
+OnClock2000:
+	if ($TH_active) {
+		end;  // Safety: don't double-spawn
+	}
+	callsub S_StartEvent;
+	end;
+
+S_StartEvent:
+	// Pick random map
+	.@idx = rand(.map_count);
+	$TH_map$ = .maps$[.@idx];
+	$TH_active = 1;
+
+	// Enable PK on chosen map
+	setmapflag $TH_map$, mf_pvp;
+	setmapflag $TH_map$, mf_pvp_noguild;
+	setmapflag $TH_map$, mf_pvp_noparty;
+
+	// Spawn the Treasure Box at a random passable coordinate
+	$TH_mobgid = monster($TH_map$, 0, 0, "Treasure Box", 3999, 1, "TreasureHunt::OnTreasureBoxKilled");
+
+	// Server-wide announcement
+	announce "[ Treasure Hunt ] A Treasure Box has appeared on " + $TH_map$ + "! It will vanish in 30 minutes. The map is now PK!", bc_all|bc_yellow;
+
+	// 30-minute despawn timer
+	initnpctimer;
+	return;
+
+OnTimer1800000:  // 30 minutes = 1,800,000 ms
+	if (!$TH_active) end;
+	callsub S_EndEvent, 0;
+	end;
+
+OnTreasureBoxKilled:
+	if (!$TH_active) end;
+
+	// Award winner
+	set #CASHPOINTS, #CASHPOINTS + 200;
+	announce "[ Treasure Hunt ] " + strcharinfo(PC_NAME) + " has slain the Treasure Box and claimed 200 Cash Points!", bc_all|bc_yellow;
+
+	callsub S_EndEvent, 1;
+	end;
+
+S_EndEvent:
+	.@killed = getarg(0);  // 1 = killed, 0 = expired
+	$TH_active = 0;
+
+	// Remove PK flags
+	removemapflag $TH_map$, mf_pvp;
+	removemapflag $TH_map$, mf_pvp_noguild;
+	removemapflag $TH_map$, mf_pvp_noparty;
+
+	// If expired (not killed), force-remove the mob
+	if (!.@killed) {
+		killmonsterall $TH_map$;
+	}
+
+	stopnpctimer;
+	$TH_map$ = "";
+	$TH_mobgid = 0;
+	return;
+}

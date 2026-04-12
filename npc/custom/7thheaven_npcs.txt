@@ -1,0 +1,17 @@
+// ==========================================================================
+// 7th Heaven Tavern — NPC Framework
+// ==========================================================================
+// Non-Astrid NPCs only. Astrid (Welcome NPC) is in welcome_npc.txt.
+// Coordinates are placeholders — update once map is loaded and tested.
+// ==========================================================================
+
+// Return warp (exit portal back to Prontera):
+7thheaven,100,100,0	warp	7thHeaven_Exit	2,2,prontera,150,192
+
+// Placeholder: Tavern Keeper (for flavor/future functionality)
+7thheaven,95,95,4	script	Tavern Keeper#7th	4_M_INNERMAN,{
+	mes "[Tavern Keeper]";
+	mes "Welcome to the 7th Heaven!";
+	mes "Can I get you anything to drink?";
+	close;
+}

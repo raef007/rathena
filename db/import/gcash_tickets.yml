@@ -1,0 +1,115 @@
+# GCash Ticket Items
+# 7 Fibonacci denominations: 1, 2, 3, 5, 8, 13, 21
+# Non-tradeable, non-storable, non-droppable
+
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+  - Id: 50001
+    AegisName: GCash_Ticket_1
+    Name: GCash Ticket (1)
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+
+  - Id: 50002
+    AegisName: GCash_Ticket_2
+    Name: GCash Ticket (2)
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+
+  - Id: 50003
+    AegisName: GCash_Ticket_3
+    Name: GCash Ticket (3)
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+
+  - Id: 50004
+    AegisName: GCash_Ticket_5
+    Name: GCash Ticket (5)
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+
+  - Id: 50005
+    AegisName: GCash_Ticket_8
+    Name: GCash Ticket (8)
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+
+  - Id: 50006
+    AegisName: GCash_Ticket_13
+    Name: GCash Ticket (13)
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+
+  - Id: 50007
+    AegisName: GCash_Ticket_21
+    Name: GCash Ticket (21)
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+
+Footer:

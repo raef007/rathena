@@ -1,0 +1,50 @@
+# Treasure Hunt Event - Custom Mob
+# Treasure Box Boss (ID 3999) — stationary boss, no movement, no attacks
+
+Header:
+  Type: MOB_DB
+  Version: 5
+
+Body:
+  - Id: 3999
+    AegisName: TREASURE_BOX10
+    Name: Asgard Treasure Box
+    Level: 99
+    Hp: 500000
+    Sp: 0
+    BaseExp: 0
+    JobExp: 0
+    Attack: 150
+    Attack2: 200
+    Defense: 50
+    MagicDefense: 30
+    Str: 50
+    Agi: 30
+    Vit: 80
+    Int: 30
+    Dex: 80
+    Luk: 30
+    AttackRange: 1
+    ChaseRange: 0
+    Size: Medium
+    Race: Formless
+    Element: Neutral
+    ElementLevel: 1
+    WalkSpeed: 0
+    AttackDelay: 2000
+    AttackMotion: 1000
+    DamageMotion: 500
+    Class: Normal
+    Ai: 04
+    Modes:
+      CanMove: false
+      Aggressive: false
+      Assist: false
+      CanAttack: false
+      Detector: false
+      CastSensorIdle: false
+      Boss: true
+      Plant: false
+      CanSelfMove: false
+
+Footer:

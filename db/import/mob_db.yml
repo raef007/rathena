@@ -1,0 +1,10 @@
+# Custom Monster Database Entries
+# Asgard City Features
+
+Header:
+  Type: MOB_DB
+  Version: 5
+
+Footer:
+  Imports:
+  - Path: db/import/treasure_hunt_mob.yml
