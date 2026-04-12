@@ -7,13 +7,13 @@
 // Limit    : One scroll per day per account
 // ==========================================================================
 
-tavern,47,41,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
+tavern,47,41,4	script	Astrid	4_F_EDEN_MASTER,{
 
 	// -- Welcome message for new visitors --
 
 	mes "[Astrid]";
-	mes "^777777* A tall woman in Royal regalia";
-	mes "stands at the heart of the tavern.";
+	mes "^777777* A tall woman stands at the";
+	mes "heart of the tavern.";
 	mes "Her eyes carry the weight of";
 	mes "someone who has seen many adventurers";
 	mes "come and go -- but today, she looks at";

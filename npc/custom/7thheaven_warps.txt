@@ -3,7 +3,7 @@
 // ==========================================================================
 
 // Warp object (invisible tile trigger):
-prontera,165,168,0	warp	7thHeaven_Gate	2,2,tavern,37,39
+prontera,165,168,0	warp	7thHeaven_Gate	2,2,tavern,40,39
 
 // Optional: visible NPC next to it with flavor text:
 prontera,162,283,4	script	7th Heaven Portal#prt	W_PORTALTYPE,{
