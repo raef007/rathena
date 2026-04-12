@@ -6,10 +6,10 @@
 // ==========================================================================
 
 // Return warp (exit portal back to Prontera):
-tavern,100,100,0	warp	7thHeaven_Exit	2,2,prontera,150,192
+tavern,37,39,0	warp	7thHeaven_Exit	2,2,prontera,165,168
 
 // Placeholder: Tavern Keeper (for flavor/future functionality)
-tavern,95,95,4	script	Tavern Keeper#7th	4_M_INNERMAN,{
+tavern,58,48,4	script	Tavern Keeper#7th	4_M_INNERMAN,{
 	mes "[Tavern Keeper]";
 	mes "Welcome to the 7th Heaven!";
 	mes "Can I get you anything to drink?";

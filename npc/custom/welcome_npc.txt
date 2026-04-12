@@ -7,7 +7,7 @@
 // Limit    : One scroll per day per account
 // ==========================================================================
 
-tavern,100,105,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
+tavern,47,41,4	script	Asgard Welcomer	4_F_EDEN_MASTER,{
 
 	// -- Welcome message for new visitors --
 
