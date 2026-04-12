@@ -1,2 +1,2 @@
 // Custom map index entries — loaded automatically after main map_index.txt
-7thheaven
+tavern
