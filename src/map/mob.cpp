@@ -3436,8 +3436,8 @@ int32 mob_dead(mob_data *md, block_list *src, int32 type)
 
 	// GCash Ticket Drop Hook (0.5% chance per kill, value-based daily cap of 1000)
 	if (first_sd != nullptr && !(type & 1)) {  // Check killer exists and not a special kill
-		// 0.5% chance = 1 in 200
-		if (rnd_chance(5000, 1000000u)) {  // 0.5% = 5000/1000000
+		// 0.5% chance = 5000/1000000
+		if (rnd_chance(5000u, 1000000u)) {
 			// GCash ticket item IDs (Fibonacci values: 1,2,3,5,8,13,21)
 			static const t_itemid gcash_items[] = { 50001, 50002, 50003, 50004, 50005, 50006, 50007 };
 			static const int32 gcash_values[] = { 1, 2, 3, 5, 8, 13, 21 };
@@ -3449,27 +3449,22 @@ int32 mob_dead(mob_data *md, block_list *src, int32 type)
 			static int32 gcash_last_day = 0;
 
 			// Check if we've crossed into a new day
-			int32 current_day = (int32)(time(NULL) / 86400);  // Days since epoch
+			int32 current_day = (int32)(time(NULL) / 86400);
 			if (current_day != gcash_last_day) {
 				gcash_daily_value = 0;
 				gcash_last_day = current_day;
 			}
 
-			// Check if daily cap is reached
-			if (gcash_daily_value >= gcash_daily_cap) {
-				// Cap reached, no drop
-			} else {
+			if (gcash_daily_value < gcash_daily_cap) {
 				int32 picked = rnd() % num_denominations;
-				t_itemid item_id = gcash_items[picked];
 				int32 item_value = gcash_values[picked];
 
-				// Check if this drop would exceed the cap
-				if (gcash_daily_value + item_value > gcash_daily_cap) {
-					// Would exceed cap, don't drop
-				} else {
-					// Try to add item to killer's inventory
-					if (pc_additem(first_sd, &item_id, 1, LOG_TYPE_PICKDROP_PLAYER) == 0) {
-						// Success - increment daily counter and announce
+				if (gcash_daily_value + item_value <= gcash_daily_cap) {
+					struct item tmp_item = {};
+					tmp_item.nameid = gcash_items[picked];
+					tmp_item.identify = 1;
+
+					if (pc_additem(first_sd, &tmp_item, 1, LOG_TYPE_PICKDROP_PLAYER) == 0) {
 						gcash_daily_value += item_value;
 						char msg[256];
 						snprintf(msg, sizeof(msg), "[ GCash ] %s found a GCash Ticket worth %d value! Lucky!",
