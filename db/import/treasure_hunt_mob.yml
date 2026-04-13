@@ -7,7 +7,7 @@ Header:
 
 Body:
   - Id: 24000
-    AegisName: TREASURE_BOX10
+    AegisName: ASGARD_TREASURE_BOX
     Name: Asgard Treasure Box
     Level: 99
     Hp: 500000
