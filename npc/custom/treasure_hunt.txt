@@ -4,6 +4,7 @@
 // Spawns a Treasure Box boss on a random field map every 12 hours
 // Map becomes PK-enabled for 30 minutes
 // Boss gives 200 Cash Points when killed
+// GM Commands: @treasurehunt [start|stop|on|off]  (GM level 60+)
 // ============================================================
 
 -	script	TreasureHunt	-1,{
@@ -21,13 +22,13 @@ OnInit:
 		"alberta_e", "moc_fild01", "moc_fild02", "moc_fild03",
 		"cmd_fild01", "cmd_fild02", "cmd_fild03";
 	.map_count = 33;
+	bindatcmd "treasurehunt", "TreasureHunt::OnAtCommand", 60, 99;
 	end;
 
 OnClock0800:
 OnClock2000:
-	if ($TH_active) {
-		end;  // Safety: don't double-spawn
-	}
+	if ($TH_DISABLED) end;
+	if ($TH_active) end;
 	callsub S_StartEvent;
 	end;
 
@@ -43,7 +44,7 @@ S_StartEvent:
 	setmapflag $TH_map$, mf_pvp_noparty;
 
 	// Spawn the Treasure Box at a random passable coordinate
-	$TH_mobgid = monster($TH_map$, 0, 0, "Treasure Box", 3999, 1, "TreasureHunt::OnTreasureBoxKilled");
+	$TH_mobgid = monster($TH_map$, 0, 0, "Treasure Box", 24000, 1, "TreasureHunt::OnTreasureBoxKilled");
 
 	// Server-wide announcement
 	announce "[ Treasure Hunt ] A Treasure Box has appeared on " + $TH_map$ + "! It will vanish in 30 minutes. The map is now PK!", bc_all|bc_yellow;
@@ -85,4 +86,32 @@ S_EndEvent:
 	$TH_map$ = "";
 	$TH_mobgid = 0;
 	return;
+
+OnAtCommand:
+	.@arg$ = atcmd_parameters$;
+	if (.@arg$ == "start") {
+		if ($TH_active) {
+			dispbottom "[Treasure Hunt] Event is already running on " + $TH_map$ + ".";
+			end;
+		}
+		callsub S_StartEvent;
+		dispbottom "[Treasure Hunt] Event force-started on " + $TH_map$ + ".";
+	} else if (.@arg$ == "stop") {
+		if (!$TH_active) {
+			dispbottom "[Treasure Hunt] No event is currently running.";
+			end;
+		}
+		callsub S_EndEvent, 0;
+		dispbottom "[Treasure Hunt] Event force-stopped.";
+	} else if (.@arg$ == "on") {
+		$TH_DISABLED = 0;
+		dispbottom "[Treasure Hunt] Scheduled events are now ENABLED.";
+	} else if (.@arg$ == "off") {
+		$TH_DISABLED = 1;
+		dispbottom "[Treasure Hunt] Scheduled events are now DISABLED.";
+	} else {
+		dispbottom "[Treasure Hunt] Status: " + ($TH_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($TH_active ? "YES (" + $TH_map$ + ")" : "NO");
+		dispbottom "[Treasure Hunt] Usage: @treasurehunt start | stop | on | off";
+	}
+	end;
 }

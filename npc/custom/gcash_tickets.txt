@@ -1,0 +1,53 @@
+// ============================================================
+// GCash Ticket Drop System
+// ============================================================
+// Drops GCash Tickets (items 50001-50007) when players kill mobs
+// Fibonacci denominations: 1, 2, 3, 5, 8, 13, 21 PHP
+// Daily value cap resets at midnight
+// GM Commands: @gcash [on|off]  (GM level 60+)
+// ============================================================
+
+-	script	GCashTickets	-1,{
+
+OnInit:
+	.daily_cap = 1000;	// Max total GCash value that can drop per day
+	bindatcmd "gcash", "GCashTickets::OnAtCommand", 60, 99;
+	end;
+
+OnMidnight:
+	$GCASH_DAILY_VALUE = 0;
+	end;
+
+OnNPCKillEvent:
+	if ($GCASH_DISABLED) end;
+	if ($GCASH_DAILY_VALUE >= .daily_cap) end;
+
+	// 90% drop rate for testing — change to: if (rand(200) > 0) end; for 0.5%
+	if (rand(100) >= 90) end;
+
+	setarray .@gcash_items[0], 50001, 50002, 50003, 50004, 50005, 50006, 50007;
+	setarray .@gcash_values[0], 1, 2, 3, 5, 8, 13, 21;
+	.@pick = rand(7);
+
+	if ($GCASH_DAILY_VALUE + .@gcash_values[.@pick] > .daily_cap) end;
+
+	getitem .@gcash_items[.@pick], 1;
+	$GCASH_DAILY_VALUE += .@gcash_values[.@pick];
+
+	announce "[ GCash ] " + strcharinfo(PC_NAME) + " found a GCash Ticket worth " + .@gcash_values[.@pick] + " PHP! Lucky!", bc_all|bc_yellow;
+	end;
+
+OnAtCommand:
+	.@arg$ = atcmd_parameters$;
+	if (.@arg$ == "on") {
+		$GCASH_DISABLED = 0;
+		dispbottom "[GCash] GCash ticket drops are now ENABLED.";
+	} else if (.@arg$ == "off") {
+		$GCASH_DISABLED = 1;
+		dispbottom "[GCash] GCash ticket drops are now DISABLED.";
+	} else {
+		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
+		dispbottom "[GCash] Usage: @gcash on | @gcash off";
+	}
+	end;
+}
