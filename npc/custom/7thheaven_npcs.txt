@@ -1,7 +1,7 @@
 // ==========================================================================
 // 7th Heaven Tavern — NPC Framework
 // ==========================================================================
-// Non-Astrid NPCs only. Astrid (Welcome NPC) is in welcome_npc.txt.
+// Non-Tiffy NPCs only. Tiffy (Welcome NPC) is in welcome_npc.txt.
 // Coordinates are placeholders — update once map is loaded and tested.
 // ==========================================================================
 

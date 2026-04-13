@@ -1,5 +1,5 @@
 # Treasure Hunt Event - Custom Mob
-# Treasure Box Boss (ID 3999) — stationary boss, no movement, no attacks
+# Treasure Box Boss (ID 24000) — stationary boss, no movement, no attacks
 
 Header:
   Type: MOB_DB

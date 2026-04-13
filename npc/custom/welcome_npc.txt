@@ -1,103 +1,222 @@
 // ==========================================================================
-// Welcome NPC - Tavern Welcome & Scroll Distribution
+// Welcome NPC - Tiffy (7th Heaven Rewards & Welcome)
 // ==========================================================================
-// Sprite   : 4_F_EDEN_MASTER  (Commander Arquien model)
-// Location : 7th Heaven Tavern
-// Purpose  : Welcome adventurers and provide Heaven's Recall Scroll
-// Limit    : One scroll per day per account
+// Sprite   : 4_F_EDEN_MASTER (Commander Arquien model)
+// Location : 7th Heaven Tavern (tavern map)
+// Purpose  : Welcome adventurers and distribute rewards
+// Rewards  : Pre-Registration (headgear) + Registration (starter pack)
 // ==========================================================================
 
-tavern,47,41,4	script	Astrid	4_F_EDEN_MASTER,{
+tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 
 	// -- Welcome message for new visitors --
 
-	mes "[Astrid]";
-	mes "^777777* A tall woman stands at the";
-	mes "heart of the tavern.";
-	mes "Her eyes carry the weight of";
-	mes "someone who has seen many adventurers";
-	mes "come and go -- but today, she looks at";
-	mes "you with a warm, knowing smile. *^000000";
+	mes "[Tiffy]";
+	mes "^777777* A cheerful young woman waves at you";
+	mes "from behind the tavern counter, her smile";
+	mes "bright enough to light the room. *^000000";
 	next;
 
-	mes "[Astrid]";
-	mes "Welcome, " + strcharinfo(0) + ".";
+	mes "[Tiffy]";
+	mes "Hiya, " + strcharinfo(0) + "~!";
 	mes " ";
-	mes "You've found your way to the 7th Heaven,";
-	mes "heart of ^0000FF Asgard City ^000000. Here, adventurers";
-	mes "of all walks gather to rest, resupply,";
-	mes "and prepare for the trials ahead.";
+	mes "Welcome to the 7th Heaven Tavern,";
+	mes "the heart of ^0000FF Asgard City ^000000!";
 	mes " ";
-	mes "I am Astrid. I tend to this tavern and";
-	mes "those who pass through its doors.";
+	mes "I'm Tiffy, and I'm here to make";
+	mes "sure every adventurer feels right";
+	mes "at home~";
 	next;
 
 	.@choice = select(
-		"Give me a Heaven's Recall Scroll",
+		"I heard you have something for me~",
 		"Tell me about this place",
 		"I'm just passing through"
 	);
 
 	switch (.@choice) {
+
 		case 1:
-			// Check if already received one today (account-wide, daily)
-			if (gettime(DT_YDAY) == #HEAVEN_SCROLL_DATE) {
-				mes "[Astrid]";
-				mes "You've already received a scroll today.";
-				mes "Return tomorrow if you need another.";
-				close;
+			// --- REWARD SUB-MENU ---
+			mes "[Tiffy]";
+			mes "Oh, rewards? You bet I do~!";
+			mes "Which one are you here for?";
+			next;
+
+			.@reward = select(
+				"I was one of the first!",
+				"I'm kind of new here",
+				"Never mind"
+			);
+
+			switch (.@reward) {
+
+				case 1:
+					// ===== PRE-REGISTRATION REWARD =====
+					// Check if already claimed (account-wide, permanent)
+					if (#PREREG_CLAIMED) {
+						mes "[Tiffy]";
+						mes "You already picked up your";
+						mes "pre-registration reward, silly~";
+						mes "No double-dipping!";
+						close;
+					}
+
+					// SQL check: login.created_at between 2026-04-01 and 2026-04-18
+					.@aid = getcharid(3);
+					.@eligible = 0;
+					query_sql("SELECT COUNT(*) FROM `login` WHERE `account_id` = " + .@aid + " AND `created_at` >= '2026-04-01 00:00:00' AND `created_at` < '2026-04-19 00:00:00'", .@eligible);
+
+					if (.@eligible < 1) {
+						mes "[Tiffy]";
+						mes "Hmm, I don't see your name on";
+						mes "the pre-registration list...";
+						mes " ";
+						mes "This reward is only for accounts";
+						mes "created between ^FF0000April 1st^000000";
+						mes "and ^FF0000April 18th, 2026^000000.";
+						close;
+					}
+
+					mes "[Tiffy]";
+					mes "Wow, you really were one of the first!";
+					mes "As a thank-you, you get to pick";
+					mes "one special headgear~";
+					mes " ";
+					mes "Choose wisely -- you only get one!";
+					next;
+
+					.@hg = select(
+						"Angel Wing",
+						"Evil Wing",
+						"Apple of Archer",
+						"Majestic Goat"
+					);
+
+					switch (.@hg) {
+						case 1: .@item_id = 2254; break;  // Angel Wing (Angelic_Chain)
+						case 2: .@item_id = 2255; break;  // Evil Wing (Satanic_Chain)
+						case 3: .@item_id = 2285; break;  // Apple of Archer
+						case 4: .@item_id = 2256; break;  // Majestic Goat (Magestic_Goat)
+					}
+
+					// Weight check
+					if (checkweight(.@item_id, 1) == 0) {
+						mes "[Tiffy]";
+						mes "Eek! Your bags are way too full!";
+						mes "Make some room and come back, okay~?";
+						close;
+					}
+
+					// Confirmation prompt
+					mes "[Tiffy]";
+					mes "You want the ^0000FF" + getitemname(.@item_id) + "^000000?";
+					mes "This is a one-time thing,";
+					mes "so make sure you're happy with it!";
+					next;
+
+					if (select("Yes, I'm sure!", "Wait, let me reconsider...") == 2) {
+						mes "[Tiffy]";
+						mes "No rush~ Come back whenever";
+						mes "you've made up your mind!";
+						close;
+					}
+
+					set #PREREG_CLAIMED, 1;
+					getitem .@item_id, 1;
+
+					mes "[Tiffy]";
+					mes "^777777* She reaches under the counter";
+					mes "and presents the headgear with a";
+					mes "little flourish~ *^000000";
+					mes " ";
+					mes "Here you go! Wear it with pride~";
+					mes "Thanks for being one of the first!";
+					close;
+
+				case 2:
+					// ===== REGISTRATION (WELCOME) REWARD =====
+					if (#WELCOME_CLAIMED) {
+						mes "[Tiffy]";
+						mes "You already got your welcome";
+						mes "starter pack~! No seconds!";
+						close;
+					}
+
+					// Weight/inventory check for 3 items:
+					// 30000 (weight 0), 30001 (weight 0), 50010 (weight 10)
+					if (checkweight(50010, 1) == 0) {
+						mes "[Tiffy]";
+						mes "Your inventory is stuffed to the brim!";
+						mes "Make some space and come back~";
+						close;
+					}
+
+					mes "[Tiffy]";
+					mes "Welcome to Asgard City~!";
+					mes "Here's a little starter pack";
+					mes "to help you on your adventures:";
+					mes " ";
+					mes "^00FF00- Auto-Battle Capsule^000000";
+					mes "^00FF00- Auto-Support Orb^000000";
+					mes "^00FF00- Heaven's Recall Scroll^000000";
+					mes " ";
+					mes "Use them wisely~!";
+					next;
+
+					set #WELCOME_CLAIMED, 1;
+					getitem 30000, 1;  // Auto-Battle Capsule
+					getitem 30001, 1;  // Auto-Support Orb
+					getitem 50010, 1;  // Heaven's Recall Scroll
+
+					mes "[Tiffy]";
+					mes "^777777* She slides three items across";
+					mes "the counter with a wink~ *^000000";
+					mes " ";
+					mes "There you go! The Recall Scroll will";
+					mes "bring you right back here whenever";
+					mes "you need it. It never runs out~!";
+					close;
+
+				case 3:
+					// --- Never mind ---
+					mes "[Tiffy]";
+					mes "No worries! Come back anytime~";
+					close;
 			}
-
-			if (checkweight(50010, 1) == 0) {
-				mes "[Astrid]";
-				mes "Your inventory is too full for a scroll.";
-				mes "Make some space and return.";
-				close;
-			}
-
-			getitem 50010, 1;
-			set #HEAVEN_SCROLL_DATE, gettime(DT_YDAY);
-
-			mes "[Astrid]";
-			mes "^777777* She reaches beneath the counter";
-			mes "and produces a shimmering scroll. *^000000";
-			mes " ";
-			mes "Here you are -- a Heaven's Recall Scroll.";
-			mes " ";
-			mes "Use it anytime you wish to return";
-			mes "to the 7th Heaven, no matter where";
-			mes "your adventures take you.";
-			mes " ";
-			mes "May it guide you home.";
-			close;
+			break;
 
 		case 2:
-			mes "[Astrid]";
-			mes "The 7th Heaven is many things:";
+			// --- ABOUT THIS PLACE ---
+			mes "[Tiffy]";
+			mes "The 7th Heaven Tavern is your";
+			mes "home base in Asgard City~!";
 			mes " ";
-			mes "^00FF00 A sanctuary from the wilds ^000000";
-			mes "  — Rest and restore yourself";
+			mes "^00FF00A sanctuary from the wilds^000000";
+			mes "  - Rest and restore yourself";
 			mes " ";
-			mes "^00FF00 A place of commerce ^000000";
-			mes "  — Buy, sell, and trade freely";
+			mes "^00FF00A place of commerce^000000";
+			mes "  - Buy, sell, and trade freely";
 			mes " ";
-			mes "^00FF00 A gathering place ^000000";
-			mes "  — Meet others who share your goals";
+			mes "^00FF00A gathering place^000000";
+			mes "  - Meet others who share your goals";
 			mes " ";
-			mes "^00FF00 A beginning for all adventurers ^000000";
-			mes "  — New and veteran explorers alike";
+			mes "^00FF00A beginning for all adventurers^000000";
+			mes "  - New and veteran alike~";
 			mes " ";
-			mes "Whether you seek supplies, companionship,";
-			mes "or simply a respite from danger,";
-			mes "you will find it here.";
+			mes "Whether you need supplies, friends,";
+			mes "or just a break from danger,";
+			mes "you'll find it all here!";
 			close;
 
 		case 3:
-			mes "[Astrid]";
-			mes "Safe travels, then.";
+			// --- FAREWELL ---
+			mes "[Tiffy]";
+			mes "Safe travels, adventurer~!";
 			mes " ";
-			mes "If you find yourself lost or weary,";
-			mes "the 7th Heaven will always be here.";
+			mes "If you ever get lost or tired,";
+			mes "the 7th Heaven will always";
+			mes "have a spot for you!";
 			close;
 	}
 }
