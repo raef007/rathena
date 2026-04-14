@@ -1,0 +1,264 @@
+# Custom Skill Modifications for Asgard City
+# This file overrides base skill definitions from db/re/skill_db.yml
+
+Header:
+  Type: SKILL_DB
+  Version: 4
+
+Body:
+  # Sharpshooting (Focused Arrow Strike) - Range set to 14 cells from caster
+  - Id: 382
+    Name: SN_SHARPSHOOTING
+    Description: Focused Arrow Strike
+    MaxLevel: 5
+    Type: Weapon
+    TargetType: Attack
+    DamageFlags:
+      Critical: true
+    Flags:
+      TargetTrap: true
+    Range: 14
+    Hit: Multi_Hit
+    HitCount: 1
+    Element: Weapon
+    SplashArea: 2
+    ActiveInstance: 14
+    CastTime: 500
+    AfterCastActDelay: 500
+    Cooldown: 150
+    FixedCastTime: 500
+    Requires:
+      SpCost:
+        - Level: 1
+          Amount: 16
+        - Level: 2
+          Amount: 18
+        - Level: 3
+          Amount: 20
+        - Level: 4
+          Amount: 22
+        - Level: 5
+          Amount: 24
+      Weapon:
+        Bow: true
+      Ammo:
+        Arrow: true
+      AmmoAmount: 1
+
+  # Mammonite - Zeny cost set to 100z on all levels
+  - Id: 42
+    Name: MC_MAMMONITE
+    Description: Mammonite
+    MaxLevel: 10
+    Type: Weapon
+    TargetType: Attack
+    Flags:
+      AllowOnMado: true
+    Range: -1
+    Hit: Single
+    HitCount: 1
+    Element: Weapon
+    CopyFlags:
+      Skill:
+        Plagiarism: true
+        Reproduce: true
+    Requires:
+      SpCost: 5
+      ZenyCost:
+        - Level: 1
+          Amount: 100
+        - Level: 2
+          Amount: 100
+        - Level: 3
+          Amount: 100
+        - Level: 4
+          Amount: 100
+        - Level: 5
+          Amount: 100
+        - Level: 6
+          Amount: 100
+        - Level: 7
+          Amount: 100
+        - Level: 8
+          Amount: 100
+        - Level: 9
+          Amount: 100
+        - Level: 10
+          Amount: 100
+
+  # Blessing - Duration increased to 10 minutes (600000ms) for all levels
+  - Id: 34
+    Name: AL_BLESSING
+    Description: Blessing
+    MaxLevel: 10
+    Type: Magic
+    TargetType: Support
+    DamageFlags:
+      NoDamage: true
+    Range: 9
+    Hit: Single
+    HitCount: 1
+    Duration1:
+      - Level: 1
+        Time: 600000
+      - Level: 2
+        Time: 600000
+      - Level: 3
+        Time: 600000
+      - Level: 4
+        Time: 600000
+      - Level: 5
+        Time: 600000
+      - Level: 6
+        Time: 600000
+      - Level: 7
+        Time: 600000
+      - Level: 8
+        Time: 600000
+      - Level: 9
+        Time: 600000
+      - Level: 10
+        Time: 600000
+    Requires:
+      SpCost:
+        - Level: 1
+          Amount: 28
+        - Level: 2
+          Amount: 32
+        - Level: 3
+          Amount: 36
+        - Level: 4
+          Amount: 40
+        - Level: 5
+          Amount: 44
+        - Level: 6
+          Amount: 48
+        - Level: 7
+          Amount: 52
+        - Level: 8
+          Amount: 56
+        - Level: 9
+          Amount: 60
+        - Level: 10
+          Amount: 64
+    Status: Blessing
+
+  # Increase Agility - Duration increased to 10 minutes (600000ms) for all levels
+  - Id: 29
+    Name: AL_INCAGI
+    Description: Increase AGI
+    MaxLevel: 10
+    Type: Magic
+    TargetType: Support
+    DamageFlags:
+      NoDamage: true
+    Range: 9
+    Hit: Single
+    HitCount: 1
+    CastTime: 800
+    AfterCastActDelay: 400
+    Duration1:
+      - Level: 1
+        Time: 600000
+      - Level: 2
+        Time: 600000
+      - Level: 3
+        Time: 600000
+      - Level: 4
+        Time: 600000
+      - Level: 5
+        Time: 600000
+      - Level: 6
+        Time: 600000
+      - Level: 7
+        Time: 600000
+      - Level: 8
+        Time: 600000
+      - Level: 9
+        Time: 600000
+      - Level: 10
+        Time: 600000
+    FixedCastTime: 200
+    Requires:
+      HpCost: 15
+      SpCost:
+        - Level: 1
+          Amount: 18
+        - Level: 2
+          Amount: 21
+        - Level: 3
+          Amount: 24
+        - Level: 4
+          Amount: 27
+        - Level: 5
+          Amount: 30
+        - Level: 6
+          Amount: 33
+        - Level: 7
+          Amount: 36
+        - Level: 8
+          Amount: 39
+        - Level: 9
+          Amount: 42
+        - Level: 10
+          Amount: 45
+    Status: IncreaseAgi
+
+  # Aspersio - Duration increased to 30 minutes (1800000ms); consumes 5 Holy Water
+  - Id: 68
+    Name: PR_ASPERSIO
+    Description: Aspersio
+    MaxLevel: 5
+    Type: Magic
+    TargetType: Support
+    DamageFlags:
+      NoDamage: true
+      IgnoreElement: true
+      IgnoreDefense: true
+    Range: 9
+    Hit: Single
+    HitCount: 1
+    Element: Holy
+    CopyFlags:
+      Skill:
+        Plagiarism: true
+        Reproduce: true
+    AfterCastActDelay: 2000
+    Duration1:
+      - Level: 1
+        Time: 1800000
+      - Level: 2
+        Time: 1800000
+      - Level: 3
+        Time: 1800000
+      - Level: 4
+        Time: 1800000
+      - Level: 5
+        Time: 1800000
+    Requires:
+      SpCost:
+        - Level: 1
+          Amount: 14
+        - Level: 2
+          Amount: 18
+        - Level: 3
+          Amount: 22
+        - Level: 4
+          Amount: 26
+        - Level: 5
+          Amount: 30
+      ItemCost:
+        - Item: Holy_Water
+          Amount: 5
+    Status: Aspersio
+
+  # Abracadabra - DISABLED (MaxLevel set to 0)
+  - Id: 290
+    Name: SA_ABRACADABRA
+    Description: Hocus-pocus
+    MaxLevel: 0
+
+  # Greed - DISABLED (MaxLevel set to 0)
+  - Id: 1013
+    Name: BS_GREED
+    MaxLevel: 0

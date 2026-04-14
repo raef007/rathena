@@ -39,3 +39,16 @@
 Header:
   Type: PLAYER_GROUP_DB
   Version: 1
+
+Body:
+  - Id: 0
+    Name: Player
+    Level: 0
+    Commands:
+      changedress: true
+      resurrect: true
+      autotrade: true
+    Permissions:
+      can_trade: true
+      can_party: true
+      attendance: true

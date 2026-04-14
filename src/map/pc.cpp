@@ -5680,7 +5680,7 @@ int32 pc_modifybuyvalue(const map_session_data* sd, int32 orig_value )
 int32 pc_modifysellvalue( const map_session_data* sd, int32 orig_value )
 {
 	int32 skill,val = orig_value,rate = 0;
-	if((skill=pc_checkskill(sd,MC_OVERCHARGE))>0)	//OverCharge
+	if((skill=pc_checkskill(sd,MC_OVERCHARGE))>0 && sd->status.base_level >= 75)	//OverCharge - requires base level 75
 		rate = 5+skill*2-((skill==10)? 1:0);
 	if(rate)
 		val = (int32)((double)orig_value*(double)(100+rate)/100.);

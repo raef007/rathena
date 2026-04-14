@@ -115,3 +115,9 @@ max_third_parameter: 99
 max_third_trans_parameter: 99
 max_baby_third_parameter: 80
 max_extended_parameter: 99
+
+//-----------
+// player.conf
+//-----------
+// Push Cart provides 10,000 cart weight
+max_cart_weight: 10000

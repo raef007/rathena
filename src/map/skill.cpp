@@ -6510,6 +6510,19 @@ static int32 skill_unit_onplace(skill_unit *unit, block_list *bl, t_tick tick)
 			break;
 
 		case UNT_QUAGMIRE:
+			// Custom: Quagmire cannot affect the caster, party members, or guild members
+			if( bl->id == ss->id )
+				break; // Skip caster
+			if( ss->type == BL_PC && bl->type == BL_PC ) {
+				map_session_data *qm_sd = BL_CAST(BL_PC, ss);
+				map_session_data *qm_tsd = BL_CAST(BL_PC, bl);
+				if( qm_sd && qm_tsd ) {
+					if( qm_sd->status.party_id > 0 && qm_sd->status.party_id == qm_tsd->status.party_id )
+						break; // Skip party members
+					if( qm_sd->status.guild_id > 0 && qm_sd->status.guild_id == qm_tsd->status.guild_id )
+						break; // Skip guild members
+				}
+			}
 			if( !sce && battle_check_target(unit,bl,sg->target_flag) > 0 )
 				sc_start4(ss, bl,type,100,sg->skill_lv,sg->group_id,0,0,sg->limit);
 			break;
