@@ -2,22 +2,70 @@
 // VIP Login Indicator
 // ==========================================================================
 // Shows VIP status and remaining time to the player on login.
-// Only the player can see the message (dispbottom).
+// Applies SC_LIFEINSURANCE as a persistent VIP buff icon + death item-drop protection.
+// GM Commands:     @gmvip <days>   (GM level 60+ — bypasses @vip GM restriction)
+// Player Commands: @vipstatus      (any player — check status anytime)
 // ==========================================================================
 
 -	script	VIP_Login_Indicator	-1,{
+
+OnInit:
+	bindatcmd "gmvip", "VIP_Login_Indicator::OnGmVip", 60, 99;
+	bindatcmd "vipstatus", "VIP_Login_Indicator::OnVipStatus", 0, 99;
 	end;
 
 OnPCLoginEvent:
+	if (!vip_status(VIP_STATUS_ACTIVE)) end;
+	.@remaining = vip_status(VIP_STATUS_REMAINING);
+	.@days  = .@remaining / 86400;
+	.@hours = (.@remaining % 86400) / 3600;
+	.@mins  = (.@remaining % 3600) / 60;
+	dispbottom "────────────────────────────────────";
+	dispbottom "★ VIP Status: ACTIVE";
+	dispbottom "  Time remaining: " + .@days + "d " + .@hours + "h " + .@mins + "m";
+	dispbottom "────────────────────────────────────";
+	// SC_LIFEINSURANCE: VIP buff icon + death item-drop protection
+	// Duration capped at 2,000,000,000 ms (~23 days) to avoid int32 overflow
+	if (.@remaining > 2000000) {
+		sc_start SC_LIFEINSURANCE, 2000000000, 1;
+	} else {
+		sc_start SC_LIFEINSURANCE, .@remaining * 1000, 1;
+	}
+	end;
+
+OnGmVip:
+	.@days_in = atoi(atcmd_parameters$);
+	if (.@days_in == 0) {
+		dispbottom "[GM VIP] Usage: @gmvip <days>  (e.g. @gmvip 30 or @gmvip -7 to remove time)";
+		dispbottom "[GM VIP] Current status: " + (vip_status(VIP_STATUS_ACTIVE) ? "ACTIVE" : "INACTIVE");
+		end;
+	}
+	vip_time (.@days_in * 1440);
+	if (vip_status(VIP_STATUS_ACTIVE)) {
+		.@r = vip_status(VIP_STATUS_REMAINING);
+		.@d = .@r / 86400;
+		.@h = (.@r % 86400) / 3600;
+		dispbottom "[GM VIP] VIP applied. Active for " + .@d + "d " + .@h + "h.";
+		if (.@r > 2000000) {
+			sc_start SC_LIFEINSURANCE, 2000000000, 1;
+		} else {
+			sc_start SC_LIFEINSURANCE, .@r * 1000, 1;
+		}
+	} else {
+		dispbottom "[GM VIP] VIP time removed.";
+		sc_end SC_LIFEINSURANCE;
+	}
+	end;
+
+OnVipStatus:
 	if (vip_status(VIP_STATUS_ACTIVE)) {
 		.@remaining = vip_status(VIP_STATUS_REMAINING);
 		.@days  = .@remaining / 86400;
 		.@hours = (.@remaining % 86400) / 3600;
 		.@mins  = (.@remaining % 3600) / 60;
-		dispbottom "────────────────────────────────────";
-		dispbottom "★ VIP Status: ACTIVE";
-		dispbottom "  Time remaining: " + .@days + "d " + .@hours + "h " + .@mins + "m";
-		dispbottom "────────────────────────────────────";
+		dispbottom "[ VIP ] Status: ACTIVE - " + .@days + "d " + .@hours + "h " + .@mins + "m remaining";
+	} else {
+		dispbottom "[ VIP ] Status: INACTIVE - Use a VIP Pass to activate.";
 	}
 	end;
 }
