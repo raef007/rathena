@@ -88,7 +88,7 @@ S_EndEvent:
 	return;
 
 OnAtCommand:
-	.@arg$ = atcmd_parameters$;
+	.@arg$ = .@atcmd_parameters$;
 	if (.@arg$ == "start") {
 		if ($TH_active) {
 			dispbottom "[Treasure Hunt] Event is already running on " + $TH_map$ + ".";

@@ -34,25 +34,19 @@ OnPCLoginEvent:
 	end;
 
 OnGmVip:
-	.@days_in = atoi(atcmd_parameters$);
+	.@days_in = atoi(.@atcmd_parameters$);
 	if (.@days_in == 0) {
 		dispbottom "[GM VIP] Usage: @gmvip <days>  (e.g. @gmvip 30 or @gmvip -7 to remove time)";
-		dispbottom "[GM VIP] Current status: " + (vip_status(VIP_STATUS_ACTIVE) ? "ACTIVE" : "INACTIVE");
+		dispbottom "[GM VIP] Note: VIP status takes effect after relog.";
 		end;
 	}
 	vip_time (.@days_in * 1440);
-	if (vip_status(VIP_STATUS_ACTIVE)) {
-		.@r = vip_status(VIP_STATUS_REMAINING);
-		.@d = .@r / 86400;
-		.@h = (.@r % 86400) / 3600;
-		dispbottom "[GM VIP] VIP applied. Active for " + .@d + "d " + .@h + "h.";
-		if (.@r > 2000000) {
-			sc_start SC_LIFEINSURANCE, 2000000000, 1;
-		} else {
-			sc_start SC_LIFEINSURANCE, .@r * 1000, 1;
-		}
+	// vip_time is async — do not check vip_status() here; relog required for sd->vip.enabled update
+	if (.@days_in > 0) {
+		dispbottom "[GM VIP] " + .@days_in + " day(s) of VIP added. Relog to activate benefits.";
+		sc_start SC_LIFEINSURANCE, 2000000000, 1;
 	} else {
-		dispbottom "[GM VIP] VIP time removed.";
+		dispbottom "[GM VIP] VIP time reduced by " + (-1 * .@days_in) + " day(s). Relog to deactivate.";
 		sc_end SC_LIFEINSURANCE;
 	}
 	end;

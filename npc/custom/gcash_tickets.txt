@@ -38,7 +38,7 @@ OnNPCKillEvent:
 	end;
 
 OnAtCommand:
-	.@arg$ = atcmd_parameters$;
+	.@arg$ = .@atcmd_parameters$;
 	if (.@arg$ == "on") {
 		$GCASH_DISABLED = 0;
 		dispbottom "[GCash] GCash ticket drops are now ENABLED.";
