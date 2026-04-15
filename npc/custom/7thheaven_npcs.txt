@@ -209,7 +209,7 @@ OnInit:
 // ==========================================================================
 // Innkeeper Mara
 // ==========================================================================
-tavern,62,44,4	script	Innkeeper Mara#7th	4_F_INNMAN,{
+tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 
 	mes "[Innkeeper Mara]";
 	mes "^777777* A warm woman behind the front";
@@ -300,7 +300,7 @@ tavern,62,44,4	script	Innkeeper Mara#7th	4_F_INNMAN,{
 // ==========================================================================
 // Chef Goran
 // ==========================================================================
-tavern,66,44,4	script	Chef Goran#7th	4_M_FATCAT,{
+tavern,63,41,4	script	Chef Goran#7th	4_CH1_GRAY_VALKYRIE,{
 
 	mes "[Chef Goran]";
 	mes "^777777* A massive chef wipes his hands";
@@ -411,7 +411,7 @@ L_Shop:
 // ==========================================================================
 // Guild Representative
 // ==========================================================================
-tavern,54,44,4	script	Guild Representative#7th	4_M_KNIGHT_B,{
+tavern,65,41,4	script	Guild Representative#7th	4_M_THAIONGBAK,{
 
 	mes "[Guild Representative]";
 	mes "^777777* A stern man in guild colours";
