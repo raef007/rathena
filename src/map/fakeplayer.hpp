@@ -9,7 +9,7 @@
 
 void fakeplayer_init(void);
 void fakeplayer_final(void);
-int32 fakeplayer_spawn(int32 count);
+int32 fakeplayer_spawn(int32 count, const char* mapname = nullptr);
 void fakeplayer_remove_all(void);
 int32 fakeplayer_count(void);
 bool fakeplayer_is_fakeplayer(int32 id);

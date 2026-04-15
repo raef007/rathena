@@ -230,6 +230,7 @@ static const int32 town_map_count = sizeof(town_maps) / sizeof(town_maps[0]);
 // ============================================================
 static std::vector<int32> fakeplayer_ids;       // GIDs of spawned fake player mobs
 static int32 fakeplayer_respawn_timer_id = INVALID_TIMER;
+static int16 fakeplayer_target_map = -1;        // If >= 0, all fake players spawn on this map only
 
 // ============================================================
 // Roam state for walker fake players (same system as auto-battle)
@@ -238,6 +239,7 @@ struct s_fakeplayer_roam {
 	int16 roam_dest_x, roam_dest_y;
 	bool roam_has_dest;
 	t_tick last_roam_tick;
+	int16 roam_last_x, roam_last_y; // position snapshot for stuck detection
 };
 
 static std::map<int32, s_fakeplayer_roam> fakeplayer_roam_state;
@@ -538,13 +540,16 @@ static int32 fakeplayer_spawn_one(int16 m) {
 	// Spawn on map
 	mob_spawn(md);
 
-	// Initialize roam state for walker-type fake players
-	if (behavior_type == 1) { // Walker type
+	// Initialize roam state for hunter and walker-type fake players
+	// Both types roam across the map; hunters also fight mobs they encounter
+	if (behavior_type == 0 || behavior_type == 1) {
 		s_fakeplayer_roam roam = {};
 		roam.roam_dest_x = 0;
 		roam.roam_dest_y = 0;
 		roam.roam_has_dest = false;
 		roam.last_roam_tick = gettick();
+		roam.roam_last_x = x;
+		roam.roam_last_y = y;
 		fakeplayer_roam_state[md->id] = roam;
 	}
 
@@ -575,10 +580,29 @@ static TIMER_FUNC(fakeplayer_walk_update) {
 			continue;
 		}
 
+		// === Skip roaming if this hunter is currently fighting/chasing ===
+		if ((md->status.mode & MD_AGGRESSIVE) && md->target_id != 0) {
+			// Hunter is engaged with a target — let mob AI handle movement
+			roam.roam_has_dest = false; // reset so we pick a new dest when idle again
+			roam.roam_last_x = md->x;
+			roam.roam_last_y = md->y;
+			++it;
+			continue;
+		}
+
 		// === Destination timeout ===
 		if (roam.roam_has_dest && DIFF_TICK(gettick(), roam.last_roam_tick) > 60000) {
 			roam.roam_has_dest = false;
 		}
+
+		// === Stuck detection: if walk timer idle AND position unchanged, abandon dest ===
+		if (roam.roam_has_dest && md->ud.walktimer == INVALID_TIMER) {
+			if (md->x == roam.roam_last_x && md->y == roam.roam_last_y) {
+				roam.roam_has_dest = false;
+			}
+		}
+		roam.roam_last_x = md->x;
+		roam.roam_last_y = md->y;
 
 		// === Check if we need a new destination ===
 		bool need_new_dest = !roam.roam_has_dest;
@@ -706,9 +730,9 @@ static TIMER_FUNC(fakeplayer_respawn_check) {
 		dead_count++;
 	}
 
-	// Respawn dead fake players on new maps
+	// Respawn dead fake players
 	for (int32 i = 0; i < dead_count; i++) {
-		int16 m = fakeplayer_select_map();
+		int16 m = (fakeplayer_target_map >= 0) ? fakeplayer_target_map : fakeplayer_select_map();
 		if (m < 0)
 			break;
 
@@ -726,10 +750,11 @@ static TIMER_FUNC(fakeplayer_respawn_check) {
 // ============================================================
 
 /**
- * Spawn `count` fake players across random eligible maps.
+ * Spawn `count` fake players.
+ * If mapname is provided, all spawn on that map; otherwise across random eligible maps.
  * Removes any existing fake players first.
  */
-int32 fakeplayer_spawn(int32 count) {
+int32 fakeplayer_spawn(int32 count, const char* mapname) {
 	if (!battle_config.fakeplayer_enabled) {
 		ShowWarning("fakeplayer_spawn: System is disabled via fakeplayer_enabled config.\n");
 		return 0;
@@ -738,9 +763,26 @@ int32 fakeplayer_spawn(int32 count) {
 	// Remove existing fake players
 	fakeplayer_remove_all();
 
+	// Resolve target map if specified (also stored for respawn)
+	int16 target_map = -1;
+	if (mapname != nullptr && mapname[0] != '\0') {
+		target_map = map_mapname2mapid(mapname);
+		if (target_map < 0) {
+			ShowWarning("fakeplayer_spawn: Map '%s' not found.\n", mapname);
+			return 0;
+		}
+		if (!fakeplayer_map_eligible(target_map)) {
+			ShowWarning("fakeplayer_spawn: Map '%s' is not eligible for fake players.\n", mapname);
+			return 0;
+		}
+	}
+
+	// Store for respawn timer
+	fakeplayer_target_map = target_map;
+
 	int32 spawned = 0;
 	for (int32 i = 0; i < count; i++) {
-		int16 m = fakeplayer_select_map();
+		int16 m = (target_map >= 0) ? target_map : fakeplayer_select_map();
 		if (m < 0) {
 			ShowWarning("fakeplayer_spawn: No eligible maps found.\n");
 			break;
@@ -753,7 +795,10 @@ int32 fakeplayer_spawn(int32 count) {
 		}
 	}
 
-	ShowInfo("Fake Players: Spawned %d/%d fake players across the world.\n", spawned, count);
+	if (target_map >= 0)
+		ShowInfo("Fake Players: Spawned %d/%d fake players on map '%s'.\n", spawned, count, mapname);
+	else
+		ShowInfo("Fake Players: Spawned %d/%d fake players across the world.\n", spawned, count);
 	return spawned;
 }
 
@@ -776,6 +821,7 @@ void fakeplayer_remove_all(void) {
 		fakeplayer_roam_state.erase(gid);
 	}
 	fakeplayer_ids.clear();
+	fakeplayer_target_map = -1;
 }
 
 /**

@@ -2,16 +2,575 @@
 // 7th Heaven Tavern — NPC Framework
 // ==========================================================================
 // Non-Tiffy NPCs only. Tiffy (Welcome NPC) is in welcome_npc.txt.
-// Coordinates are placeholders — update once map is loaded and tested.
+// Coordinates are suggestions — confirm with @warp tavern 0 0 in-game.
 // ==========================================================================
 
 // Return warp (exit portal back to Prontera):
 tavern,37,39,0	warp	7thHeaven_Exit	2,2,prontera,162,168
 
-// Placeholder: Tavern Keeper (for flavor/future functionality)
-tavern,58,48,4	script	Tavern Keeper#7th	4_M_INNERMAN,{
-	mes "[Tavern Keeper]";
-	mes "Welcome to the 7th Heaven!";
-	mes "Can I get you anything to drink?";
+// ==========================================================================
+// Beast Master
+// ==========================================================================
+tavern,58,44,4	script	Beast Master#7th	4_M_THAIONGBAK,{
+
+	mes "[Beast Master]";
+	mes "^777777* A massive, weathered man sits";
+	mes "on a crate, a falcon perched on one arm";
+	mes "and a pair of Peco reins on his belt. *^000000";
+	next;
+
+	mes "[Beast Master]";
+	mes "Need a bird? A ride?";
+	mes "Or perhaps... you want one of these.";
+	mes "^777777* He holds up a worn leather leash. *^000000";
+	next;
+
+	.@sel = select(
+		" ~ Rent a Peco Peco",
+		" ~ Rent a Falcon",
+		" ~ Craft a Beast Master's Leash",
+		" ~ Upgrade my Leash",
+		" ~ ^777777Leave^000000"
+	);
+
+	switch (.@sel) {
+		case 1: goto L_RentPeco;
+		case 2: goto L_RentFalcon;
+		case 3: goto L_CraftLeash;
+		case 4: goto L_UpgradeLeash;
+		case 5:
+			mes "[Beast Master]";
+			mes "Come back when you need something.";
+			close;
+	}
+
+// -------------------------------------------------------
+L_RentPeco:
+	if (BaseJob != Job_Knight && BaseJob != Job_Crusader) {
+		mes "[Beast Master]";
+		mes "These Pecos are for Knights and";
+		mes "Crusaders only. Sorry.";
+		close;
+	}
+	if (checkriding()) {
+		mes "[Beast Master]";
+		mes "You're already on one.";
+		close;
+	}
+	if (ismounting()) {
+		mes "[Beast Master]";
+		mes "Dismiss your current mount first.";
+		close;
+	}
+	if (getskilllv("KN_RIDING") == 0) {
+		mes "[Beast Master]";
+		mes "You haven't learned to ride yet.";
+		close;
+	}
+	mes "[Beast Master]";
+	mes "Rental fee: ^00AA002,500 zeny^000000.";
+	next;
+	if (select(" ~ Rent: ~ ^777777Cancel^000000") == 2) { close; }
+	if (Zeny < 2500) {
+		mes "[Beast Master]";
+		mes "Not enough zeny.";
+		close;
+	}
+	Zeny -= 2500;
+	setriding;
+	mes "[Beast Master]";
+	mes "There you go. Treat it well.";
 	close;
+
+// -------------------------------------------------------
+L_RentFalcon:
+	if (BaseJob != Job_Hunter) {
+		mes "[Beast Master]";
+		mes "Falcons are for Hunters only.";
+		close;
+	}
+	if (checkfalcon()) {
+		mes "[Beast Master]";
+		mes "You already have a falcon.";
+		close;
+	}
+	if (checkwug()) {
+		mes "[Beast Master]";
+		mes "Dismiss your warg first.";
+		close;
+	}
+	if (getskilllv("HT_FALCON") == 0) {
+		mes "[Beast Master]";
+		mes "Learn Falcon Mastery first.";
+		close;
+	}
+	mes "[Beast Master]";
+	mes "Rental fee: ^00AA002,500 zeny^000000.";
+	next;
+	if (select(" ~ Rent: ~ ^777777Cancel^000000") == 2) { close; }
+	if (Zeny < 2500) {
+		mes "[Beast Master]";
+		mes "Not enough zeny.";
+		close;
+	}
+	Zeny -= 2500;
+	setfalcon;
+	mes "[Beast Master]";
+	mes "Careful with that one. She bites.";
+	close;
+
+// -------------------------------------------------------
+L_CraftLeash:
+	if (LEASH_LV > 0 || countitem(50011) > 0) {
+		mes "[Beast Master]";
+		mes "You already have a leash.";
+		close;
+	}
+	mes "[Beast Master]";
+	mes "Materials required:";
+	mes "^00AA0010 Oridecon^000000";
+	mes "^00AA0010 Elunium^000000";
+	mes "^00AA003,000,000 zeny^000000";
+	next;
+	if (select(" ~ Craft it: ~ ^777777Cancel^000000") == 2) { close; }
+	if (countitem(984) < 10 || countitem(985) < 10 || Zeny < 3000000) {
+		mes "[Beast Master]";
+		mes "You don't have the materials.";
+		close;
+	}
+	delitem 984, 10;
+	delitem 985, 10;
+	Zeny -= 3000000;
+	getitem 50011, 1;
+	set LEASH_LV, 1;
+	mes "[Beast Master]";
+	mes "^777777* He knots the leash with practised";
+	mes "hands and hands it over. *^000000";
+	mes " ";
+	mes "Lv1 now. It'll hold a Peco.";
+	mes "Bring it back when you want it stronger.";
+	close;
+
+// -------------------------------------------------------
+L_UpgradeLeash:
+	if (LEASH_LV == 0 || countitem(50011) == 0) {
+		mes "[Beast Master]";
+		mes "You don't have a leash to upgrade.";
+		close;
+	}
+	if (LEASH_LV >= 10) {
+		mes "[Beast Master]";
+		mes "That leash is already at its peak.";
+		close;
+	}
+	.@next_lv = LEASH_LV + 1;
+	mes "[Beast Master]";
+	mes "Current level: ^8800FF" + LEASH_LV + "^000000";
+	mes "Upgrading to: ^0055FF" + .@next_lv + "^000000";
+	mes " ";
+	mes "Materials:";
+	mes "^00AA003 Oridecon^000000";
+	mes "^00AA003 Elunium^000000";
+	mes "^00AA00100,000 zeny^000000";
+	mes " ";
+	mes "Success rate: ^FF0000" + .SuccessRate[LEASH_LV] + "%^000000";
+	next;
+	if (select(" ~ Attempt upgrade: ~ ^777777Cancel^000000") == 2) { close; }
+	if (countitem(984) < 3 || countitem(985) < 3 || Zeny < 100000) {
+		mes "[Beast Master]";
+		mes "Not enough materials.";
+		close;
+	}
+	delitem 984, 3;
+	delitem 985, 3;
+	Zeny -= 100000;
+
+	if (rand(100) < .SuccessRate[LEASH_LV]) {
+		set LEASH_LV, .@next_lv;
+		mes "[Beast Master]";
+		mes "^777777* The leather darkens and binds";
+		mes "tighter. *^000000";
+		mes " ";
+		mes "^00AA00Success!^000000 Leash is now Lv" + LEASH_LV + ".";
+	} else {
+		mes "[Beast Master]";
+		mes "^777777* The binding snaps loose.";
+		mes "Materials wasted. *^000000";
+		mes " ";
+		mes "^FF0000Failed.^000000 Your leash holds at Lv" + LEASH_LV + ".";
+	}
+	close;
+
+OnInit:
+	setarray .SuccessRate[1], 50,44,37,30,23,17,12,7,5;
+	end;
+}
+
+// ==========================================================================
+// Innkeeper Mara
+// ==========================================================================
+tavern,63,48,4	script	Innkeeper Mara#7th	4_F_INNMAN,{
+
+	mes "[Innkeeper Mara]";
+	mes "^777777* A warm woman behind the front";
+	mes "desk gives you a tired but genuine smile. *^000000";
+	next;
+
+	mes "[Innkeeper Mara]";
+	mes "Welcome to the 7th Heaven.";
+	mes "What can I do for you?";
+	next;
+
+	.@sel = select(
+		" ~ Save my respawn here",
+		" ~ Check in (Daily — Meal Package)",
+		" ~ ^777777Leave^000000"
+	);
+
+	switch (.@sel) {
+		case 1:
+			savepoint "tavern", 100, 100, 1, 1;
+			mes "[Innkeeper Mara]";
+			mes "Your respawn is saved here.";
+			mes "Rest well, adventurer.";
+			close;
+
+		case 2:
+			if (gettimetick(2) - INN_CHECKIN < 86400) {
+				.@remaining = 86400 - (gettimetick(2) - INN_CHECKIN);
+				.@hrs = .@remaining / 3600;
+				.@min = (.@remaining % 3600) / 60;
+				mes "[Innkeeper Mara]";
+				mes "You already checked in today.";
+				mes "Come back in ^FF0000" + .@hrs + "h " + .@min + "m^000000.";
+				close;
+			}
+
+			if (checkweight(50012, 1) == 0) {
+				mes "[Innkeeper Mara]";
+				mes "Your inventory is too full.";
+				mes "Make some room first.";
+				close;
+			}
+
+			mes "[Innkeeper Mara]";
+			mes "A room, a meal, and some peace.";
+			mes " ";
+			mes "You'll get:";
+			mes "^00AA001x Heaven's Meal Voucher^000000";
+			mes "^00AA003 hours of HP/SP Recovery boost^000000";
+			mes " ";
+			mes "Cost: ^FF000077,000 zeny^000000";
+			next;
+
+			if (select(" ~ Check in: ~ ^777777Not right now^000000") == 2) {
+				mes "[Innkeeper Mara]";
+				mes "Come back any time.";
+				close;
+			}
+
+			if (Zeny < 77000) {
+				mes "[Innkeeper Mara]";
+				mes "A room here costs 77,000 zeny.";
+				mes "Come back when you have the coin.";
+				close;
+			}
+
+			Zeny -= 77000;
+			set INN_CHECKIN, gettimetick(2);
+			getitem 50012, 1;
+			sc_start SC_APPLEIDUN, 10800000, 10;
+			sc_start SC_MAGNIFICAT, 10800000, 5;
+
+			mes "[Innkeeper Mara]";
+			mes "^777777* She hands you a warm voucher";
+			mes "and shows you to a quiet corner. *^000000";
+			mes " ";
+			mes "Enjoy your stay. The Chef is";
+			mes "just past the bar when you're ready.";
+			close;
+
+		case 3:
+			mes "[Innkeeper Mara]";
+			mes "Safe travels.";
+			close;
+	}
+}
+
+// ==========================================================================
+// Chef Goran
+// ==========================================================================
+tavern,67,48,4	script	Chef Goran#7th	4_M_FATCAT,{
+
+	mes "[Chef Goran]";
+	mes "^777777* A massive chef wipes his hands";
+	mes "on an apron and peers down at you. *^000000";
+	next;
+
+	mes "[Chef Goran]";
+	mes "You got a voucher? Good.";
+	mes "Otherwise, I sell à la carte.";
+	next;
+
+	.@sel = select(
+		" ~ Redeem a Meal Voucher",
+		" ~ Browse à la carte (food shop)",
+		" ~ ^777777Leave^000000"
+	);
+
+	switch (.@sel) {
+		case 1: goto L_Voucher;
+		case 2: goto L_Shop;
+		case 3:
+			mes "[Chef Goran]";
+			mes "Come back hungry.";
+			close;
+	}
+
+// -------------------------------------------------------
+L_Voucher:
+	if (countitem(50012) < 1) {
+		mes "[Chef Goran]";
+		mes "No voucher, no meal. Simple.";
+		close;
+	}
+
+	mes "[Chef Goran]";
+	mes "What'll it be?";
+	mes "^00AA001 voucher = +20 to chosen stat for 2 hours.^000000";
+	next;
+
+	.@meal = select(
+		" ~ Warrior's Feast (STR +20)",
+		" ~ Wind Sprint Soup (AGI +20)",
+		" ~ Iron Belly Stew (VIT +20)",
+		" ~ Sage's Elixir (INT +20)",
+		" ~ Hawk Eye Platter (DEX +20)",
+		" ~ Fortune Cookie Bun (LUK +20)",
+		" ~ ^777777I changed my mind^000000"
+	);
+	if (.@meal == 7) { mes "[Chef Goran]"; mes "Come back when you know."; close; }
+
+	.@item_id = 50012 + .@meal; // 50013 = Warrior's Feast, ..., 50018 = Fortune Cookie
+
+	if (checkweight(.@item_id, 1) == 0) {
+		mes "[Chef Goran]";
+		mes "Your bags are full. Make room.";
+		close;
+	}
+
+	delitem 50012, 1;
+	getitem .@item_id, 1;
+
+	mes "[Chef Goran]";
+	mes "^777777* He slides a steaming dish";
+	mes "across the counter. *^000000";
+	mes " ";
+	mes "Eat up. That'll keep you going.";
+	close;
+
+// -------------------------------------------------------
+L_Shop:
+	mes "[Chef Goran]";
+	mes "Quality ingredients, made right.";
+	mes "^00AA0020,000 zeny each. +20 to stat for 2 hours.^000000";
+	next;
+
+	.@food = select(
+		" ~ Warrior's Feast (STR +20) — 20,000z",
+		" ~ Wind Sprint Soup (AGI +20) — 20,000z",
+		" ~ Iron Belly Stew (VIT +20) — 20,000z",
+		" ~ Sage's Elixir (INT +20) — 20,000z",
+		" ~ Hawk Eye Platter (DEX +20) — 20,000z",
+		" ~ Fortune Cookie Bun (LUK +20) — 20,000z",
+		" ~ ^777777Leave^000000"
+	);
+	if (.@food == 7) { mes "[Chef Goran]"; mes "Come back hungry."; close; }
+
+	.@shop_id = 50012 + .@food; // 50013–50018
+
+	if (Zeny < 20000) {
+		mes "[Chef Goran]";
+		mes "That'll be 20,000 zeny. You short.";
+		close;
+	}
+	if (checkweight(.@shop_id, 1) == 0) {
+		mes "[Chef Goran]";
+		mes "Your bags are full.";
+		close;
+	}
+
+	Zeny -= 20000;
+	getitem .@shop_id, 1;
+
+	mes "[Chef Goran]";
+	mes "Fresh batch. Enjoy.";
+	close;
+}
+
+// ==========================================================================
+// Guild Representative
+// ==========================================================================
+tavern,55,44,4	script	Guild Representative#7th	4_M_KNIGHT_B,{
+
+	mes "[Guild Representative]";
+	mes "^777777* A stern man in guild colours";
+	mes "nods as you approach, a ledger open";
+	mes "on the table beside him. *^000000";
+	next;
+
+	mes "[Guild Representative]";
+	mes "All contributions go toward your";
+	mes "guild's growth.";
+	mes " ";
+	mes "Zeny, materials — we accept both.";
+	next;
+
+	.@sel = select(
+		" ~ Donate Zeny",
+		" ~ Donate Emperium",
+		" ~ Available Quests",
+		" ~ ^777777Leave^000000"
+	);
+
+	switch (.@sel) {
+		case 1: goto L_DonateZeny;
+		case 2: goto L_DonateEmperium;
+		case 3: goto L_Quests;
+		case 4:
+			mes "[Guild Representative]";
+			mes "Your guild thanks you.";
+			close;
+	}
+
+// -------------------------------------------------------
+L_DonateZeny:
+	if (getcharid(2) == 0) {
+		mes "[Guild Representative]";
+		mes "You are not in a guild.";
+		mes "Join one first.";
+		close;
+	}
+
+	mes "[Guild Representative]";
+	mes "Exchange rate:";
+	mes "^00AA001 Zeny = 20 Guild EXP^000000";
+	mes " ";
+	mes "You have: ^0055FF" + Zeny + " zeny^000000.";
+	mes "How much would you like to donate?";
+	next;
+
+	input .@amount;
+
+	if (.@amount <= 0) {
+		mes "[Guild Representative]";
+		mes "That's not a valid amount.";
+		close;
+	}
+	if (Zeny < .@amount) {
+		mes "[Guild Representative]";
+		mes "You don't have that much zeny.";
+		close;
+	}
+
+	.@gexp = .@amount * 20;
+
+	mes "[Guild Representative]";
+	mes "Donating ^0055FF" + .@amount + " zeny^000000.";
+	mes "Your guild will receive:";
+	mes "^00AA00" + .@gexp + " Guild EXP^000000.";
+	next;
+
+	if (select(" ~ Confirm: ~ ^777777Cancel^000000") == 2) {
+		mes "[Guild Representative]";
+		mes "Come back when you're ready.";
+		close;
+	}
+
+	Zeny -= .@amount;
+	guildgetexp .@gexp;
+
+	mes "[Guild Representative]";
+	mes "^777777* He marks the ledger and stamps";
+	mes "the contribution seal. *^000000";
+	mes " ";
+	mes "Contribution recorded. Your guild";
+	mes "grows stronger.";
+	close;
+
+// -------------------------------------------------------
+L_DonateEmperium:
+	if (getcharid(2) == 0) {
+		mes "[Guild Representative]";
+		mes "You are not in a guild.";
+		mes "Join one first.";
+		close;
+	}
+
+	.@emp_count = countitem(714);
+
+	if (.@emp_count == 0) {
+		mes "[Guild Representative]";
+		mes "You don't have any Emperium.";
+		close;
+	}
+
+	mes "[Guild Representative]";
+	mes "Exchange rate:";
+	mes "^00AA001 Emperium = 20,000 Guild EXP^000000";
+	mes " ";
+	mes "You have: ^0055FF" + .@emp_count + " Emperium^000000.";
+	mes "How many would you like to donate?";
+	next;
+
+	input .@emp_donate;
+
+	if (.@emp_donate <= 0) {
+		mes "[Guild Representative]";
+		mes "That's not a valid amount.";
+		close;
+	}
+	if (.@emp_donate > .@emp_count) {
+		mes "[Guild Representative]";
+		mes "You don't have that many.";
+		close;
+	}
+
+	.@gexp = .@emp_donate * 20000;
+
+	mes "[Guild Representative]";
+	mes "Donating ^0055FF" + .@emp_donate + " Emperium^000000.";
+	mes "Your guild will receive:";
+	mes "^00AA00" + .@gexp + " Guild EXP^000000.";
+	next;
+
+	if (select(" ~ Confirm: ~ ^777777Cancel^000000") == 2) {
+		mes "[Guild Representative]";
+		mes "Come back when you're ready.";
+		close;
+	}
+
+	delitem 714, .@emp_donate;
+	guildgetexp .@gexp;
+
+	mes "[Guild Representative]";
+	mes "^777777* He places each Emperium in a";
+	mes "sealed chest, nodding with approval. *^000000";
+	mes " ";
+	mes "Contribution recorded. Your guild";
+	mes "grows stronger.";
+	close;
+
+// -------------------------------------------------------
+L_Quests:
+	mes "[Guild Representative]";
+	mes "^777777* He flips through the ledger";
+	mes "and shakes his head. *^000000";
+	mes " ";
+	mes "No guild quests available at this time.";
+	mes "Check back later.";
+	close;
+
+OnInit:
+	end;
 }

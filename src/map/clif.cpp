@@ -15462,7 +15462,13 @@ void clif_parse_FriendsListAdd(int32 fd, map_session_data *sd)
 	int32 i;
 
 	// TODO: shuffle packet
-	f_sd = map_nick2sd(RFIFOCP(fd,packet_db[RFIFOW(fd,0)].pos[0]),false);
+	const char* friend_name = RFIFOCP(fd,packet_db[RFIFOW(fd,0)].pos[0]);
+	f_sd = map_nick2sd(friend_name,false);
+
+	// Block interaction with fake players — silently reject
+	if (f_sd == nullptr && fakeplayer_is_fakeplayer_name(friend_name)) {
+		return;
+	}
 
 	// Friend doesn't exist (no player with this name)
 	if (f_sd == nullptr) {

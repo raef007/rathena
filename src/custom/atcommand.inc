@@ -19,9 +19,9 @@
 //}
 
 /**
- * @fakeplayers [count]
+ * @fakeplayers [count] [mapname]
  * No args: Show current count
- * count > 0: Remove existing + spawn new
+ * count > 0: Remove existing + spawn new (on mapname if specified, otherwise world-wide)
  * count = 0: Remove all
  **/
 ACMD_FUNC(fakeplayers)
@@ -35,10 +35,12 @@ ACMD_FUNC(fakeplayers)
 		return 0;
 	}
 
-	int32 count = atoi(message);
+	int32 count = 0;
+	char mapname[MAP_NAME_LENGTH_EXT] = "";
+	sscanf(message, "%d %23s", &count, mapname);
 
 	if (count < 0) {
-		clif_displaymessage(fd, "Usage: @fakeplayers [count] — count must be 0 or positive.");
+		clif_displaymessage(fd, "Usage: @fakeplayers [count] [mapname]");
 		return -1;
 	}
 
@@ -48,8 +50,13 @@ ACMD_FUNC(fakeplayers)
 		return 0;
 	}
 
-	int32 spawned = fakeplayer_spawn(count);
-	snprintf(msg, sizeof(msg), "Spawned %d/%d fake players across the world.", spawned, count);
+	const char* target_map = (mapname[0] != '\0') ? mapname : nullptr;
+	int32 spawned = fakeplayer_spawn(count, target_map);
+
+	if (target_map)
+		snprintf(msg, sizeof(msg), "Spawned %d/%d fake players on map '%s'.", spawned, count, target_map);
+	else
+		snprintf(msg, sizeof(msg), "Spawned %d/%d fake players across the world.", spawned, count);
 	clif_displaymessage(fd, msg);
 	return 0;
 }

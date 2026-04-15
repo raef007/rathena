@@ -16,7 +16,7 @@
 //   Baby paths     → up to Baby 2nd Class
 // ==========================================================================
 
-prontera,163,283,4	script	Mimir	4_CH1_GRAY_VALKYRIE,{
+tavern,52,41,4	script	Mimir	4_CH1_GRAY_VALKYRIE,{
 
 	function Check_Riding;
 	function Check_SkillPoints;
@@ -28,20 +28,40 @@ prontera,163,283,4	script	Mimir	4_CH1_GRAY_VALKYRIE,{
 	// Greeting
 	// ============================================================
 	mes .NPCName$;
-	mes "^777777* A grey-armoured figure stands beside";
-	mes "a shimmering basin of water, his gaze fixed";
-	mes "on something far beyond the surface. As you";
-	mes "draw near, he speaks without looking up. *^000000";
+	mes "^777777* A broad-shouldered figure sits";
+	mes "at a corner table of the tavern, a worn";
+	mes "tome open before him. He looks up as";
+	mes "you approach, eyes sharp and knowing. *^000000";
 	next;
 
 	mes .NPCName$;
-	mes "I am ^8800FFMimir^000000, Seer of the Well.";
-	mes "I have watched the fates of every warrior";
-	mes "who ever walked these roads.";
+	mes "I am ^8800FFMimir^000000.";
+	mes "I have seen the paths of countless";
+	mes "warriors pass through these halls.";
 	mes " ";
-	mes "I see yours now, " + strcharinfo(0) + ".";
-	mes "Shall I guide your next step?";
+	mes "I can shape your destiny,";
+	mes strcharinfo(0) + ". For a price.";
 	next;
+
+	// ============================================================
+	// Top-level menu
+	// ============================================================
+	.@action = select(
+		" ~ Change Job",
+		" ~ Purchase Platinum Skills",
+		" ~ Reset Stats",
+		" ~ Reset Skills",
+		" ~ ^777777Leave^000000"
+	);
+	if (.@action == 5) {
+		mes .NPCName$;
+		mes "Return when you are ready.";
+		close;
+	}
+	if (.@action == 2) goto L_PlatinumShop;
+	if (.@action == 3) goto L_StatReset;
+	if (.@action == 4) goto L_SkillReset;
+	// .@action == 1 falls through to job change flow
 
 	// ============================================================
 	// Pre-checks
@@ -602,6 +622,36 @@ function Confirm_Change {
 		mes "are certain.";
 		close;
 	}
+
+	if (.@class == Job_Novice_High) {
+		mes .NPCName$;
+		mes "Rebirth is not without cost.";
+		mes "The thread of fate demands:";
+		mes " ";
+		mes "^00AA00200,000 zeny^000000";
+		mes "^00AA003x Opal^000000";
+		mes " ";
+		mes "Do you accept these terms?";
+		next;
+		if (select(" ~ I accept: ~ ^777777I am not ready^000000") == 2) {
+			mes .NPCName$;
+			mes "Return when you are prepared.";
+			close;
+		}
+		if (Zeny < 200000) {
+			mes .NPCName$;
+			mes "You do not have 200,000 zeny.";
+			close;
+		}
+		if (countitem(727) < 3) {
+			mes .NPCName$;
+			mes "You lack the ^8800FF3 Opals^000000 required.";
+			close;
+		}
+		Zeny -= 200000;
+		delitem 727, 3;
+	}
+
 	Do_JobChange(.@class);
 	return;
 }
@@ -623,10 +673,6 @@ function Do_JobChange {
 	specialeffect2 EF_BLESSING;
 	specialeffect2 EF_ASSUMPTIO2;
 	specialeffect2 EF_ANGEL2;
-
-	// Platinum skills
-	if (.@previous_class != Class && .Platinum)
-		callfunc "F_GetPlatinumSkills";
 
 	next;
 	mes .NPCName$;
@@ -650,6 +696,153 @@ function Do_JobChange {
 	}
 	close;
 }
+
+// ================================================================
+// Platinum Shop / Stat Reset / Skill Reset
+// ================================================================
+
+L_PlatinumShop:
+	.@eac = eaclass();
+	if (.@eac & (EAJL_2 | EAJL_UPPER)) {
+		.@plat_cost = 50000;
+		.@tier$ = "2nd job";
+	} else if (.@eac & EAJL_2) {
+		.@plat_cost = 50000;
+		.@tier$ = "2nd job";
+	} else if ((.@eac & EAJ_BASEMASK) > 0) {
+		.@plat_cost = 30000;
+		.@tier$ = "1st job";
+	} else {
+		.@plat_cost = 20000;
+		.@tier$ = "novice";
+	}
+
+	mes .NPCName$;
+	mes "Platinum skills carry knowledge";
+	mes "that must be unlocked deliberately.";
+	mes " ";
+	mes "For a ^8800FF" + .@tier$ + "^000000 class, the fee is:";
+	mes "^00AA00" + .@plat_cost + " zeny^000000.";
+	next;
+
+	if (select(" ~ Purchase Platinum Skills: ~ ^777777Cancel^000000") == 2) {
+		mes .NPCName$;
+		mes "Come back when you are ready.";
+		close;
+	}
+
+	if (Zeny < .@plat_cost) {
+		mes .NPCName$;
+		mes "You do not have enough zeny.";
+		close;
+	}
+
+	Zeny -= .@plat_cost;
+	callfunc "F_GetPlatinumSkills";
+
+	mes .NPCName$;
+	mes "^777777* He speaks a word over your";
+	mes "weapon hand. Knowledge floods in. *^000000";
+	mes " ";
+	mes "The hidden arts are yours now.";
+	mes "Use them well.";
+	close;
+
+// -------------------------------------------------------
+L_StatReset:
+	mes .NPCName$;
+	mes "I can undo the paths your stats";
+	mes "have walked — but fate charges for it.";
+	mes " ";
+	mes "^FF0000Stat Reset costs:^000000";
+	mes "^00AA003,000,000 zeny^000000";
+	mes "^00AA005x Opal^000000";
+	mes "^00AA001x Fragment of Darkness^000000";
+	next;
+
+	if (select(" ~ Reset my stats: ~ ^777777Cancel^000000") == 2) {
+		mes .NPCName$;
+		mes "Return when you are certain.";
+		close;
+	}
+
+	if (Zeny < 3000000) {
+		mes .NPCName$;
+		mes "You need 3,000,000 zeny.";
+		close;
+	}
+	if (countitem(727) < 5) {
+		mes .NPCName$;
+		mes "You need ^8800FF5 Opals^000000.";
+		close;
+	}
+	if (countitem(7798) < 1) {
+		mes .NPCName$;
+		mes "You need ^8800FF1 Fragment of Darkness^000000.";
+		close;
+	}
+
+	Zeny -= 3000000;
+	delitem 727, 5;
+	delitem 7798, 1;
+	resetstatus;
+
+	mes .NPCName$;
+	mes "^777777* He lays a hand on your brow.";
+	mes "The weight of your old choices";
+	mes "dissolves. *^000000";
+	mes " ";
+	mes "Your stats have been reset.";
+	mes "Spend your points wisely this time.";
+	close;
+
+// -------------------------------------------------------
+L_SkillReset:
+	mes .NPCName$;
+	mes "I can unlearn what your hands have";
+	mes "mastered — but not without cost.";
+	mes " ";
+	mes "^FF0000Skill Reset costs:^000000";
+	mes "^00AA001,000,000 zeny^000000";
+	mes "^00AA005x Opal^000000";
+	mes "^00AA001x Fragment of Darkness^000000";
+	next;
+
+	if (select(" ~ Reset my skills: ~ ^777777Cancel^000000") == 2) {
+		mes .NPCName$;
+		mes "Return when you are certain.";
+		close;
+	}
+
+	if (Zeny < 1000000) {
+		mes .NPCName$;
+		mes "You need 1,000,000 zeny.";
+		close;
+	}
+	if (countitem(727) < 5) {
+		mes .NPCName$;
+		mes "You need ^8800FF5 Opals^000000.";
+		close;
+	}
+	if (countitem(7798) < 1) {
+		mes .NPCName$;
+		mes "You need ^8800FF1 Fragment of Darkness^000000.";
+		close;
+	}
+
+	Zeny -= 1000000;
+	delitem 727, 5;
+	delitem 7798, 1;
+	resetskill;
+
+	mes .NPCName$;
+	mes "^777777* He traces a symbol in the air";
+	mes "above your hands. Your muscle memory";
+	mes "unravels cleanly. *^000000";
+	mes " ";
+	mes "Your skills have been reset.";
+	mes "Spend your points wisely this time.";
+	close;
 
 OnInit:
 	.NPCName$ = "[Mimir]";

@@ -1,0 +1,40 @@
+// ==========================================================================
+// 7th Heaven — Persistent Leash & Passive Event Handler
+// ==========================================================================
+// Re-applies Beast Master's Leash buffs on every login.
+// Lv9-10: passive all-stat bonus (inventory check, no mount required)
+// Lv2-8:  mounted buffs (HP%, regen, def/mdef/flee at Lv6+)
+// ==========================================================================
+
+-	script	7thHeaven_Events	-1,{
+
+OnPCLoginEvent:
+	// ---- Beast Master's Leash passive (Lv9-10) ----
+	if (countitem(50011) > 0 && LEASH_LV >= 9) {
+		.@val = LEASH_LV - 8; // Lv9 = +1, Lv10 = +2
+		sc_start SC_INCALLSTATUS, 82800000, .@val;
+	}
+
+	// ---- Beast Master's Leash while-mounted buffs (Lv2-8) ----
+	if (countitem(50011) > 0 && LEASH_LV >= 2 && (checkriding() || ismounting())) {
+		.@lv = LEASH_LV;
+
+		// HP bonus: +2% per level from Lv2, capped at +10% from Lv5+
+		.@hp_pct = (.@lv >= 5) ? 10 : (.@lv - 1) * 2;
+		if (.@hp_pct > 0)
+			sc_start SC_APPLEIDUN, 82800000, .@hp_pct;
+
+		// Regen boost (Magnificat proxy): level scales with leash level, cap at 5
+		.@regen_lv = (.@lv >= 5) ? 5 : .@lv;
+		sc_start SC_MAGNIFICAT, 82800000, .@regen_lv;
+
+		// Def/MDef/Flee bonus (Lv6-8): +10/20/30
+		if (.@lv >= 6) {
+			.@stat_bonus = (.@lv - 5) * 10;
+			sc_start SC_DEF_RATE, 82800000, .@stat_bonus;
+			sc_start SC_MDEF_RATE, 82800000, .@stat_bonus;
+			sc_start SC_INCFLEE, 82800000, .@stat_bonus;
+		}
+	}
+	end;
+}
