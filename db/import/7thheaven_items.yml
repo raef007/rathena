@@ -33,9 +33,6 @@ Body:
     Type: Usable
     Flags:
       NoConsume: true
-    Delay:
-      Duration: 3000
-      Status: All_Riding_Reuse_Limit
     Trade:
       NoDrop: true
       NoTrade: true
