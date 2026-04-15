@@ -40,7 +40,7 @@ Body:
       NoDrop: true
       NoTrade: true
       NoSell: true
-      NoCart: false
+      NoCart: true
       NoStorage: true
       NoGuildStorage: true
       NoMail: true
