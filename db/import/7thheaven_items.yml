@@ -47,6 +47,9 @@ Body:
       NoAuction: true
     Script: |
       setmounting();
+    UnEquipScript: |
+      if (ismounting())
+        setmounting();
 
   - Id: 50012
     AegisName: Heavens_Meal_Voucher
