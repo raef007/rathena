@@ -34,8 +34,8 @@ Body:
     Flags:
       NoConsume: true
     Delay:
-        Duration: 3000
-        Status: All_Riding_Reuse_Limit
+      Duration: 3000
+      Status: All_Riding_Reuse_Limit
     Trade:
       NoDrop: true
       NoTrade: true
@@ -47,9 +47,6 @@ Body:
       NoAuction: true
     Script: |
       setmounting();
-    UnEquipScript: |
-      if (ismounting())
-        setmounting();
 
   - Id: 50012
     AegisName: Heavens_Meal_Voucher

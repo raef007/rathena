@@ -14,13 +14,13 @@ tavern,37,39,0	warp	7thHeaven_Exit	2,2,prontera,162,168
 tavern,39,36,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 
 	mes "[Beast Master]";
-	mes "^777777* A sun-darkened man sits cross-legged.";
+	mes "A sun-darkened man sits cross-legged.";
 	mes "Scars criss-cross both forearms";
-	mes "He doesn't look up as you approach. *^000000";
+	mes "He doesn't look up as you approach.";
 	next;
 
 	mes "[Beast Master]";
-	mes "So — you here for a beast, or you";
+	mes "So - you here for a beast, or you";
 	mes "want me to work on that leash?";
 	next;
 
@@ -39,8 +39,8 @@ tavern,39,36,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 		case 4: goto L_UpgradeLeash;
 		case 5:
 			mes "[Beast Master]";
-			mes "^777777* He grunts and goes back to";
-			mes "eating. *^000000";
+			mes "He grunts and goes back to";
+			mes "eating.";
 			mes " ";
 			mes "Don't spook the birds on your way out.";
 			close;
@@ -50,8 +50,8 @@ tavern,39,36,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 L_RentPeco:
 	if (BaseJob != Job_Knight && BaseJob != Job_Crusader) {
 		mes "[Beast Master]";
-		mes "^777777* He looks you up and down,";
-		mes "then shakes his head. *^000000";
+		mes "He looks you up and down,";
+		mes "then shakes his head.";
 		mes " ";
 		mes "These Pecos aren't ponies for a day out.";
 		mes "Only ^0055FFKnights^000000 and ^0055FFCrusaders^000000";
@@ -71,8 +71,8 @@ L_RentPeco:
 	}
 	if (getskilllv("KN_RIDING") == 0) {
 		mes "[Beast Master]";
-		mes "^777777* He crosses his arms and squints";
-		mes "at you. *^000000";
+		mes "He crosses his arms and squints";
+		mes "at you.";
 		mes " ";
 		mes "You don't know ^FF0000Riding^000000 yet.";
 		mes "Learn the skill first, then come talk.";
@@ -91,8 +91,8 @@ L_RentPeco:
 	}
 	if (Zeny < 2500) {
 		mes "[Beast Master]";
-		mes "^777777* He holds out his palm and";
-		mes "waits. Nothing comes. *^000000";
+		mes "He holds out his palm and";
+		mes "waits. Nothing comes.";
 		mes " ";
 		mes "That's what I thought. Come back";
 		mes "when your purse isn't empty.";
@@ -101,8 +101,8 @@ L_RentPeco:
 	Zeny -= 2500;
 	setriding;
 	mes "[Beast Master]";
-	mes "^777777* He whistles sharply. A Peco Peco";
-	mes "trots over and lowers itself for you. *^000000";
+	mes "He whistles sharply. A Peco Peco";
+	mes "trots over and lowers itself for you.";
 	mes " ";
 	mes "She's yours. Don't ride her into walls.";
 	close;
@@ -111,8 +111,8 @@ L_RentPeco:
 L_RentFalcon:
 	if (BaseJob != Job_Hunter) {
 		mes "[Beast Master]";
-		mes "^777777* The falcon on his shoulder";
-		mes "screeches as you reach toward it. *^000000";
+		mes "The falcon on his shoulder";
+		mes "screeches as you reach toward it.";
 		mes " ";
 		mes "Easy! She's not for you.";
 		mes "Falcons bond with ^0055FFHunters^000000 only.";
@@ -141,8 +141,8 @@ L_RentFalcon:
 		close;
 	}
 	mes "[Beast Master]";
-	mes "^777777* He strokes the falcon's breast";
-	mes "feathers thoughtfully. *^000000";
+	mes "He strokes the falcon's breast";
+	mes "feathers thoughtfully.";
 	mes " ";
 	mes "This one's been with me a while.";
 	mes "^00AA002,500 zeny^000000 and she's yours to borrow.";
@@ -160,9 +160,9 @@ L_RentFalcon:
 	Zeny -= 2500;
 	setfalcon;
 	mes "[Beast Master]";
-	mes "^777777* The falcon launches from his";
+	mes "The falcon launches from his";
 	mes "shoulder and circles once before landing";
-	mes "on your outstretched arm. *^000000";
+	mes "on your outstretched arm.";
 	mes " ";
 	mes "Careful with that one. She bites";
 	mes "when she's bored.";
@@ -172,8 +172,8 @@ L_RentFalcon:
 L_CraftLeash:
 	if (LEASH_LV > 0 || countitem(50011) > 0) {
 		mes "[Beast Master]";
-		mes "^777777* He glances at your belt and";
-		mes "raises an eyebrow. *^000000";
+		mes "He glances at your belt and";
+		mes "raises an eyebrow.";
 		mes " ";
 		mes "You've already got a leash. One per";
 		mes "customer. I don't have the hides";
@@ -181,9 +181,9 @@ L_CraftLeash:
 		close;
 	}
 	mes "[Beast Master]";
-	mes "^777777* He pulls a length of raw leather";
+	mes "He pulls a length of raw leather";
 	mes "from under the hay bale and stretches";
-	mes "it between his fists. *^000000";
+	mes "it between his fists.";
 	mes " ";
 	mes "A proper Beast Master's Leash. Lets";
 	mes "you call a mount anywhere, no rental";
@@ -203,8 +203,8 @@ L_CraftLeash:
 	}
 	if (countitem(984) < 10 || countitem(985) < 10 || Zeny < 3000000) {
 		mes "[Beast Master]";
-		mes "^777777* He counts through your materials";
-		mes "and frowns. *^000000";
+		mes "He counts through your materials";
+		mes "and frowns.";
 		mes " ";
 		mes "Not enough. Don't waste my time";
 		mes "unless you've got the full load.";
@@ -216,11 +216,11 @@ L_CraftLeash:
 	getitem 50011, 1;
 	set LEASH_LV, 1;
 	mes "[Beast Master]";
-	mes "^777777* His hands move fast — cutting,";
+	mes "His hands move fast - cutting,";
 	mes "knotting, binding the leather with a";
 	mes "precision born of years of practice.";
 	mes "He blows on the final knot and hands";
-	mes "it over without ceremony. *^000000";
+	mes "it over without ceremony.";
 	mes " ";
 	mes "^00AA00Lv1 Beast Master's Leash.^000000";
 	mes "Use it from your inventory to mount up.";
@@ -236,10 +236,10 @@ L_UpgradeLeash:
 	}
 	if (LEASH_LV >= 10) {
 		mes "[Beast Master]";
-		mes "^777777* He turns the leash over in his";
+		mes "He turns the leash over in his";
 		mes "hands, running a thumb along the";
 		mes "bindings. A rare look of satisfaction";
-		mes "crosses his face. *^000000";
+		mes "crosses his face.";
 		mes " ";
 		mes "This is as good as it gets.";
 		mes "^8800FFLevel 10^000000. Nothing more I can do.";
@@ -248,8 +248,8 @@ L_UpgradeLeash:
 	}
 	.@next_lv = LEASH_LV + 1;
 	mes "[Beast Master]";
-	mes "^777777* He takes your leash and examines";
-	mes "the stitching with a critical eye. *^000000";
+	mes "He takes your leash and examines";
+	mes "the stitching with a critical eye.";
 	mes " ";
 	mes "Current: ^8800FFLv " + LEASH_LV + "^000000";
 	mes "Target:  ^0055FFLv " + .@next_lv + "^000000";
@@ -282,10 +282,10 @@ L_UpgradeLeash:
 		set LEASH_LV, .@next_lv;
 		specialeffect2 EF_REFINEOK;
 		mes "[Beast Master]";
-		mes "^777777* He works the new material into";
+		mes "He works the new material into";
 		mes "the binding. The leather darkens and";
 		mes "pulls taut with an almost living";
-		mes "tension. He nods once. *^000000";
+		mes "tension. He nods once.";
 		mes " ";
 		mes "^00AA00Success.^000000 Leash is now ^8800FFLv " + LEASH_LV + "^000000.";
 		if (LEASH_LV >= 9)
@@ -293,9 +293,9 @@ L_UpgradeLeash:
 	} else {
 		specialeffect2 EF_REFINEFAIL;
 		mes "[Beast Master]";
-		mes "^777777* The new binding doesn't take.";
+		mes "The new binding doesn't take.";
 		mes "He pulls the failed material free";
-		mes "and tosses it aside with a grunt. *^000000";
+		mes "and tosses it aside with a grunt.";
 		mes " ";
 		mes "^FF0000No good.^000000 Materials are spent.";
 		mes "Leash holds at ^8800FFLv " + LEASH_LV + "^000000.";
@@ -315,7 +315,7 @@ OnInit:
 tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 
 	mes "[Innkeeper Mara]";
-	mes "^A woman with kind eyes and flour-dusted";
+	mes "A woman with kind eyes and flour-dusted";
 	mes "sleeves looks up from polishing the counter.";
 	mes "She sets down her rag and gives you her full";
 	mes "attention, like you're the only person in";
@@ -341,8 +341,8 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 		case 1:
 			savepoint "tavern", 100, 100, 1, 1;
 			mes "[Innkeeper Mara]";
-			mes "^777777* She jots something down in a";
-			mes "leather-bound ledger and smiles. *^000000";
+			mes "She jots something down in a";
+			mes "leather-bound ledger and smiles.";
 			mes " ";
 			mes "All set. If anything happens out";
 			mes "there, you'll wake up right here.";
@@ -355,8 +355,8 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 				.@hrs = .@remaining / 3600;
 				.@min = (.@remaining % 3600) / 60;
 				mes "[Innkeeper Mara]";
-				mes "^777777* She checks her ledger and";
-				mes "taps the page with a finger. *^000000";
+				mes "She checks her ledger and";
+				mes "taps the page with a finger.";
 				mes " ";
 				mes "Oh honey, you already checked in";
 				mes "today! Your room's still warm.";
@@ -413,10 +413,10 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 			sc_start SC_MAGNIFICAT, 10800000, 5;
 
 			mes "[Innkeeper Mara]";
-			mes "^777777* She tucks a warm meal voucher";
+			mes "She tucks a warm meal voucher";
 			mes "into your hand and guides you toward";
 			mes "a quiet corner with a crackling";
-			mes "fireplace. *^000000";
+			mes "fireplace.";
 			mes " ";
 			mes "There we are. Rest up, and when";
 			mes "you're hungry, take that voucher";
@@ -440,11 +440,11 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 tavern,55,43,4	script	Chef Goran#7th	4_cook,{
 
 	mes "[Chef Goran]";
-	mes "^777777* A barrel-chested man stands behind a";
+	mes "A barrel-chested man stands behind a";
 	mes "scarred wooden counter, sleeves rolled past";
 	mes "his elbows, a cleaver resting within easy";
 	mes "reach. The smell of roasting meat and fresh";
-	mes "bread fills the air. He sizes you up. *^000000";
+	mes "bread fills the air. He sizes you up.";
 	next;
 
 	mes "[Chef Goran]";
@@ -467,8 +467,8 @@ tavern,55,43,4	script	Chef Goran#7th	4_cook,{
 		case 2: goto L_Shop;
 		case 3:
 			mes "[Chef Goran]";
-			mes "^777777* He grunts and turns back";
-			mes "to the stove. *^000000";
+			mes "He grunts and turns back";
+			mes "to the stove.";
 			mes " ";
 			mes "Everybody's hungry. They just";
 			mes "don't know it yet. Come back.";
@@ -479,8 +479,8 @@ tavern,55,43,4	script	Chef Goran#7th	4_cook,{
 L_Voucher:
 	if (countitem(50012) < 1) {
 		mes "[Chef Goran]";
-		mes "^777777* He holds out his hand, waits,";
-		mes "then pulls it back. *^000000";
+		mes "He holds out his hand, waits,";
+		mes "then pulls it back.";
 		mes " ";
 		mes "No voucher, no free meal. That's how";
 		mes "it works. Go see ^0055FFMara^000000 if you want one.";
@@ -488,8 +488,8 @@ L_Voucher:
 	}
 
 	mes "[Chef Goran]";
-	mes "^777777* He snatches the voucher and squints";
-	mes "at it, then nods. *^000000";
+	mes "He snatches the voucher and squints";
+	mes "at it, then nods.";
 	mes " ";
 	mes "Right. One meal, your choice. Each dish";
 	mes "gives ^00AA00+20 to a stat for 2 hours^000000.";
@@ -523,10 +523,10 @@ L_Voucher:
 	}
 
 	mes "[Chef Goran]";
-	mes "^777777* He vanishes behind the counter.";
+	mes "He vanishes behind the counter.";
 	mes "Pans clang. Something sizzles. Moments";
 	mes "later he slides a steaming plate across";
-	mes "to you. *^000000";
+	mes "to you.";
 	mes " ";
 	mes "^00AA00" + .@dish$ + "^000000 — " + .@stat$ + " +20 for 2 hours.";
 	mes " ";
@@ -603,8 +603,8 @@ L_Shop:
 	getitem .@shop_id, .@qty;
 
 	mes "[Chef Goran]";
-	mes "^777777* He wraps the portions and slides";
-	mes "them across the counter. *^000000";
+	mes "He wraps the portions and slides";
+	mes "them across the counter.";
 	mes " ";
 	mes .@qty + "x ^00AA00" + .@dish$ + "^000000.";
 	mes "Eat them when you need them.";
@@ -617,12 +617,12 @@ L_Shop:
 tavern,45,50,4	script	Guild Representative#7th	4_m_cru_crua,{
 
 	mes "[Guild Representative]";
-	mes "^777777* A weathered soldier sits at a corner";
+	mes "A weathered soldier sits at a corner";
 	mes "table, guild insignias stitched into his";
 	mes "cloak. A heavy ledger lies open before him,";
 	mes "columns of figures filling every page. He";
 	mes "looks up with the measured gaze of a man";
-	mes "who has seen too many battles. *^000000";
+	mes "who has seen too many battles.";
 	next;
 
 	mes "[Guild Representative]";
@@ -709,9 +709,9 @@ L_DonateZeny:
 	guildgetexp .@gexp;
 
 	mes "[Guild Representative]";
-	mes "^777777* He writes the amount in the ledger";
+	mes "He writes the amount in the ledger";
 	mes "with careful strokes, then presses a";
-	mes "guild seal into hot wax beside it. *^000000";
+	mes "guild seal into hot wax beside it.";
 	mes " ";
 	mes "Recorded and sealed. Your guild grows";
 	mes "stronger today because of you.";
@@ -781,9 +781,9 @@ L_DonateEmperium:
 	guildgetexp .@gexp;
 
 	mes "[Guild Representative]";
-	mes "^777777* He places each stone into a velvet-";
+	mes "He places each stone into a velvet-";
 	mes "lined case with practiced hands, locking";
-	mes "it with a key he wears around his neck. *^000000";
+	mes "it with a key he wears around his neck.";
 	mes " ";
 	mes "A fine donation. Your guild master will";
 	mes "hear of this. Well done, soldier.";
@@ -792,9 +792,9 @@ L_DonateEmperium:
 // -------------------------------------------------------
 L_Quests:
 	mes "[Guild Representative]";
-	mes "^777777* He flips through the ledger slowly,";
+	mes "He flips through the ledger slowly,";
 	mes "running a scarred finger down each page,";
-	mes "then closes it with a sigh. *^000000";
+	mes "then closes it with a sigh.";
 	mes " ";
 	mes "Nothing posted right now. The guild";
 	mes "boards have been quiet lately.";

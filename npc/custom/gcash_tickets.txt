@@ -22,8 +22,8 @@ OnNPCKillEvent:
 	if ($GCASH_DISABLED) end;
 	if ($GCASH_DAILY_VALUE >= .daily_cap) end;
 
-	// 90% drop rate for testing — change to: if (rand(200) > 0) end; for 0.5%
-	if (rand(100) >= 90) end;
+	// 90% drop rate (rand(100) >= 90) for testing — change to: if (rand(200) > 0) end; for 0.5%
+	if (rand(200) > 0) end;
 
 	setarray .@gcash_items[0], 50001, 50002, 50003, 50004, 50005, 50006, 50007;
 	setarray .@gcash_values[0], 1, 2, 3, 5, 8, 13, 21;
