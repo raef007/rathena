@@ -36,48 +36,70 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 	switch (.@choice) {
 
 		case 1:
-			// ===== WELCOME REWARD =====
-			if (#WELCOME_CLAIMED) {
-				mes "[Tiffy]";
-				mes "You already got your welcome";
-				mes "starter pack~! No seconds!";
-				close;
-			}
-
-			if (checkweight(5035,1) == 0 || checkweight(12263,5) == 0) {
-				mes "[Tiffy]";
-				mes "Your inventory is stuffed to the brim!";
-				mes "Make some space and come back, okay~?";
-				close;
-			}
-
+			// --- REWARD SUB-MENU ---
 			mes "[Tiffy]";
-			mes "Welcome to Asgard City~!";
-			mes "Here's your starter gift:";
-			mes " ";
-			mes "^00FF001x Poring Hat^000000";
-			mes "^00FF001x Mr. Smile^000000";
-			mes "^00FF005x Field Manual^000000";
-			mes "^00FF005x Job Manual^000000";
-			mes "^00FF001x Bubble Gum^000000";
-			mes " ";
-			mes "Use them wisely~!";
+			mes "Oh, rewards? You bet I do~!";
+			mes "Which one are you here for?";
 			next;
 
-			set #WELCOME_CLAIMED, 1;
-			getitem 5035, 1;    // Poring Hat
-			getitem 2278, 1;    // Mr. Smile
-			getitem 12263, 5;   // Field Manual
-			getitem 14592, 5;   // Job Manual (50%)
-			getitem 12210, 1;   // Bubble Gum
+			.@reward = select(
+				"I'm kind of new here",
+				"Never mind"
+			);
 
-			mes "[Tiffy]";
-			mes "^777777* She slides the items across";
-			mes "the counter with a big grin~ *^000000";
-			mes " ";
-			mes "There you go! Good luck out there,";
-			mes strcharinfo(0) + "~!";
-			close;
+			switch (.@reward) {
+
+				case 1:
+					// ===== WELCOME REWARD =====
+					if (#WELCOME_CLAIMED) {
+						mes "[Tiffy]";
+						mes "You already got your welcome";
+						mes "starter pack~! No seconds!";
+						close;
+					}
+
+					if (checkweight(5035,1) == 0 || checkweight(12263,5) == 0) {
+						mes "[Tiffy]";
+						mes "Your inventory is stuffed to the brim!";
+						mes "Make some space and come back, okay~?";
+						close;
+					}
+
+					mes "[Tiffy]";
+					mes "Welcome to Asgard City~!";
+					mes "Here's your starter gift:";
+					mes " ";
+					mes "^00FF001x Poring Hat^000000";
+					mes "^00FF001x Mr. Smile^000000";
+					mes "^00FF005x Field Manual^000000";
+					mes "^00FF005x Job Manual^000000";
+					mes "^00FF001x Bubble Gum^000000";
+					mes " ";
+					mes "Use them wisely~!";
+					next;
+
+					set #WELCOME_CLAIMED, 1;
+					getitem 5035, 1;    // Poring Hat
+					getitem 2278, 1;    // Mr. Smile
+					getitem 12263, 5;   // Field Manual
+					getitem 14592, 5;   // Job Manual (50%)
+					getitem 12210, 1;   // Bubble Gum
+
+					mes "[Tiffy]";
+					mes "^777777* She slides the items across";
+					mes "the counter with a big grin~ *^000000";
+					mes " ";
+					mes "There you go! Good luck out there,";
+					mes strcharinfo(0) + "~!";
+					close;
+
+				case 2:
+					// --- Never mind ---
+					mes "[Tiffy]";
+					mes "No worries! Come back anytime~";
+					close;
+			}
+			break;
 
 		case 2:
 			// --- ABOUT THIS PLACE ---

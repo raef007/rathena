@@ -30,12 +30,15 @@ Body:
   - Id: 50011
     AegisName: Beastmasters_Leash
     Name: Beast Master's Leash
-    Type: Etc
+    Type: Usable
     Buy: 0
     Sell: 0
     Weight: 100
     Flags:
-      BuyingStore: false
+      NoConsume: true
+    Delay:
+      Duration: 3000
+      Status: All_Riding_Reuse_Limit
     Trade:
       NoDrop: true
       NoTrade: true
@@ -45,6 +48,8 @@ Body:
       NoGuildStorage: false
       NoMail: true
       NoAuction: true
+    Script: |
+      setmounting();
 
   - Id: 50012
     AegisName: Heavens_Meal_Voucher
@@ -68,77 +73,5 @@ Body:
       mes "[Heaven's Meal Voucher]";
       mes "Take this to the Chef at the 7th Heaven Tavern to claim a meal.";
       close;
-
-  - Id: 50013
-    AegisName: Tavern_Warriors_Feast
-    Name: Warrior's Feast
-    Type: Healing
-    Buy: 20000
-    Sell: 10000
-    Weight: 10
-    Flags:
-      BuyingStore: true
-    Script: |
-      sc_start SC_FOOD_STR_CASH,7200000,20;
-
-  - Id: 50014
-    AegisName: Tavern_Wind_Sprint_Soup
-    Name: Wind Sprint Soup
-    Type: Healing
-    Buy: 20000
-    Sell: 10000
-    Weight: 10
-    Flags:
-      BuyingStore: true
-    Script: |
-      sc_start SC_FOOD_AGI_CASH,7200000,20;
-
-  - Id: 50015
-    AegisName: Tavern_Iron_Belly_Stew
-    Name: Iron Belly Stew
-    Type: Healing
-    Buy: 20000
-    Sell: 10000
-    Weight: 10
-    Flags:
-      BuyingStore: true
-    Script: |
-      sc_start SC_FOOD_VIT_CASH,7200000,20;
-
-  - Id: 50016
-    AegisName: Tavern_Sages_Elixir
-    Name: Sage's Elixir
-    Type: Healing
-    Buy: 20000
-    Sell: 10000
-    Weight: 10
-    Flags:
-      BuyingStore: true
-    Script: |
-      sc_start SC_FOOD_INT_CASH,7200000,20;
-
-  - Id: 50017
-    AegisName: Tavern_Hawk_Eye_Platter
-    Name: Hawk Eye Platter
-    Type: Healing
-    Buy: 20000
-    Sell: 10000
-    Weight: 10
-    Flags:
-      BuyingStore: true
-    Script: |
-      sc_start SC_FOOD_DEX_CASH,7200000,20;
-
-  - Id: 50018
-    AegisName: Tavern_Fortune_Cookie
-    Name: Fortune Cookie Bun
-    Type: Healing
-    Buy: 20000
-    Sell: 10000
-    Weight: 10
-    Flags:
-      BuyingStore: true
-    Script: |
-      sc_start SC_FOOD_LUK_CASH,7200000,20;
 
 Footer:

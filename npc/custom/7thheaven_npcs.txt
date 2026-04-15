@@ -14,23 +14,27 @@ tavern,37,39,0	warp	7thHeaven_Exit	2,2,prontera,162,168
 tavern,58,44,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 
 	mes "[Beast Master]";
-	mes "^777777* A massive, weathered man sits";
-	mes "on a crate, a falcon perched on one arm";
-	mes "and a pair of Peco reins on his belt. *^000000";
+	mes "^777777* A sun-darkened man sits cross-legged";
+	mes "on a hay bale, absently feeding strips of";
+	mes "jerky to a falcon on his shoulder. Scars";
+	mes "criss-cross both forearms. He doesn't look";
+	mes "up as you approach — the falcon does. *^000000";
 	next;
 
 	mes "[Beast Master]";
-	mes "Need a bird? A ride?";
-	mes "Or perhaps... you want one of these.";
-	mes "^777777* He holds up a worn leather leash. *^000000";
+	mes "Hrmph. She noticed you before I did.";
+	mes "Good instincts on that one.";
+	mes " ";
+	mes "So — you here for a beast, or you";
+	mes "want me to work on that leash?";
 	next;
 
 	.@sel = select(
-		" ~ Rent a Peco Peco",
-		" ~ Rent a Falcon",
-		" ~ Craft a Beast Master's Leash",
+		" ~ I need a Peco",
+		" ~ I need a Falcon",
+		" ~ Craft me a Beast Master's Leash",
 		" ~ Upgrade my Leash",
-		" ~ ^777777Leave^000000"
+		" ~ ^777777Just looking^000000"
 	);
 
 	switch (.@sel) {
@@ -40,7 +44,10 @@ tavern,58,44,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 		case 4: goto L_UpgradeLeash;
 		case 5:
 			mes "[Beast Master]";
-			mes "Come back when you need something.";
+			mes "^777777* He grunts and goes back to";
+			mes "feeding the falcon. *^000000";
+			mes " ";
+			mes "Don't spook the birds on your way out.";
 			close;
 	}
 
@@ -48,94 +55,164 @@ tavern,58,44,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 L_RentPeco:
 	if (BaseJob != Job_Knight && BaseJob != Job_Crusader) {
 		mes "[Beast Master]";
-		mes "These Pecos are for Knights and";
-		mes "Crusaders only. Sorry.";
+		mes "^777777* He looks you up and down,";
+		mes "then shakes his head. *^000000";
+		mes " ";
+		mes "These Pecos aren't ponies for a day out.";
+		mes "Only ^0055FFKnights^000000 and ^0055FFCrusaders^000000";
+		mes "know how to handle them.";
 		close;
 	}
 	if (checkriding()) {
 		mes "[Beast Master]";
-		mes "You're already on one.";
+		mes "You're already sitting on one, genius.";
 		close;
 	}
 	if (ismounting()) {
 		mes "[Beast Master]";
-		mes "Dismiss your current mount first.";
+		mes "Get off whatever you're on first.";
+		mes "I'm not stacking mounts.";
 		close;
 	}
 	if (getskilllv("KN_RIDING") == 0) {
 		mes "[Beast Master]";
-		mes "You haven't learned to ride yet.";
+		mes "^777777* He crosses his arms and squints";
+		mes "at you. *^000000";
+		mes " ";
+		mes "You don't know ^FF0000Riding^000000 yet.";
+		mes "Learn the skill first, then come talk.";
+		mes "I'm not scraping you off the cobblestones.";
 		close;
 	}
 	mes "[Beast Master]";
-	mes "Rental fee: ^00AA002,500 zeny^000000.";
+	mes "Good Pecos aren't cheap to feed.";
+	mes "Rental's ^00AA002,500 zeny^000000. Fair price";
+	mes "for a beast that won't throw you.";
 	next;
-	if (select(" ~ Rent: ~ ^777777Cancel^000000") == 2) { close; }
+	if (select(" ~ Pay up: ~ ^777777On second thought...^000000") == 2) {
+		mes "[Beast Master]";
+		mes "Suit yourself.";
+		close;
+	}
 	if (Zeny < 2500) {
 		mes "[Beast Master]";
-		mes "Not enough zeny.";
+		mes "^777777* He holds out his palm and";
+		mes "waits. Nothing comes. *^000000";
+		mes " ";
+		mes "That's what I thought. Come back";
+		mes "when your purse isn't empty.";
 		close;
 	}
 	Zeny -= 2500;
 	setriding;
 	mes "[Beast Master]";
-	mes "There you go. Treat it well.";
+	mes "^777777* He whistles sharply. A Peco Peco";
+	mes "trots over and lowers itself for you. *^000000";
+	mes " ";
+	mes "She's yours. Don't ride her into walls.";
 	close;
 
 // -------------------------------------------------------
 L_RentFalcon:
 	if (BaseJob != Job_Hunter) {
 		mes "[Beast Master]";
-		mes "Falcons are for Hunters only.";
+		mes "^777777* The falcon on his shoulder";
+		mes "screeches as you reach toward it. *^000000";
+		mes " ";
+		mes "Easy! She's not for you.";
+		mes "Falcons bond with ^0055FFHunters^000000 only.";
+		mes "Anyone else, she'd take a finger.";
 		close;
 	}
 	if (checkfalcon()) {
 		mes "[Beast Master]";
-		mes "You already have a falcon.";
+		mes "You've already got one circling above.";
+		mes "What, you want a whole flock?";
 		close;
 	}
 	if (checkwug()) {
 		mes "[Beast Master]";
-		mes "Dismiss your warg first.";
+		mes "Your warg's giving me the eye and I";
+		mes "don't like it. Dismiss it first.";
 		close;
 	}
 	if (getskilllv("HT_FALCON") == 0) {
 		mes "[Beast Master]";
-		mes "Learn Falcon Mastery first.";
+		mes "^777777* He tilts his head, studying you. *^000000";
+		mes " ";
+		mes "You don't have ^FF0000Falcon Mastery^000000.";
+		mes "Without it, she'd claw your arm open";
+		mes "before you could say 'heel'.";
 		close;
 	}
 	mes "[Beast Master]";
-	mes "Rental fee: ^00AA002,500 zeny^000000.";
+	mes "^777777* He strokes the falcon's breast";
+	mes "feathers thoughtfully. *^000000";
+	mes " ";
+	mes "This one's been with me a while.";
+	mes "^00AA002,500 zeny^000000 and she's yours to borrow.";
 	next;
-	if (select(" ~ Rent: ~ ^777777Cancel^000000") == 2) { close; }
+	if (select(" ~ I'll take her: ~ ^777777Maybe later^000000") == 2) {
+		mes "[Beast Master]";
+		mes "She'll be here. Probably.";
+		close;
+	}
 	if (Zeny < 2500) {
 		mes "[Beast Master]";
-		mes "Not enough zeny.";
+		mes "Can't pay, can't play. Simple as that.";
 		close;
 	}
 	Zeny -= 2500;
 	setfalcon;
 	mes "[Beast Master]";
-	mes "Careful with that one. She bites.";
+	mes "^777777* The falcon launches from his";
+	mes "shoulder and circles once before landing";
+	mes "on your outstretched arm. *^000000";
+	mes " ";
+	mes "Careful with that one. She bites";
+	mes "when she's bored.";
 	close;
 
 // -------------------------------------------------------
 L_CraftLeash:
 	if (LEASH_LV > 0 || countitem(50011) > 0) {
 		mes "[Beast Master]";
-		mes "You already have a leash.";
+		mes "^777777* He glances at your belt and";
+		mes "raises an eyebrow. *^000000";
+		mes " ";
+		mes "You've already got a leash. One per";
+		mes "customer — I don't have the hides";
+		mes "to waste making two.";
 		close;
 	}
 	mes "[Beast Master]";
-	mes "Materials required:";
-	mes "^00AA0010 Oridecon^000000";
-	mes "^00AA0010 Elunium^000000";
+	mes "^777777* He pulls a length of raw leather";
+	mes "from under the hay bale and stretches";
+	mes "it between his fists. *^000000";
+	mes " ";
+	mes "A proper Beast Master's Leash. Lets";
+	mes "you call a mount anywhere, no rental";
+	mes "needed. Upgradeable too, if you've";
+	mes "got the stones for it.";
+	mes " ";
+	mes "Materials:";
+	mes "^00AA0010x Oridecon^000000";
+	mes "^00AA0010x Elunium^000000";
 	mes "^00AA003,000,000 zeny^000000";
 	next;
-	if (select(" ~ Craft it: ~ ^777777Cancel^000000") == 2) { close; }
+	if (select(" ~ Craft it: ~ ^777777That's steep...^000000") == 2) {
+		mes "[Beast Master]";
+		mes "Quality costs. Come back when";
+		mes "you're serious.";
+		close;
+	}
 	if (countitem(984) < 10 || countitem(985) < 10 || Zeny < 3000000) {
 		mes "[Beast Master]";
-		mes "You don't have the materials.";
+		mes "^777777* He counts through your materials";
+		mes "and frowns. *^000000";
+		mes " ";
+		mes "Not enough. Don't waste my time";
+		mes "unless you've got the full load.";
 		close;
 	}
 	delitem 984, 10;
@@ -144,10 +221,14 @@ L_CraftLeash:
 	getitem 50011, 1;
 	set LEASH_LV, 1;
 	mes "[Beast Master]";
-	mes "^777777* He knots the leash with practised";
-	mes "hands and hands it over. *^000000";
+	mes "^777777* His hands move fast — cutting,";
+	mes "knotting, binding the leather with a";
+	mes "precision born of years of practice.";
+	mes "He blows on the final knot and hands";
+	mes "it over without ceremony. *^000000";
 	mes " ";
-	mes "Lv1 now. It'll hold a Peco.";
+	mes "^00AA00Lv1 Beast Master's Leash.^000000";
+	mes "Use it from your inventory to mount up.";
 	mes "Bring it back when you want it stronger.";
 	close;
 
@@ -155,30 +236,47 @@ L_CraftLeash:
 L_UpgradeLeash:
 	if (LEASH_LV == 0 || countitem(50011) == 0) {
 		mes "[Beast Master]";
-		mes "You don't have a leash to upgrade.";
+		mes "You don't have a leash for me to work on.";
 		close;
 	}
 	if (LEASH_LV >= 10) {
 		mes "[Beast Master]";
-		mes "That leash is already at its peak.";
+		mes "^777777* He turns the leash over in his";
+		mes "hands, running a thumb along the";
+		mes "bindings. A rare look of satisfaction";
+		mes "crosses his face. *^000000";
+		mes " ";
+		mes "This is as good as it gets.";
+		mes "^8800FFLevel 10^000000. Nothing more I can do.";
+		mes "You should be proud of this thing.";
 		close;
 	}
 	.@next_lv = LEASH_LV + 1;
 	mes "[Beast Master]";
-	mes "Current level: ^8800FF" + LEASH_LV + "^000000";
-	mes "Upgrading to: ^0055FF" + .@next_lv + "^000000";
+	mes "^777777* He takes your leash and examines";
+	mes "the stitching with a critical eye. *^000000";
 	mes " ";
-	mes "Materials:";
-	mes "^00AA003 Oridecon^000000";
-	mes "^00AA003 Elunium^000000";
+	mes "Current: ^8800FFLv " + LEASH_LV + "^000000";
+	mes "Target:  ^0055FFLv " + .@next_lv + "^000000";
+	mes " ";
+	mes "I'll need:";
+	mes "^00AA003x Oridecon^000000";
+	mes "^00AA003x Elunium^000000";
 	mes "^00AA00100,000 zeny^000000";
 	mes " ";
 	mes "Success rate: ^FF0000" + .SuccessRate[LEASH_LV] + "%^000000";
+	mes " ";
+	mes "If it fails, the materials are gone";
+	mes "but your leash stays where it is.";
 	next;
-	if (select(" ~ Attempt upgrade: ~ ^777777Cancel^000000") == 2) { close; }
+	if (select(" ~ Do it: ~ ^777777Not today^000000") == 2) {
+		mes "[Beast Master]";
+		mes "Smart to think on it.";
+		close;
+	}
 	if (countitem(984) < 3 || countitem(985) < 3 || Zeny < 100000) {
 		mes "[Beast Master]";
-		mes "Not enough materials.";
+		mes "Check your bags. You're short.";
 		close;
 	}
 	delitem 984, 3;
@@ -188,16 +286,24 @@ L_UpgradeLeash:
 	if (rand(100) < .SuccessRate[LEASH_LV]) {
 		set LEASH_LV, .@next_lv;
 		mes "[Beast Master]";
-		mes "^777777* The leather darkens and binds";
-		mes "tighter. *^000000";
+		mes "^777777* He works the new material into";
+		mes "the binding. The leather darkens and";
+		mes "pulls taut with an almost living";
+		mes "tension. He nods once. *^000000";
 		mes " ";
-		mes "^00AA00Success!^000000 Leash is now Lv" + LEASH_LV + ".";
+		mes "^00AA00Success.^000000 Leash is now ^8800FFLv " + LEASH_LV + "^000000.";
+		if (LEASH_LV >= 9)
+			mes "I can feel it from here. That's a fine piece.";
 	} else {
 		mes "[Beast Master]";
-		mes "^777777* The binding snaps loose.";
-		mes "Materials wasted. *^000000";
+		mes "^777777* The new binding doesn't take.";
+		mes "He pulls the failed material free";
+		mes "and tosses it aside with a grunt. *^000000";
 		mes " ";
-		mes "^FF0000Failed.^000000 Your leash holds at Lv" + LEASH_LV + ".";
+		mes "^FF0000No good.^000000 Materials are spent.";
+		mes "Leash holds at ^8800FFLv " + LEASH_LV + "^000000.";
+		mes "That's the game. Try again when";
+		mes "you've got more supplies.";
 	}
 	close;
 
@@ -212,27 +318,38 @@ OnInit:
 tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 
 	mes "[Innkeeper Mara]";
-	mes "^777777* A warm woman behind the front";
-	mes "desk gives you a tired but genuine smile. *^000000";
+	mes "^777777* A woman with kind eyes and flour-dusted";
+	mes "sleeves looks up from polishing the counter.";
+	mes "She sets down her rag and gives you her full";
+	mes "attention, like you're the only person in";
+	mes "the room. *^000000";
 	next;
 
 	mes "[Innkeeper Mara]";
-	mes "Welcome to the 7th Heaven.";
-	mes "What can I do for you?";
+	mes "Well now, another weary soul finds";
+	mes "their way to the 7th Heaven~";
+	mes " ";
+	mes "You look like you could use a rest.";
+	mes "Or at least a warm bed and a hot meal.";
+	mes "What'll it be, love?";
 	next;
 
 	.@sel = select(
 		" ~ Save my respawn here",
 		" ~ Check in (Daily — Meal Package)",
-		" ~ ^777777Leave^000000"
+		" ~ ^777777Just passing through^000000"
 	);
 
 	switch (.@sel) {
 		case 1:
 			savepoint "tavern", 100, 100, 1, 1;
 			mes "[Innkeeper Mara]";
-			mes "Your respawn is saved here.";
-			mes "Rest well, adventurer.";
+			mes "^777777* She jots something down in a";
+			mes "leather-bound ledger and smiles. *^000000";
+			mes " ";
+			mes "All set. If anything happens out";
+			mes "there, you'll wake up right here.";
+			mes "Safe and sound, I promise.";
 			close;
 
 		case 2:
@@ -241,38 +358,54 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 				.@hrs = .@remaining / 3600;
 				.@min = (.@remaining % 3600) / 60;
 				mes "[Innkeeper Mara]";
-				mes "You already checked in today.";
-				mes "Come back in ^FF0000" + .@hrs + "h " + .@min + "m^000000.";
+				mes "^777777* She checks her ledger and";
+				mes "taps the page with a finger. *^000000";
+				mes " ";
+				mes "Oh honey, you already checked in";
+				mes "today! Your room's still warm.";
+				mes "Come back in ^FF0000" + .@hrs + "h " + .@min + "m^000000";
+				mes "and I'll have everything ready";
+				mes "for you again~";
 				close;
 			}
 
 			if (checkweight(50012, 1) == 0) {
 				mes "[Innkeeper Mara]";
-				mes "Your inventory is too full.";
-				mes "Make some room first.";
+				mes "Oh dear, your bags are bursting";
+				mes "at the seams! Lighten up a bit";
+				mes "and come back, okay?";
 				close;
 			}
 
 			mes "[Innkeeper Mara]";
-			mes "A room, a meal, and some peace.";
+			mes "Here's what I've got for you:";
 			mes " ";
-			mes "You'll get:";
+			mes "^00AA00A cozy room for the night^000000";
 			mes "^00AA001x Heaven's Meal Voucher^000000";
-			mes "^00AA003 hours of HP/SP Recovery boost^000000";
+			mes "  ^777777(Redeem with Chef Goran next door)^000000";
+			mes "^00AA003 hours of rest bonus^000000";
+			mes "  ^777777(HP recovery and SP regeneration)^000000";
 			mes " ";
-			mes "Cost: ^FF000077,000 zeny^000000";
+			mes "All for just ^FF000077,000 zeny^000000.";
+			mes "Best deal in Rune-Midgarts, if I";
+			mes "do say so myself~";
 			next;
 
-			if (select(" ~ Check in: ~ ^777777Not right now^000000") == 2) {
+			if (select(" ~ Sounds wonderful: ~ ^777777Maybe another time^000000") == 2) {
 				mes "[Innkeeper Mara]";
-				mes "Come back any time.";
+				mes "No rush, love. The 7th Heaven's";
+				mes "doors are always open for you~";
 				close;
 			}
 
 			if (Zeny < 77000) {
 				mes "[Innkeeper Mara]";
-				mes "A room here costs 77,000 zeny.";
-				mes "Come back when you have the coin.";
+				mes "^777777* She winces apologetically. *^000000";
+				mes " ";
+				mes "I wish I could waive it, truly.";
+				mes "But a room costs 77,000 zeny — the";
+				mes "tavern doesn't run on goodwill alone.";
+				mes "Come back when you can, okay?";
 				close;
 			}
 
@@ -283,16 +416,23 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 			sc_start SC_MAGNIFICAT, 10800000, 5;
 
 			mes "[Innkeeper Mara]";
-			mes "^777777* She hands you a warm voucher";
-			mes "and shows you to a quiet corner. *^000000";
+			mes "^777777* She tucks a warm meal voucher";
+			mes "into your hand and guides you toward";
+			mes "a quiet corner with a crackling";
+			mes "fireplace. *^000000";
 			mes " ";
-			mes "Enjoy your stay. The Chef is";
-			mes "just past the bar when you're ready.";
+			mes "There we are. Rest up, and when";
+			mes "you're hungry, take that voucher";
+			mes "to ^0055FFChef Goran^000000 — he'll fix you";
+			mes "something wonderful~";
 			close;
 
 		case 3:
 			mes "[Innkeeper Mara]";
-			mes "Safe travels.";
+			mes "^777777* She waves warmly. *^000000";
+			mes " ";
+			mes "Stay safe out there, love.";
+			mes "You're always welcome here~";
 			close;
 	}
 }
@@ -303,19 +443,26 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 tavern,63,41,4	script	Chef Goran#7th	4_CH1_GRAY_VALKYRIE,{
 
 	mes "[Chef Goran]";
-	mes "^777777* A massive chef wipes his hands";
-	mes "on an apron and peers down at you. *^000000";
+	mes "^777777* A barrel-chested man stands behind a";
+	mes "scarred wooden counter, sleeves rolled past";
+	mes "his elbows, a cleaver resting within easy";
+	mes "reach. The smell of roasting meat and fresh";
+	mes "bread fills the air. He sizes you up. *^000000";
 	next;
 
 	mes "[Chef Goran]";
-	mes "You got a voucher? Good.";
-	mes "Otherwise, I sell à la carte.";
+	mes "You hungry or not? Don't just stand";
+	mes "there letting the heat out.";
+	mes " ";
+	mes "Got a voucher from Mara? I'll cook";
+	mes "you something proper. No voucher?";
+	mes "I still cook — it just costs more.";
 	next;
 
 	.@sel = select(
 		" ~ Redeem a Meal Voucher",
-		" ~ Browse à la carte (food shop)",
-		" ~ ^777777Leave^000000"
+		" ~ Order à la carte (20,000z)",
+		" ~ ^777777Not hungry^000000"
 	);
 
 	switch (.@sel) {
@@ -323,7 +470,11 @@ tavern,63,41,4	script	Chef Goran#7th	4_CH1_GRAY_VALKYRIE,{
 		case 2: goto L_Shop;
 		case 3:
 			mes "[Chef Goran]";
-			mes "Come back hungry.";
+			mes "^777777* He grunts and turns back";
+			mes "to the stove. *^000000";
+			mes " ";
+			mes "Everybody's hungry. They just";
+			mes "don't know it yet. Come back.";
 			close;
 	}
 
@@ -331,13 +482,21 @@ tavern,63,41,4	script	Chef Goran#7th	4_CH1_GRAY_VALKYRIE,{
 L_Voucher:
 	if (countitem(50012) < 1) {
 		mes "[Chef Goran]";
-		mes "No voucher, no meal. Simple.";
+		mes "^777777* He holds out his hand, waits,";
+		mes "then pulls it back. *^000000";
+		mes " ";
+		mes "No voucher, no free meal. That's how";
+		mes "it works. Go see ^0055FFMara^000000 if you want one.";
 		close;
 	}
 
 	mes "[Chef Goran]";
-	mes "What'll it be?";
-	mes "^00AA001 voucher = +20 to chosen stat for 2 hours.^000000";
+	mes "^777777* He snatches the voucher and squints";
+	mes "at it, then nods. *^000000";
+	mes " ";
+	mes "Right. One meal, your choice. Each dish";
+	mes "gives ^00AA00+20 to a stat for 2 hours^000000.";
+	mes "Pick your poison.";
 	next;
 
 	.@meal = select(
@@ -347,64 +506,111 @@ L_Voucher:
 		" ~ Sage's Elixir (INT +20)",
 		" ~ Hawk Eye Platter (DEX +20)",
 		" ~ Fortune Cookie Bun (LUK +20)",
-		" ~ ^777777I changed my mind^000000"
+		" ~ ^777777I'll think about it^000000"
 	);
-	if (.@meal == 7) { mes "[Chef Goran]"; mes "Come back when you know."; close; }
-
-	.@item_id = 50012 + .@meal; // 50013 = Warrior's Feast, ..., 50018 = Fortune Cookie
-
-	if (checkweight(.@item_id, 1) == 0) {
+	if (.@meal == 7) {
 		mes "[Chef Goran]";
-		mes "Your bags are full. Make room.";
+		mes "Don't take too long. Food's best hot.";
 		close;
 	}
 
 	delitem 50012, 1;
-	getitem .@item_id, 1;
+
+	switch (.@meal) {
+		case 1: sc_start SC_FOOD_STR_CASH, 7200000, 20; .@stat$ = "STR"; .@dish$ = "Warrior's Feast"; break;
+		case 2: sc_start SC_FOOD_AGI_CASH, 7200000, 20; .@stat$ = "AGI"; .@dish$ = "Wind Sprint Soup"; break;
+		case 3: sc_start SC_FOOD_VIT_CASH, 7200000, 20; .@stat$ = "VIT"; .@dish$ = "Iron Belly Stew"; break;
+		case 4: sc_start SC_FOOD_INT_CASH, 7200000, 20; .@stat$ = "INT"; .@dish$ = "Sage's Elixir"; break;
+		case 5: sc_start SC_FOOD_DEX_CASH, 7200000, 20; .@stat$ = "DEX"; .@dish$ = "Hawk Eye Platter"; break;
+		case 6: sc_start SC_FOOD_LUK_CASH, 7200000, 20; .@stat$ = "LUK"; .@dish$ = "Fortune Cookie Bun"; break;
+	}
 
 	mes "[Chef Goran]";
-	mes "^777777* He slides a steaming dish";
-	mes "across the counter. *^000000";
+	mes "^777777* He vanishes behind the counter.";
+	mes "Pans clang. Something sizzles. Moments";
+	mes "later he slides a steaming plate across";
+	mes "to you. *^000000";
 	mes " ";
-	mes "Eat up. That'll keep you going.";
+	mes "^00AA00" + .@dish$ + "^000000 — " + .@stat$ + " +20 for 2 hours.";
+	mes " ";
+	mes "Eat. Don't talk. Enjoy it.";
 	close;
 
 // -------------------------------------------------------
 L_Shop:
 	mes "[Chef Goran]";
-	mes "Quality ingredients, made right.";
-	mes "^00AA0020,000 zeny each. +20 to stat for 2 hours.^000000";
+	mes "À la carte. These keep — you can eat";
+	mes "them whenever you're ready.";
+	mes "^00AA0030,000 zeny^000000 each.";
+	mes " ";
+	mes "What do you want?";
 	next;
 
 	.@food = select(
-		" ~ Warrior's Feast (STR +20) — 20,000z",
-		" ~ Wind Sprint Soup (AGI +20) — 20,000z",
-		" ~ Iron Belly Stew (VIT +20) — 20,000z",
-		" ~ Sage's Elixir (INT +20) — 20,000z",
-		" ~ Hawk Eye Platter (DEX +20) — 20,000z",
-		" ~ Fortune Cookie Bun (LUK +20) — 20,000z",
-		" ~ ^777777Leave^000000"
+		" ~ Steamed Tongue (STR +10, 1hr)",
+		" ~ Steamed Desert Scorpions (AGI +10, 1hr)",
+		" ~ Immortal Stew (VIT +10, 1hr)",
+		" ~ Dragon Breath Cocktail (INT +10, 1hr)",
+		" ~ Hwergelmir's Tonic (DEX +10, 1hr)",
+		" ~ Cooked Nine Tail (LUK +10, 1hr)",
+		" ~ ^777777Changed my mind^000000"
 	);
-	if (.@food == 7) { mes "[Chef Goran]"; mes "Come back hungry."; close; }
-
-	.@shop_id = 50012 + .@food; // 50013–50018
-
-	if (Zeny < 20000) {
+	if (.@food == 7) {
 		mes "[Chef Goran]";
-		mes "That'll be 20,000 zeny. You short.";
-		close;
-	}
-	if (checkweight(.@shop_id, 1) == 0) {
-		mes "[Chef Goran]";
-		mes "Your bags are full.";
+		mes "People who can't decide go hungry.";
 		close;
 	}
 
-	Zeny -= 20000;
-	getitem .@shop_id, 1;
+	switch (.@food) {
+		case 1: .@shop_id = 12250; .@dish$ = "Steamed Tongue"; break;
+		case 2: .@shop_id = 12251; .@dish$ = "Steamed Desert Scorpions"; break;
+		case 3: .@shop_id = 12255; .@dish$ = "Immortal Stew"; break;
+		case 4: .@shop_id = 12252; .@dish$ = "Dragon Breath Cocktail"; break;
+		case 5: .@shop_id = 12253; .@dish$ = "Hwergelmir's Tonic"; break;
+		case 6: .@shop_id = 12254; .@dish$ = "Cooked Nine Tail"; break;
+	}
 
 	mes "[Chef Goran]";
-	mes "Fresh batch. Enjoy.";
+	mes "^00AA00" + .@dish$ + "^000000 — 30,000z each.";
+	mes "How many do you want?";
+	next;
+
+	input .@qty;
+
+	if (.@qty <= 0) {
+		mes "[Chef Goran]";
+		mes "That's not a number I can cook.";
+		close;
+	}
+
+	.@total = .@qty * 30000;
+
+	if (Zeny < .@total) {
+		mes "[Chef Goran]";
+		mes "^777777* He does the math faster than you. *^000000";
+		mes " ";
+		mes "That's ^FF0000" + .@total + " zeny^000000 for " + .@qty + ".";
+		mes "You're short. Come back when you";
+		mes "can afford what you're ordering.";
+		close;
+	}
+
+	if (checkweight(.@shop_id, .@qty) == 0) {
+		mes "[Chef Goran]";
+		mes "You can't carry that many.";
+		mes "Clear some bag space first.";
+		close;
+	}
+
+	Zeny -= .@total;
+	getitem .@shop_id, .@qty;
+
+	mes "[Chef Goran]";
+	mes "^777777* He wraps the portions and slides";
+	mes "them across the counter. *^000000";
+	mes " ";
+	mes .@qty + "x ^00AA00" + .@dish$ + "^000000.";
+	mes "Eat them when you need them.";
 	close;
 }
 
@@ -414,23 +620,28 @@ L_Shop:
 tavern,65,41,4	script	Guild Representative#7th	4_M_THAIONGBAK,{
 
 	mes "[Guild Representative]";
-	mes "^777777* A stern man in guild colours";
-	mes "nods as you approach, a ledger open";
-	mes "on the table beside him. *^000000";
+	mes "^777777* A weathered soldier sits at a corner";
+	mes "table, guild insignias stitched into his";
+	mes "cloak. A heavy ledger lies open before him,";
+	mes "columns of figures filling every page. He";
+	mes "looks up with the measured gaze of a man";
+	mes "who has seen too many battles. *^000000";
 	next;
 
 	mes "[Guild Representative]";
-	mes "All contributions go toward your";
-	mes "guild's growth.";
+	mes "Every guild needs resources to grow.";
+	mes "Zeny, materials — I take both and";
+	mes "make sure it reaches your guild's";
+	mes "coffers properly.";
 	mes " ";
-	mes "Zeny, materials — we accept both.";
+	mes "What can I do for you, soldier?";
 	next;
 
 	.@sel = select(
 		" ~ Donate Zeny",
 		" ~ Donate Emperium",
 		" ~ Available Quests",
-		" ~ ^777777Leave^000000"
+		" ~ ^777777Nothing for now^000000"
 	);
 
 	switch (.@sel) {
@@ -439,7 +650,9 @@ tavern,65,41,4	script	Guild Representative#7th	4_M_THAIONGBAK,{
 		case 3: goto L_Quests;
 		case 4:
 			mes "[Guild Representative]";
-			mes "Your guild thanks you.";
+			mes "^777777* He nods curtly. *^000000";
+			mes " ";
+			mes "Strength to your guild, adventurer.";
 			close;
 	}
 
@@ -447,29 +660,35 @@ tavern,65,41,4	script	Guild Representative#7th	4_M_THAIONGBAK,{
 L_DonateZeny:
 	if (getcharid(2) == 0) {
 		mes "[Guild Representative]";
-		mes "You are not in a guild.";
-		mes "Join one first.";
+		mes "^777777* He glances at your cloak —";
+		mes "no guild crest. *^000000";
+		mes " ";
+		mes "You're not in a guild, friend.";
+		mes "Can't send funds to an organization";
+		mes "that doesn't exist. Join one first.";
 		close;
 	}
 
 	mes "[Guild Representative]";
-	mes "Exchange rate:";
-	mes "^00AA001 Zeny = 20 Guild EXP^000000";
+	mes "The exchange rate is straightforward:";
+	mes "^00AA001 zeny = 20 Guild EXP^000000.";
 	mes " ";
-	mes "You have: ^0055FF" + Zeny + " zeny^000000.";
-	mes "How much would you like to donate?";
+	mes "Your purse holds: ^0055FF" + Zeny + " zeny^000000.";
+	mes " ";
+	mes "How much would you like to contribute?";
 	next;
 
 	input .@amount;
 
 	if (.@amount <= 0) {
 		mes "[Guild Representative]";
-		mes "That's not a valid amount.";
+		mes "I need an actual number, soldier.";
 		close;
 	}
 	if (Zeny < .@amount) {
 		mes "[Guild Representative]";
-		mes "You don't have that much zeny.";
+		mes "Your ambition outweighs your wallet.";
+		mes "You don't have that much.";
 		close;
 	}
 
@@ -477,13 +696,15 @@ L_DonateZeny:
 
 	mes "[Guild Representative]";
 	mes "Donating ^0055FF" + .@amount + " zeny^000000.";
-	mes "Your guild will receive:";
+	mes "Your guild receives:";
 	mes "^00AA00" + .@gexp + " Guild EXP^000000.";
+	mes " ";
+	mes "Confirm?";
 	next;
 
-	if (select(" ~ Confirm: ~ ^777777Cancel^000000") == 2) {
+	if (select(" ~ Confirm donation: ~ ^777777Cancel^000000") == 2) {
 		mes "[Guild Representative]";
-		mes "Come back when you're ready.";
+		mes "Take your time. I'm not going anywhere.";
 		close;
 	}
 
@@ -491,19 +712,22 @@ L_DonateZeny:
 	guildgetexp .@gexp;
 
 	mes "[Guild Representative]";
-	mes "^777777* He marks the ledger and stamps";
-	mes "the contribution seal. *^000000";
+	mes "^777777* He writes the amount in the ledger";
+	mes "with careful strokes, then presses a";
+	mes "guild seal into hot wax beside it. *^000000";
 	mes " ";
-	mes "Contribution recorded. Your guild";
-	mes "grows stronger.";
+	mes "Recorded and sealed. Your guild grows";
+	mes "stronger today because of you.";
 	close;
 
 // -------------------------------------------------------
 L_DonateEmperium:
 	if (getcharid(2) == 0) {
 		mes "[Guild Representative]";
-		mes "You are not in a guild.";
-		mes "Join one first.";
+		mes "^777777* He shakes his head slowly. *^000000";
+		mes " ";
+		mes "No guild, no donation. Get yourself";
+		mes "into one first.";
 		close;
 	}
 
@@ -511,15 +735,18 @@ L_DonateEmperium:
 
 	if (.@emp_count == 0) {
 		mes "[Guild Representative]";
-		mes "You don't have any Emperium.";
+		mes "^777777* He looks at your empty hands. *^000000";
+		mes " ";
+		mes "No Emperium? Then we've got nothing";
+		mes "to discuss on that front.";
 		close;
 	}
 
 	mes "[Guild Representative]";
-	mes "Exchange rate:";
-	mes "^00AA001 Emperium = 20,000 Guild EXP^000000";
+	mes "Emperium — now that's a real contribution.";
+	mes "^00AA001 Emperium = 20,000 Guild EXP^000000.";
 	mes " ";
-	mes "You have: ^0055FF" + .@emp_count + " Emperium^000000.";
+	mes "You're carrying ^0055FF" + .@emp_count + " Emperium^000000.";
 	mes "How many would you like to donate?";
 	next;
 
@@ -527,12 +754,13 @@ L_DonateEmperium:
 
 	if (.@emp_donate <= 0) {
 		mes "[Guild Representative]";
-		mes "That's not a valid amount.";
+		mes "That's not a number I can work with.";
 		close;
 	}
 	if (.@emp_donate > .@emp_count) {
 		mes "[Guild Representative]";
-		mes "You don't have that many.";
+		mes "You're offering more than you have.";
+		mes "Check your inventory.";
 		close;
 	}
 
@@ -540,13 +768,15 @@ L_DonateEmperium:
 
 	mes "[Guild Representative]";
 	mes "Donating ^0055FF" + .@emp_donate + " Emperium^000000.";
-	mes "Your guild will receive:";
+	mes "Your guild receives:";
 	mes "^00AA00" + .@gexp + " Guild EXP^000000.";
+	mes " ";
+	mes "Confirm?";
 	next;
 
-	if (select(" ~ Confirm: ~ ^777777Cancel^000000") == 2) {
+	if (select(" ~ Confirm donation: ~ ^777777Cancel^000000") == 2) {
 		mes "[Guild Representative]";
-		mes "Come back when you're ready.";
+		mes "No rush. Emperium's not going anywhere.";
 		close;
 	}
 
@@ -554,21 +784,26 @@ L_DonateEmperium:
 	guildgetexp .@gexp;
 
 	mes "[Guild Representative]";
-	mes "^777777* He places each Emperium in a";
-	mes "sealed chest, nodding with approval. *^000000";
+	mes "^777777* He places each stone into a velvet-";
+	mes "lined case with practiced hands, locking";
+	mes "it with a key he wears around his neck. *^000000";
 	mes " ";
-	mes "Contribution recorded. Your guild";
-	mes "grows stronger.";
+	mes "A fine donation. Your guild master will";
+	mes "hear of this. Well done, soldier.";
 	close;
 
 // -------------------------------------------------------
 L_Quests:
 	mes "[Guild Representative]";
-	mes "^777777* He flips through the ledger";
-	mes "and shakes his head. *^000000";
+	mes "^777777* He flips through the ledger slowly,";
+	mes "running a scarred finger down each page,";
+	mes "then closes it with a sigh. *^000000";
 	mes " ";
-	mes "No guild quests available at this time.";
-	mes "Check back later.";
+	mes "Nothing posted right now. The guild";
+	mes "boards have been quiet lately.";
+	mes " ";
+	mes "Check back another time — there's";
+	mes "always work that needs doing.";
 	close;
 
 OnInit:
