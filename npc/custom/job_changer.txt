@@ -16,7 +16,7 @@
 //   Baby paths     → up to Baby 2nd Class
 // ==========================================================================
 
-tavern,52,41,4	script	Mimir	4_CH1_GRAY_VALKYRIE,{
+tavern,64,35,4	script	Mimir	4_CH1_GRAY_VALKYRIE,{
 
 	function Check_Riding;
 	function Check_SkillPoints;
@@ -47,11 +47,11 @@ tavern,52,41,4	script	Mimir	4_CH1_GRAY_VALKYRIE,{
 	// Top-level menu
 	// ============================================================
 	.@action = select(
-		" ~ Change Job",
-		" ~ Purchase Platinum Skills",
-		" ~ Reset Stats",
-		" ~ Reset Skills",
-		" ~ ^777777Leave^000000"
+		"Change Job",
+		"Purchase Platinum Skills",
+		"Reset Stats",
+		"Reset Skills",
+		"^777777Leave^000000"
 	);
 	if (.@action == 5) {
 		mes .NPCName$;

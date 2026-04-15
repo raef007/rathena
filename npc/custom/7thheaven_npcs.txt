@@ -11,30 +11,25 @@ tavern,37,39,0	warp	7thHeaven_Exit	2,2,prontera,162,168
 // ==========================================================================
 // Beast Master
 // ==========================================================================
-tavern,58,44,4	script	Beast Master#7th	4_M_THAIONGBAK,{
+tavern,39,36,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 
 	mes "[Beast Master]";
-	mes "^777777* A sun-darkened man sits cross-legged";
-	mes "on a hay bale, absently feeding strips of";
-	mes "jerky to a falcon on his shoulder. Scars";
-	mes "criss-cross both forearms. He doesn't look";
-	mes "up as you approach — the falcon does. *^000000";
+	mes "^777777* A sun-darkened man sits cross-legged.";
+	mes "Scars criss-cross both forearms";
+	mes "He doesn't look up as you approach. *^000000";
 	next;
 
 	mes "[Beast Master]";
-	mes "Hrmph. She noticed you before I did.";
-	mes "Good instincts on that one.";
-	mes " ";
 	mes "So — you here for a beast, or you";
 	mes "want me to work on that leash?";
 	next;
 
 	.@sel = select(
-		" ~ I need a Peco",
-		" ~ I need a Falcon",
-		" ~ Craft me a Beast Master's Leash",
-		" ~ Upgrade my Leash",
-		" ~ ^777777Just looking^000000"
+		"I need a Peco",
+		"I need a Falcon",
+		"Craft me a Beast Master's Leash",
+		"Upgrade my Leash",
+		"^777777Just looking^000000"
 	);
 
 	switch (.@sel) {
@@ -45,7 +40,7 @@ tavern,58,44,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 		case 5:
 			mes "[Beast Master]";
 			mes "^777777* He grunts and goes back to";
-			mes "feeding the falcon. *^000000";
+			mes "eating. *^000000";
 			mes " ";
 			mes "Don't spook the birds on your way out.";
 			close;
@@ -181,7 +176,7 @@ L_CraftLeash:
 		mes "raises an eyebrow. *^000000";
 		mes " ";
 		mes "You've already got a leash. One per";
-		mes "customer — I don't have the hides";
+		mes "customer. I don't have the hides";
 		mes "to waste making two.";
 		close;
 	}
@@ -285,6 +280,7 @@ L_UpgradeLeash:
 
 	if (rand(100) < .SuccessRate[LEASH_LV]) {
 		set LEASH_LV, .@next_lv;
+		specialeffect2 EF_REFINEOK;
 		mes "[Beast Master]";
 		mes "^777777* He works the new material into";
 		mes "the binding. The leather darkens and";
@@ -295,6 +291,7 @@ L_UpgradeLeash:
 		if (LEASH_LV >= 9)
 			mes "I can feel it from here. That's a fine piece.";
 	} else {
+		specialeffect2 EF_REFINEFAIL;
 		mes "[Beast Master]";
 		mes "^777777* The new binding doesn't take.";
 		mes "He pulls the failed material free";
@@ -315,14 +312,14 @@ OnInit:
 // ==========================================================================
 // Innkeeper Mara
 // ==========================================================================
-tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
+tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 
 	mes "[Innkeeper Mara]";
-	mes "^777777* A woman with kind eyes and flour-dusted";
+	mes "^A woman with kind eyes and flour-dusted";
 	mes "sleeves looks up from polishing the counter.";
 	mes "She sets down her rag and gives you her full";
 	mes "attention, like you're the only person in";
-	mes "the room. *^000000";
+	mes "the room.";
 	next;
 
 	mes "[Innkeeper Mara]";
@@ -335,9 +332,9 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 	next;
 
 	.@sel = select(
-		" ~ Save my respawn here",
-		" ~ Check in (Daily — Meal Package)",
-		" ~ ^777777Just passing through^000000"
+		"Save my respawn here",
+		"Check in (Daily — Meal Package)",
+		"^777777Just passing through^000000"
 	);
 
 	switch (.@sel) {
@@ -365,7 +362,7 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 				mes "today! Your room's still warm.";
 				mes "Come back in ^FF0000" + .@hrs + "h " + .@min + "m^000000";
 				mes "and I'll have everything ready";
-				mes "for you again~";
+				mes "for you again";
 				close;
 			}
 
@@ -388,7 +385,7 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 			mes " ";
 			mes "All for just ^FF000077,000 zeny^000000.";
 			mes "Best deal in Rune-Midgarts, if I";
-			mes "do say so myself~";
+			mes "do say so myself";
 			next;
 
 			if (select(" ~ Sounds wonderful: ~ ^777777Maybe another time^000000") == 2) {
@@ -403,7 +400,7 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 				mes "^777777* She winces apologetically. *^000000";
 				mes " ";
 				mes "I wish I could waive it, truly.";
-				mes "But a room costs 77,000 zeny — the";
+				mes "But a room costs 77,000 zeny - the";
 				mes "tavern doesn't run on goodwill alone.";
 				mes "Come back when you can, okay?";
 				close;
@@ -423,8 +420,8 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 			mes " ";
 			mes "There we are. Rest up, and when";
 			mes "you're hungry, take that voucher";
-			mes "to ^0055FFChef Goran^000000 — he'll fix you";
-			mes "something wonderful~";
+			mes "to ^0055FFChef Goran^000000 - he'll fix you";
+			mes "something wonderful";
 			close;
 
 		case 3:
@@ -440,7 +437,7 @@ tavern,61,41,4	script	Innkeeper Mara#7th	4_F_EDEN_MASTER,{
 // ==========================================================================
 // Chef Goran
 // ==========================================================================
-tavern,63,41,4	script	Chef Goran#7th	4_CH1_GRAY_VALKYRIE,{
+tavern,55,43,4	script	Chef Goran#7th	4_cook,{
 
 	mes "[Chef Goran]";
 	mes "^777777* A barrel-chested man stands behind a";
@@ -456,13 +453,13 @@ tavern,63,41,4	script	Chef Goran#7th	4_CH1_GRAY_VALKYRIE,{
 	mes " ";
 	mes "Got a voucher from Mara? I'll cook";
 	mes "you something proper. No voucher?";
-	mes "I still cook — it just costs more.";
+	mes "I still cook - it just costs more.";
 	next;
 
 	.@sel = select(
-		" ~ Redeem a Meal Voucher",
-		" ~ Order à la carte (20,000z)",
-		" ~ ^777777Not hungry^000000"
+		"Redeem a Meal Voucher",
+		"Order a la carte (20,000z)",
+		"^777777Not hungry^000000"
 	);
 
 	switch (.@sel) {
@@ -500,13 +497,13 @@ L_Voucher:
 	next;
 
 	.@meal = select(
-		" ~ Warrior's Feast (STR +20)",
-		" ~ Wind Sprint Soup (AGI +20)",
-		" ~ Iron Belly Stew (VIT +20)",
-		" ~ Sage's Elixir (INT +20)",
-		" ~ Hawk Eye Platter (DEX +20)",
-		" ~ Fortune Cookie Bun (LUK +20)",
-		" ~ ^777777I'll think about it^000000"
+		"Warrior's Feast (STR +20)",
+		"Wind Sprint Soup (AGI +20)",
+		"Iron Belly Stew (VIT +20)",
+		"Sage's Elixir (INT +20)",
+		"Hawk Eye Platter (DEX +20)",
+		"Fortune Cookie Bun (LUK +20)",
+		"^777777I'll think about it^000000"
 	);
 	if (.@meal == 7) {
 		mes "[Chef Goran]";
@@ -539,7 +536,7 @@ L_Voucher:
 // -------------------------------------------------------
 L_Shop:
 	mes "[Chef Goran]";
-	mes "À la carte. These keep — you can eat";
+	mes "A la carte. These keep - you can eat";
 	mes "them whenever you're ready.";
 	mes "^00AA0030,000 zeny^000000 each.";
 	mes " ";
@@ -547,13 +544,13 @@ L_Shop:
 	next;
 
 	.@food = select(
-		" ~ Steamed Tongue (STR +10, 1hr)",
-		" ~ Steamed Desert Scorpions (AGI +10, 1hr)",
-		" ~ Immortal Stew (VIT +10, 1hr)",
-		" ~ Dragon Breath Cocktail (INT +10, 1hr)",
-		" ~ Hwergelmir's Tonic (DEX +10, 1hr)",
-		" ~ Cooked Nine Tail (LUK +10, 1hr)",
-		" ~ ^777777Changed my mind^000000"
+		"Steamed Tongue (STR +10, 1hr)",
+		"Steamed Desert Scorpions (AGI +10, 1hr)",
+		"Immortal Stew (VIT +10, 1hr)",
+		"Dragon Breath Cocktail (INT +10, 1hr)",
+		"Hwergelmir's Tonic (DEX +10, 1hr)",
+		"Cooked Nine Tail (LUK +10, 1hr)",
+		"^777777Changed my mind^000000"
 	);
 	if (.@food == 7) {
 		mes "[Chef Goran]";
@@ -571,7 +568,7 @@ L_Shop:
 	}
 
 	mes "[Chef Goran]";
-	mes "^00AA00" + .@dish$ + "^000000 — 30,000z each.";
+	mes "^00AA00" + .@dish$ + "^000000 - 30,000z each.";
 	mes "How many do you want?";
 	next;
 
@@ -617,7 +614,7 @@ L_Shop:
 // ==========================================================================
 // Guild Representative
 // ==========================================================================
-tavern,65,41,4	script	Guild Representative#7th	4_M_THAIONGBAK,{
+tavern,45,50,4	script	Guild Representative#7th	4_m_cru_crua,{
 
 	mes "[Guild Representative]";
 	mes "^777777* A weathered soldier sits at a corner";
@@ -630,7 +627,7 @@ tavern,65,41,4	script	Guild Representative#7th	4_M_THAIONGBAK,{
 
 	mes "[Guild Representative]";
 	mes "Every guild needs resources to grow.";
-	mes "Zeny, materials — I take both and";
+	mes "Zeny, materials - I take both and";
 	mes "make sure it reaches your guild's";
 	mes "coffers properly.";
 	mes " ";
@@ -638,10 +635,10 @@ tavern,65,41,4	script	Guild Representative#7th	4_M_THAIONGBAK,{
 	next;
 
 	.@sel = select(
-		" ~ Donate Zeny",
-		" ~ Donate Emperium",
-		" ~ Available Quests",
-		" ~ ^777777Nothing for now^000000"
+		"Donate Zeny",
+		"Donate Emperium",
+		"Available Quests",
+		"^777777Nothing for now^000000"
 	);
 
 	switch (.@sel) {
@@ -660,7 +657,7 @@ tavern,65,41,4	script	Guild Representative#7th	4_M_THAIONGBAK,{
 L_DonateZeny:
 	if (getcharid(2) == 0) {
 		mes "[Guild Representative]";
-		mes "^777777* He glances at your cloak —";
+		mes "^777777* He glances at your cloak";
 		mes "no guild crest. *^000000";
 		mes " ";
 		mes "You're not in a guild, friend.";
@@ -743,7 +740,7 @@ L_DonateEmperium:
 	}
 
 	mes "[Guild Representative]";
-	mes "Emperium — now that's a real contribution.";
+	mes "Emperium - now that's a real contribution.";
 	mes "^00AA001 Emperium = 20,000 Guild EXP^000000.";
 	mes " ";
 	mes "You're carrying ^0055FF" + .@emp_count + " Emperium^000000.";
@@ -802,7 +799,7 @@ L_Quests:
 	mes "Nothing posted right now. The guild";
 	mes "boards have been quiet lately.";
 	mes " ";
-	mes "Check back another time — there's";
+	mes "Check back another time - there's";
 	mes "always work that needs doing.";
 	close;
 

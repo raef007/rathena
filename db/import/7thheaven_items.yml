@@ -31,25 +31,25 @@ Body:
     AegisName: Beastmasters_Leash
     Name: Beast Master's Leash
     Type: Usable
-    Buy: 0
-    Sell: 0
-    Weight: 100
     Flags:
       NoConsume: true
     Delay:
-      Duration: 3000
-      Status: All_Riding_Reuse_Limit
+        Duration: 3000
+        Status: All_Riding_Reuse_Limit
     Trade:
       NoDrop: true
       NoTrade: true
       NoSell: true
       NoCart: false
-      NoStorage: false
-      NoGuildStorage: false
+      NoStorage: true
+      NoGuildStorage: true
       NoMail: true
       NoAuction: true
     Script: |
       setmounting();
+    UnEquipScript: |
+      if (ismounting())
+        setmounting();
 
   - Id: 50012
     AegisName: Heavens_Meal_Voucher

@@ -12,7 +12,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 
 	mes "[Tiffy]";
 	mes "^777777* A cheerful young woman waves at you";
-	mes "from behind the tavern counter, her smile";
+	mes "from below the stairs, her smile";
 	mes "bright enough to light the room. *^000000";
 	next;
 
