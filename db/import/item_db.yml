@@ -346,3 +346,4 @@ Footer:
   Imports:
   - Path: db/import/gcash_tickets.yml
   - Path: db/import/7thheaven_items.yml
+  - Path: db/import/soul_eater_items.yml

@@ -1,0 +1,212 @@
+// ============================================================
+// World Blessing System
+// ============================================================
+// Tavern NPC that accepts Zeny donations.
+// When target is reached:
+//   +50% Base EXP, +50% Job EXP, +25% Drop Rates
+// Blessing always ends at 00:00 server time.
+// ============================================================
+
+tavern,68,35,4	script	World Tree Sapling	4_CH1_GRAY_VALKYRIE,{
+	mes "[World Tree Sapling]";
+	mes "^777777* The spirit in the tree hums softly. *^000000";
+	next;
+
+	callsub S_ShowStatus;
+	next;
+
+	.@menu = select(
+		"Offer Zeny",
+		"Check blessing details",
+		"Leave"
+	);
+
+	if (.@menu == 1) goto L_Donate;
+	if (.@menu == 2) goto L_Info;
+	close;
+
+L_Donate:
+	if ($WB_ACTIVE) {
+		mes "[World Tree Sapling]";
+		mes "The blessing is already active.";
+		mes "Return after midnight for the next cycle.";
+		close;
+	}
+
+	mes "[World Tree Sapling]";
+	mes "How much Zeny will you offer?";
+	input .@zeny;
+
+	if (.@zeny <= 0) {
+		mes "[World Tree Sapling]";
+		mes "Only sincere offerings are accepted.";
+		close;
+	}
+	if (Zeny < .@zeny) {
+		mes "[World Tree Sapling]";
+		mes "You do not carry that much Zeny.";
+		close;
+	}
+
+	Zeny -= .@zeny;
+	$WB_CURRENT_ZENY += .@zeny;
+
+	if ($WB_CURRENT_ZENY >= $WB_TARGET_ZENY) {
+		donpcevent "WorldBlessingController::OnBlessingActivate";
+		mes "[World Tree Sapling]";
+		mes "The roots awaken. Midgard is blessed.";
+		close;
+	}
+
+		.@remain = $WB_TARGET_ZENY - $WB_CURRENT_ZENY;
+		mes "[World Tree Sapling]";
+		mes "Your offering was accepted.";
+		mes "Remaining for blessing: ^0055FF" + .@remain + "^000000 Zeny.";
+	close;
+
+L_Info:
+	mes "[World Tree Sapling]";
+		mes "When total offerings reach ^0055FF" + $WB_TARGET_ZENY + "^000000 Zeny:";
+	mes "^00AA00+50%^000000 Base EXP";
+	mes "^00AA00+50%^000000 Job EXP";
+	mes "^00AA00+25%^000000 Drop Rates";
+	mes " ";
+	mes "The blessing always ends at midnight.";
+	close;
+
+S_ShowStatus:
+	mes "[World Tree Sapling]";
+	if ($WB_ACTIVE) {
+		mes "Blessing status: ^00AA00ACTIVE^000000";
+		mes "It will end at midnight.";
+	} else {
+		.@remain = $WB_TARGET_ZENY - $WB_CURRENT_ZENY;
+		if (.@remain < 0) .@remain = 0;
+		mes "Blessing status: ^FF0000INACTIVE^000000";
+		mes "Progress: ^0055FF" + $WB_CURRENT_ZENY + "^000000 / ^0055FF" + $WB_TARGET_ZENY + "^000000";
+		mes "Remaining: ^0055FF" + .@remain + "^000000";
+	}
+	return;
+}
+
+-	script	WorldBlessingController	-1,{
+
+OnInit:
+	// Core configuration
+	if (!$WB_TARGET_ZENY) $WB_TARGET_ZENY = 1000000;
+	if (!$WB_BASE_BONUS_PCT) $WB_BASE_BONUS_PCT = 50;
+	if (!$WB_JOB_BONUS_PCT) $WB_JOB_BONUS_PCT = 50;
+	if (!$WB_DROP_BONUS_PCT) $WB_DROP_BONUS_PCT = 25;
+
+	// Baseline rates for reset (edit these if your server defaults differ)
+	if (!$WB_BASE_RATE_DEFAULT) $WB_BASE_RATE_DEFAULT = 100;
+	if (!$WB_JOB_RATE_DEFAULT) $WB_JOB_RATE_DEFAULT = 100;
+	if (!$WB_DROP_RATE_DEFAULT) $WB_DROP_RATE_DEFAULT = 100;
+
+	bindatcmd "worldblessing", "WorldBlessingController::OnAtCommand", 60, 99;
+
+	.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+	if ($WB_ACTIVE && $WB_ACTIVE_DATE != .@today) {
+		$WB_ACTIVE = 0;
+		$WB_ACTIVE_DATE = 0;
+	}
+
+	// Re-apply after restart if still active for the same day.
+	if ($WB_ACTIVE && $WB_ACTIVE_DATE == .@today) {
+		callsub S_ApplyRates;
+	}
+	end;
+
+OnClock0000:
+	if ($WB_ACTIVE) {
+		callsub S_ResetRates;
+		$WB_ACTIVE = 0;
+		$WB_ACTIVE_DATE = 0;
+		announce "[ World Blessing ] The World Tree's blessing has faded with the dawn.", bc_all|bc_yellow;
+	}
+	end;
+
+OnBlessingActivate:
+	if ($WB_ACTIVE) end;
+
+	$WB_ACTIVE = 1;
+	$WB_CURRENT_ZENY = 0;
+	$WB_ACTIVE_DATE = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+
+	callsub S_ApplyRates;
+	announce "[ World Blessing ] Offerings reached the target. +50% Base/Job EXP and +25% Drop Rates until midnight!", bc_all|bc_yellow;
+	end;
+
+S_ApplyRates:
+	.@base_rate = $WB_BASE_RATE_DEFAULT + ($WB_BASE_RATE_DEFAULT * $WB_BASE_BONUS_PCT / 100);
+	.@job_rate = $WB_JOB_RATE_DEFAULT + ($WB_JOB_RATE_DEFAULT * $WB_JOB_BONUS_PCT / 100);
+	.@drop_rate = $WB_DROP_RATE_DEFAULT + ($WB_DROP_RATE_DEFAULT * $WB_DROP_BONUS_PCT / 100);
+
+	atcommand "@setbattleflag base_exp_rate " + .@base_rate;
+	atcommand "@setbattleflag job_exp_rate " + .@job_rate;
+
+	atcommand "@setbattleflag item_rate_common " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_common_boss " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_common_mvp " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_equip " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_equip_boss " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_equip_mvp " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_card " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_card_boss " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_card_mvp " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_heal " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_heal_boss " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_heal_mvp " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_use " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_use_boss " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_use_mvp " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_treasure " + .@drop_rate;
+	atcommand "@setbattleflag item_rate_adddrop " + .@drop_rate;
+	return;
+
+S_ResetRates:
+	atcommand "@setbattleflag base_exp_rate " + $WB_BASE_RATE_DEFAULT;
+	atcommand "@setbattleflag job_exp_rate " + $WB_JOB_RATE_DEFAULT;
+
+	atcommand "@setbattleflag item_rate_common " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_common_boss " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_common_mvp " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_equip " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_equip_boss " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_equip_mvp " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_card " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_card_boss " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_card_mvp " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_heal " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_heal_boss " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_heal_mvp " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_use " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_use_boss " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_use_mvp " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_treasure " + $WB_DROP_RATE_DEFAULT;
+	atcommand "@setbattleflag item_rate_adddrop " + $WB_DROP_RATE_DEFAULT;
+	return;
+
+OnAtCommand:
+	.@arg$ = .@atcmd_parameters$;
+
+	if (.@arg$ == "status") {
+		dispbottom "[World Blessing] " + ($WB_ACTIVE ? "ACTIVE" : "INACTIVE") + " | Progress: " + $WB_CURRENT_ZENY + "/" + $WB_TARGET_ZENY;
+		end;
+	}
+	if (.@arg$ == "reset") {
+		$WB_CURRENT_ZENY = 0;
+		$WB_ACTIVE = 0;
+		callsub S_ResetRates;
+		dispbottom "[World Blessing] Progress reset and blessing disabled.";
+		end;
+	}
+	if (.@arg$ == "force") {
+		donpcevent "WorldBlessingController::OnBlessingActivate";
+		dispbottom "[World Blessing] Blessing force-activated.";
+		end;
+	}
+
+	dispbottom "[World Blessing] Usage: @worldblessing status | reset | force";
+	end;
+}

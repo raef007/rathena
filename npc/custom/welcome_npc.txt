@@ -43,7 +43,8 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 			next;
 
 			.@reward = select(
-				"I'm kind of new here",
+				"I am kinda new here",
+				"About the Soul Eater reward",
 				"Never mind"
 			);
 
@@ -94,6 +95,10 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					close;
 
 				case 2:
+					doevent "SoulEaterEvent::OnClaimFromTiffy";
+					end;
+
+				case 3:
 					// --- Never mind ---
 					mes "[Tiffy]";
 					mes "No worries! Come back anytime~";

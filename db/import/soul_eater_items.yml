@@ -1,0 +1,36 @@
+# Soul Eater Reward Item
+# Temporary costume reward claimed from Tiffy.
+
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+  - Id: 50020
+    AegisName: C_Soul_Eater_Sword
+    Name: Costume Soul Eater
+    Type: Armor
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    EquipLevelMin: 1
+    View: 12
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      bonus2 bAddRace,RC_DemiHuman,25;
+      bonus2 bAddRace,RC_Player_Human,25;
+      bonus2 bAddRace,RC_Player_Doram,25;
+      bonus2 bSubRace,RC_DemiHuman,25;
+      bonus2 bSubRace,RC_Player_Human,25;
+      bonus2 bSubRace,RC_Player_Doram,25;
+
+Footer:
