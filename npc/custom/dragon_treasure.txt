@@ -3,7 +3,7 @@
 // ==========================================================================
 // Spawns a fixed treasure chest in abyss_03 every midnight.
 // A leashed Nidhoggr's Shadow guards the chest and gets warped back if lured.
-// GM Command: @dragontreasure [start|stop|on|off]
+// GM Command: @dragontreasure [start|stop|on|off|debug]
 // ==========================================================================
 
 -	script	DragonTreasure	-1,{
@@ -33,24 +33,28 @@ OnClock0000:
 OnTimer5000:
 	if (!$DT_active) end;
 	if (!unitexists($DT_chest_gid)) {
+		callsub S_Debug, "Chest GID " + $DT_chest_gid + " is no longer valid. Ending event.";
 		callsub S_EndEvent;
 		end;
 	}
 	if (!unitexists($DT_guard_gid)) {
 		if ($DT_guard_defeated) {
+			callsub S_Debug, "Guard was defeated normally. Chest remains active.";
 			initnpctimer;
 			end;
 		}
 		$DT_guard_gid = 0;
+		callsub S_Debug, "Guard missing unexpectedly. Attempting respawn near chest.";
 		callsub S_SpawnGuard;
 		if (!$DT_guard_gid)
-			debugmes "DragonTreasure: failed to respawn guard while chest is still active on " + .map$ + ".";
+			callsub S_Debug, "Guard respawn failed while chest is still active.";
 		initnpctimer;
 		end;
 	}
 
 	getunitdata $DT_guard_gid, .@guard;
 	if (distance(.chest_x, .chest_y, .@guard[UMOB_X], .@guard[UMOB_Y]) > .guard_leash) {
+		callsub S_Debug, "Guard moved to " + .@guard[UMOB_X] + "," + .@guard[UMOB_Y] + ". Warping back to " + $DT_guard_home_x + "," + $DT_guard_home_y + ".";
 		setunitdata $DT_guard_gid, UMOB_TARGETID, 0;
 		unitwarp $DT_guard_gid, .map$, $DT_guard_home_x, $DT_guard_home_y;
 	}
@@ -68,6 +72,7 @@ OnGuardKilled:
 	if (!$DT_active) end;
 	$DT_guard_gid = 0;
 	$DT_guard_defeated = 1;
+	callsub S_Debug, "Guard defeated by players.";
 	announce "[ Dragon's Treasure ] Nidhoggr's Shadow has been driven away. The hoard in Abyss Lake 3 lies exposed.", bc_all|bc_yellow;
 	end;
 
@@ -75,17 +80,19 @@ S_StartEvent:
 	if ($DT_active) return;
 
 	$DT_active = 1;
-	$DT_chest_gid = monster(.map$, .chest_x, .chest_y, "Dragon's Treasure Chest", .chest_mob_id, 1, "DragonTreasure::OnChestKilled");
+	monster(.map$, .chest_x, .chest_y, "Dragon's Treasure Chest", .chest_mob_id, 1, "DragonTreasure::OnChestKilled");
+	$DT_chest_gid = $@mobid[0];
 	if (!$DT_chest_gid) {
-		debugmes "DragonTreasure: failed to spawn treasure chest at " + .map$ + " " + .chest_x + " " + .chest_y + ".";
+		callsub S_Debug, "Chest spawn failed at " + .map$ + " " + .chest_x + " " + .chest_y + ".";
 		$DT_active = 0;
 		return;
 	}
+	callsub S_Debug, "Chest spawned with GID " + $DT_chest_gid + " at " + .chest_x + "," + .chest_y + ".";
 
 	callsub S_SpawnGuard;
 	$DT_guard_defeated = 0;
 	if (!$DT_guard_gid) {
-		debugmes "DragonTreasure: failed to spawn " + .guard_name$ + " near the hoard on " + .map$ + ".";
+		callsub S_Debug, "Guard spawn failed near the chest.";
 		callsub S_EndEvent;
 		return;
 	}
@@ -100,8 +107,10 @@ S_SpawnGuard:
 		.@guard_x = .chest_x + 2;
 		.@guard_y = .chest_y;
 	}
+	callsub S_Debug, "Trying guard spawn at " + .@guard_x + "," + .@guard_y + ".";
 
-	$DT_guard_gid = monster(.map$, .@guard_x, .@guard_y, .guard_name$, .guard_mob_id, 1, "DragonTreasure::OnGuardKilled");
+	monster(.map$, .@guard_x, .@guard_y, .guard_name$, .guard_mob_id, 1, "DragonTreasure::OnGuardKilled");
+	$DT_guard_gid = $@mobid[0];
 	if (!$DT_guard_gid)
 		return;
 
@@ -109,6 +118,7 @@ S_SpawnGuard:
 	getunitdata $DT_guard_gid, .@guard;
 	$DT_guard_home_x = .@guard[UMOB_X];
 	$DT_guard_home_y = .@guard[UMOB_Y];
+	callsub S_Debug, "Guard spawned with GID " + $DT_guard_gid + " at " + $DT_guard_home_x + "," + $DT_guard_home_y + ".";
 	return;
 
 S_EndEvent:
@@ -132,7 +142,7 @@ OnAtCommand:
 			end;
 		}
 		callsub S_StartEvent;
-		dispbottom "[Dragon Treasure] " + ($DT_active ? "Event force-started." : "Event start failed. Check debugmes/logs.");
+		dispbottom "[Dragon Treasure] " + ($DT_active ? "Event force-started." : "Event start failed. Use @dragontreasure debug.");
 	} else if (.@arg$ == "stop") {
 		if (!$DT_active) {
 			dispbottom "[Dragon Treasure] No event is currently active.";
@@ -146,9 +156,22 @@ OnAtCommand:
 	} else if (.@arg$ == "off") {
 		$DT_DISABLED = 1;
 		dispbottom "[Dragon Treasure] Scheduled spawns are now DISABLED.";
+	} else if (.@arg$ == "debug") {
+		$DT_DEBUG = !$DT_DEBUG;
+		if ($DT_DEBUG)
+			$DT_DEBUG_NAME$ = strcharinfo(0);
+		else
+			$DT_DEBUG_NAME$ = "";
+		dispbottom "[Dragon Treasure] Debug is now " + ($DT_DEBUG ? "ENABLED" : "DISABLED") + ".";
 	} else {
-		dispbottom "[Dragon Treasure] Status: " + ($DT_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($DT_active ? "YES" : "NO");
-		dispbottom "[Dragon Treasure] Usage: @dragontreasure start | stop | on | off";
+		dispbottom "[Dragon Treasure] Status: " + ($DT_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($DT_active ? "YES" : "NO") + " | Debug: " + ($DT_DEBUG ? "ON" : "OFF");
+		dispbottom "[Dragon Treasure] Usage: @dragontreasure start | stop | on | off | debug";
 	}
 	end;
+
+S_Debug:
+	if (!$DT_DEBUG || $DT_DEBUG_NAME$ == "")
+		return;
+	message $DT_DEBUG_NAME$, "[DragonTreasure Debug] " + getarg(0);
+	return;
 }
