@@ -1,0 +1,185 @@
+// ==========================================================================
+// Coin Voucher Exchange NPC
+// ==========================================================================
+// Converts between Coin Vouchers, Cash Points, and GCash Tickets.
+// Uses the same sprite as Tiffy, but is a separate NPC.
+// ==========================================================================
+
+tavern,50,41,4	script	Lyra#Voucher	4_F_EDEN_MASTER,{
+
+	mes "[Lyra]";
+	mes "Coin Vouchers, Cash Points,";
+	mes "GCash Tickets.";
+	mes "Pick which ledger you want me";
+	mes "to balance.";
+	next;
+
+	.@choice = select(
+		"Exchange Coin Vouchers to Cash Points",
+		"Generate Coin Vouchers from Cash Points",
+		"Exchange All GCash Tickets to Coin Vouchers",
+		"Check my balances",
+		"Cancel"
+	);
+
+	switch (.@choice) {
+		case 1:
+			callsub S_VoucherToCash;
+			close;
+		case 2:
+			callsub S_CashToVoucher;
+			close;
+		case 3:
+			callsub S_GCashToVoucher;
+			close;
+		case 4:
+			callsub S_ShowBalances;
+			close;
+		default:
+			close;
+	}
+
+S_ShowBalances:
+	.@ticket_value = callsub(S_GetGCashTicketValue);
+	mes "[Lyra]";
+	mes "Current balances:";
+	mes " ";
+	mes "^0055FFCash Points:^000000 " + #CASHPOINTS;
+	mes "^0055FFCoin Vouchers:^000000 " + countitem(.coin_voucher_id);
+	mes "^0055FFGCash Ticket Value:^000000 " + .@ticket_value;
+	return;
+
+S_VoucherToCash:
+	.@owned = countitem(.coin_voucher_id);
+
+	mes "[Lyra]";
+	if (.@owned <= 0) {
+		mes "You don't have any Coin Vouchers";
+		mes "for me to redeem.";
+		return;
+	}
+
+	mes "You currently hold ^0055FF" + .@owned + "^000000 Coin Vouchers.";
+	mes "How many do you want converted";
+	mes "into Cash Points?";
+	next;
+
+	input .@amount;
+	if (.@amount <= 0) {
+		mes "[Lyra]";
+		mes "That isn't a valid amount.";
+		return;
+	}
+	if (.@amount > .@owned) {
+		mes "[Lyra]";
+		mes "You only have ^0055FF" + .@owned + "^000000 Coin Vouchers.";
+		return;
+	}
+
+	delitem .coin_voucher_id, .@amount;
+	set #CASHPOINTS, #CASHPOINTS + (.@amount * .coin_to_cash_rate);
+
+	mes "[Lyra]";
+	mes "Converted ^0055FF" + .@amount + "^000000 Coin Vouchers";
+	mes "into ^0055FF" + (.@amount * .coin_to_cash_rate) + "^000000 Cash Points.";
+	mes " ";
+	mes "New Cash Point balance: ^0055FF" + #CASHPOINTS + "^000000";
+	return;
+
+S_CashToVoucher:
+	.@max_vouchers = #CASHPOINTS / .cash_to_coin_rate;
+
+	mes "[Lyra]";
+	if (.@max_vouchers <= 0) {
+		mes "You don't have enough Cash Points";
+		mes "to generate Coin Vouchers.";
+		return;
+	}
+
+	mes "You can currently mint up to";
+	mes "^0055FF" + .@max_vouchers + "^000000 Coin Vouchers.";
+	mes "How many do you want?";
+	next;
+
+	input .@amount;
+	if (.@amount <= 0) {
+		mes "[Lyra]";
+		mes "That isn't a valid amount.";
+		return;
+	}
+	if (.@amount > .@max_vouchers) {
+		mes "[Lyra]";
+		mes "Your Cash Point balance only covers";
+		mes "^0055FF" + .@max_vouchers + "^000000 Coin Vouchers.";
+		return;
+	}
+	if (checkweight(.coin_voucher_id, .@amount) == 0) {
+		mes "[Lyra]";
+		mes "You're carrying too much already.";
+		return;
+	}
+
+	set #CASHPOINTS, #CASHPOINTS - (.@amount * .cash_to_coin_rate);
+	getitem .coin_voucher_id, .@amount;
+
+	mes "[Lyra]";
+	mes "Minted ^0055FF" + .@amount + "^000000 Coin Vouchers.";
+	mes " ";
+	mes "Remaining Cash Points: ^0055FF" + #CASHPOINTS + "^000000";
+	return;
+
+S_GCashToVoucher:
+	.@total_value = callsub(S_GetGCashTicketValue);
+
+	mes "[Lyra]";
+	if (.@total_value <= 0) {
+		mes "You aren't carrying any GCash Tickets.";
+		return;
+	}
+	if (checkweight(.coin_voucher_id, .@total_value) == 0) {
+		mes "Make room first. I can't hand over";
+		mes "the Coin Vouchers otherwise.";
+		return;
+	}
+
+	mes "I'll exchange every GCash Ticket";
+	mes "you're holding at face value.";
+	mes " ";
+	mes "Current payout: ^0055FF" + .@total_value + "^000000 Coin Vouchers.";
+	next;
+
+	if (select("Convert them all", "Cancel") == 2) {
+		mes "[Lyra]";
+		mes "Another time, then.";
+		return;
+	}
+
+	for (.@i = 0; .@i < .ticket_types; .@i++) {
+		.@count = countitem(.gcash_items[.@i]);
+		if (.@count > 0)
+			delitem .gcash_items[.@i], .@count;
+	}
+
+	getitem .coin_voucher_id, .@total_value;
+
+	mes "[Lyra]";
+	mes "Done.";
+	mes "^0055FF" + .@total_value + "^000000 Coin Vouchers";
+	mes "have been issued to you.";
+	return;
+
+S_GetGCashTicketValue:
+	.@total = 0;
+	for (.@i = 0; .@i < .ticket_types; .@i++)
+		.@total += countitem(.gcash_items[.@i]) * .gcash_values[.@i];
+	return .@total;
+
+OnInit:
+	.coin_voucher_id = 50008;
+	.coin_to_cash_rate = 1;
+	.cash_to_coin_rate = 1;
+	setarray .gcash_items[0], 50001, 50002, 50003, 50004, 50005, 50006, 50007;
+	setarray .gcash_values[0], 1, 2, 3, 5, 8, 13, 21;
+	.ticket_types = getarraysize(.gcash_items);
+	end;
+}

@@ -1,0 +1,25 @@
+# Coin Voucher - tradable bridge currency for cash point exchanges
+
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+  - Id: 50008
+    AegisName: Coin_Voucher
+    Name: Coin Voucher
+    Type: Etc
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      BuyingStore: true
+      DeadBranch: false
+      Container: false
+      UniqueId: false
+      BindOnEquip: false
+      DropAnnounce: false
+      NoConsume: true
+      DropEffect: None
+
+Footer:

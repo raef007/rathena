@@ -11,6 +11,7 @@
 
 OnInit:
 	.daily_cap = 1000;	// Max total GCash value that can drop per day
+	.drop_rate = 90;	// Percent chance used for testing
 	bindatcmd "gcash", "GCashTickets::OnAtCommand", 60, 99;
 	end;
 
@@ -23,7 +24,7 @@ OnNPCKillEvent:
 	if ($GCASH_DAILY_VALUE >= .daily_cap) end;
 
 	// 90% drop rate (rand(100) >= 90) for testing — change to: if (rand(200) > 0) end; for 0.5%
-	if (rand(100) >= 90) end;
+	if (rand(100) >= .drop_rate) end;
 
 	setarray .@gcash_items[0], 50001, 50002, 50003, 50004, 50005, 50006, 50007;
 	setarray .@gcash_values[0], 1, 2, 3, 5, 8, 13, 21;
@@ -46,7 +47,7 @@ OnAtCommand:
 		$GCASH_DISABLED = 1;
 		dispbottom "[GCash] GCash ticket drops are now DISABLED.";
 	} else {
-		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
+		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Rate: " + .drop_rate + "% | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
 		dispbottom "[GCash] Usage: @gcash on | @gcash off";
 	}
 	end;

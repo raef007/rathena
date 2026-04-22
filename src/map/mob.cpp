@@ -3434,48 +3434,6 @@ int32 mob_dead(mob_data *md, block_list *src, int32 type)
 		add_timer(tick + (!battle_config.delay_battle_damage ? 500 : 0), mob_delay_item_drop, md->id, 0);
 	}
 
-	// GCash Ticket Drop Hook (0.5% chance per kill, value-based daily cap of 1000)
-	if (first_sd != nullptr && !(type & 1)) {  // Check killer exists and not a special kill
-		// 0.5% chance = 5000/1000000
-		if (rnd_chance(5000u, 1000000u)) {
-			// GCash ticket item IDs (Fibonacci values: 1,2,3,5,8,13,21)
-			static const t_itemid gcash_items[] = { 50001, 50002, 50003, 50004, 50005, 50006, 50007 };
-			static const int32 gcash_values[] = { 1, 2, 3, 5, 8, 13, 21 };
-			static const int32 num_denominations = 7;
-			static const int32 gcash_daily_cap = 1000;  // Max GCash value per day
-
-			// Static tracking for daily cap
-			static int32 gcash_daily_value = 0;
-			static int32 gcash_last_day = 0;
-
-			// Check if we've crossed into a new day
-			int32 current_day = (int32)(time(NULL) / 86400);
-			if (current_day != gcash_last_day) {
-				gcash_daily_value = 0;
-				gcash_last_day = current_day;
-			}
-
-			if (gcash_daily_value < gcash_daily_cap) {
-				int32 picked = rnd() % num_denominations;
-				int32 item_value = gcash_values[picked];
-
-				if (gcash_daily_value + item_value <= gcash_daily_cap) {
-					struct item tmp_item = {};
-					tmp_item.nameid = gcash_items[picked];
-					tmp_item.identify = 1;
-
-					if (pc_additem(first_sd, &tmp_item, 1, LOG_TYPE_PICKDROP_PLAYER) == 0) {
-						gcash_daily_value += item_value;
-						char msg[256];
-						snprintf(msg, sizeof(msg), "[ GCash ] %s found a GCash Ticket worth %d value! Lucky!",
-							first_sd->status.name, item_value);
-						clif_broadcast(nullptr, msg, strlen(msg) + 1, BC_ALL, SELF);
-					}
-				}
-			}
-		}
-	}
-
 	// MVP Reward
 	if( mvp_sd != nullptr ){
 		t_itemid log_mvp_nameid = 0;
