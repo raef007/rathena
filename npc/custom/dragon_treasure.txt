@@ -2,7 +2,7 @@
 // Dragon Treasure Event
 // ==========================================================================
 // Spawns a fixed treasure chest in abyss_03 every midnight.
-// A leashed Nidhoggr's Shadow guards the chest and gets warped back if lured.
+// A leashed Lost Dragon guards the chest and gets warped back if lured.
 // GM Command: @dragontreasure [start|stop|on|off]
 // ==========================================================================
 
@@ -17,7 +17,8 @@ OnInit:
 	.coin_voucher_id = 50008;
 	.coin_reward = 30000;
 	.chest_mob_id = 24000;
-	.guard_mob_id = 2022; // Nidhoggr's Shadow
+	.guard_mob_id = 2131; // Lost Dragon
+	.guard_name$ = "Lost Dragon";
 	.event_name$ = "Nidhoggr's Midnight Hoard";
 	bindatcmd "dragontreasure", "DragonTreasure::OnAtCommand", 60, 99;
 	end;
@@ -54,7 +55,7 @@ OnChestKilled:
 OnGuardKilled:
 	if (!$DT_active) end;
 	$DT_guard_gid = 0;
-	announce "[ Dragon's Treasure ] Nidhoggr's Shadow has been driven away. The hoard in Abyss Lake 3 lies exposed.", bc_all|bc_yellow;
+	announce "[ Dragon's Treasure ] The Lost Dragon has been driven away. The hoard in Abyss Lake 3 lies exposed.", bc_all|bc_yellow;
 	end;
 
 S_StartEvent:
@@ -62,6 +63,11 @@ S_StartEvent:
 
 	$DT_active = 1;
 	$DT_chest_gid = monster(.map$, .chest_x, .chest_y, "Dragon's Treasure Chest", .chest_mob_id, 1, "DragonTreasure::OnChestKilled");
+	if (!$DT_chest_gid) {
+		debugmes "DragonTreasure: failed to spawn treasure chest at " + .map$ + " " + .chest_x + " " + .chest_y + ".";
+		$DT_active = 0;
+		return;
+	}
 
 	getfreecell(.map$, .@guard_x, .@guard_y, .chest_x, .chest_y, 3, 3);
 	if (.@guard_x == 0 && .@guard_y == 0) {
@@ -71,7 +77,12 @@ S_StartEvent:
 
 	$DT_guard_home_x = .@guard_x;
 	$DT_guard_home_y = .@guard_y;
-	$DT_guard_gid = monster(.map$, .@guard_x, .@guard_y, "Nidhoggr's Shadow", .guard_mob_id, 1, "DragonTreasure::OnGuardKilled");
+	$DT_guard_gid = monster(.map$, .@guard_x, .@guard_y, .guard_name$, .guard_mob_id, 1, "DragonTreasure::OnGuardKilled");
+	if (!$DT_guard_gid) {
+		debugmes "DragonTreasure: failed to spawn " + .guard_name$ + " near the hoard on " + .map$ + ".";
+		callsub S_EndEvent;
+		return;
+	}
 
 	announce "[ Dragon's Treasure ] " + .event_name$ + " has surfaced in " + .map_name$ + " at " + .chest_x + " " + .chest_y + ". Break the hoard if you dare.", bc_all|bc_yellow;
 	initnpctimer;
