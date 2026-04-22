@@ -13,13 +13,16 @@ OnInit:
 	.daily_cap = 1000;	// Max total GCash value that can drop per day
 	.drop_rate = 90;	// Percent chance used for testing
 	bindatcmd "gcash", "GCashTickets::OnAtCommand", 60, 99;
+	callsub S_SyncDailyCap;
 	end;
 
-OnMidnight:
-	$GCASH_DAILY_VALUE = 0;
+OnClock0000:
+	callsub S_SyncDailyCap, 1;
 	end;
 
 OnNPCKillEvent:
+	callsub S_SyncDailyCap;
+
 	if ($GCASH_DEBUG)
 		.@mob_name$ = getmonsterinfo(killedrid, MOB_NAME);
 
@@ -59,6 +62,7 @@ OnNPCKillEvent:
 	end;
 
 OnAtCommand:
+	callsub S_SyncDailyCap;
 	.@arg$ = .@atcmd_parameters$;
 	if (.@arg$ == "on") {
 		$GCASH_DISABLED = 0;
@@ -77,4 +81,14 @@ OnAtCommand:
 		dispbottom "[GCash] Usage: @gcash on | @gcash off | @gcash debug | @gcash test";
 	}
 	end;
+
+S_SyncDailyCap:
+	.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+	if (getarg(0, 0) || $GCASH_RESET_DATE != .@today) {
+		$GCASH_DAILY_VALUE = 0;
+		$GCASH_RESET_DATE = .@today;
+		if ($GCASH_DEBUG)
+			dispbottom "[GCash Debug] Daily cap rolled over for a new date.";
+	}
+	return;
 }

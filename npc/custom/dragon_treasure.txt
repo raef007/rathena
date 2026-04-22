@@ -2,7 +2,7 @@
 // Dragon Treasure Event
 // ==========================================================================
 // Spawns a fixed treasure chest in abyss_03 every midnight.
-// A leashed Lost Dragon guards the chest and gets warped back if lured.
+// A leashed Ifrit guards the chest and gets warped back if lured.
 // GM Command: @dragontreasure [start|stop|on|off]
 // ==========================================================================
 
@@ -17,8 +17,8 @@ OnInit:
 	.coin_voucher_id = 50008;
 	.coin_reward = 30000;
 	.chest_mob_id = 24000;
-	.guard_mob_id = 2131; // Lost Dragon
-	.guard_name$ = "Lost Dragon";
+	.guard_mob_id = 1832; // Ifrit
+	.guard_name$ = "Ifrit";
 	.event_name$ = "Nidhoggr's Midnight Hoard";
 	bindatcmd "dragontreasure", "DragonTreasure::OnAtCommand", 60, 99;
 	end;
@@ -55,7 +55,7 @@ OnChestKilled:
 OnGuardKilled:
 	if (!$DT_active) end;
 	$DT_guard_gid = 0;
-	announce "[ Dragon's Treasure ] The Lost Dragon has been driven away. The hoard in Abyss Lake 3 lies exposed.", bc_all|bc_yellow;
+	announce "[ Dragon's Treasure ] Ifrit has been driven away. The hoard in Abyss Lake 3 lies exposed.", bc_all|bc_yellow;
 	end;
 
 S_StartEvent:
