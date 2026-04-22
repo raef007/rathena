@@ -2,7 +2,7 @@
 // Dragon Treasure Event
 // ==========================================================================
 // Spawns a fixed treasure chest in abyss_03 every midnight.
-// A leashed Ifrit guards the chest and gets warped back if lured.
+// A leashed Nidhoggr's Shadow guards the chest and gets warped back if lured.
 // GM Command: @dragontreasure [start|stop|on|off]
 // ==========================================================================
 
@@ -17,8 +17,9 @@ OnInit:
 	.coin_voucher_id = 50008;
 	.coin_reward = 30000;
 	.chest_mob_id = 24000;
-	.guard_mob_id = 1832; // Ifrit
-	.guard_name$ = "Ifrit";
+	.guard_mob_id = 2022; // Nidhoggr's Shadow
+	.guard_name$ = "Nidhoggr's Shadow";
+	.guard_mode = (MD_CANMOVE|MD_AGGRESSIVE|MD_CANATTACK|MD_NORANDOMWALK|MD_TELEPORTBLOCK|MD_DETECTOR|MD_MVP|MD_STATUSIMMUNE|MD_KNOCKBACKIMMUNE);
 	.event_name$ = "Nidhoggr's Midnight Hoard";
 	bindatcmd "dragontreasure", "DragonTreasure::OnAtCommand", 60, 99;
 	end;
@@ -35,12 +36,23 @@ OnTimer5000:
 		callsub S_EndEvent;
 		end;
 	}
-	if (unitexists($DT_guard_gid)) {
-		getunitdata $DT_guard_gid, .@guard;
-		if (distance(.chest_x, .chest_y, .@guard[UMOB_X], .@guard[UMOB_Y]) > .guard_leash) {
-			setunitdata $DT_guard_gid, UMOB_TARGETID, 0;
-			unitwarp $DT_guard_gid, .map$, $DT_guard_home_x, $DT_guard_home_y;
+	if (!unitexists($DT_guard_gid)) {
+		if ($DT_guard_defeated) {
+			initnpctimer;
+			end;
 		}
+		$DT_guard_gid = 0;
+		callsub S_SpawnGuard;
+		if (!$DT_guard_gid)
+			debugmes "DragonTreasure: failed to respawn guard while chest is still active on " + .map$ + ".";
+		initnpctimer;
+		end;
+	}
+
+	getunitdata $DT_guard_gid, .@guard;
+	if (distance(.chest_x, .chest_y, .@guard[UMOB_X], .@guard[UMOB_Y]) > .guard_leash) {
+		setunitdata $DT_guard_gid, UMOB_TARGETID, 0;
+		unitwarp $DT_guard_gid, .map$, $DT_guard_home_x, $DT_guard_home_y;
 	}
 	initnpctimer;
 	end;
@@ -55,7 +67,8 @@ OnChestKilled:
 OnGuardKilled:
 	if (!$DT_active) end;
 	$DT_guard_gid = 0;
-	announce "[ Dragon's Treasure ] Ifrit has been driven away. The hoard in Abyss Lake 3 lies exposed.", bc_all|bc_yellow;
+	$DT_guard_defeated = 1;
+	announce "[ Dragon's Treasure ] Nidhoggr's Shadow has been driven away. The hoard in Abyss Lake 3 lies exposed.", bc_all|bc_yellow;
 	end;
 
 S_StartEvent:
@@ -69,15 +82,8 @@ S_StartEvent:
 		return;
 	}
 
-	getfreecell(.map$, .@guard_x, .@guard_y, .chest_x, .chest_y, 3, 3);
-	if (.@guard_x == 0 && .@guard_y == 0) {
-		.@guard_x = .chest_x + 2;
-		.@guard_y = .chest_y;
-	}
-
-	$DT_guard_home_x = .@guard_x;
-	$DT_guard_home_y = .@guard_y;
-	$DT_guard_gid = monster(.map$, .@guard_x, .@guard_y, .guard_name$, .guard_mob_id, 1, "DragonTreasure::OnGuardKilled");
+	callsub S_SpawnGuard;
+	$DT_guard_defeated = 0;
 	if (!$DT_guard_gid) {
 		debugmes "DragonTreasure: failed to spawn " + .guard_name$ + " near the hoard on " + .map$ + ".";
 		callsub S_EndEvent;
@@ -88,6 +94,23 @@ S_StartEvent:
 	initnpctimer;
 	return;
 
+S_SpawnGuard:
+	getfreecell(.map$, .@guard_x, .@guard_y, .chest_x, .chest_y, 3, 3);
+	if (.@guard_x == 0 && .@guard_y == 0) {
+		.@guard_x = .chest_x + 2;
+		.@guard_y = .chest_y;
+	}
+
+	$DT_guard_gid = monster(.map$, .@guard_x, .@guard_y, .guard_name$, .guard_mob_id, 1, "DragonTreasure::OnGuardKilled");
+	if (!$DT_guard_gid)
+		return;
+
+	setunitdata $DT_guard_gid, UMOB_MODE, .guard_mode;
+	getunitdata $DT_guard_gid, .@guard;
+	$DT_guard_home_x = .@guard[UMOB_X];
+	$DT_guard_home_y = .@guard[UMOB_Y];
+	return;
+
 S_EndEvent:
 	if (!$DT_active) return;
 	stopnpctimer;
@@ -96,6 +119,7 @@ S_EndEvent:
 	$DT_active = 0;
 	$DT_chest_gid = 0;
 	$DT_guard_gid = 0;
+	$DT_guard_defeated = 0;
 	$DT_guard_home_x = 0;
 	$DT_guard_home_y = 0;
 	return;
@@ -108,7 +132,7 @@ OnAtCommand:
 			end;
 		}
 		callsub S_StartEvent;
-		dispbottom "[Dragon Treasure] Event force-started.";
+		dispbottom "[Dragon Treasure] " + ($DT_active ? "Event force-started." : "Event start failed. Check debugmes/logs.");
 	} else if (.@arg$ == "stop") {
 		if (!$DT_active) {
 			dispbottom "[Dragon Treasure] No event is currently active.";
