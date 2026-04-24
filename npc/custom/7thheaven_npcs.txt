@@ -380,8 +380,10 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 			mes "^00AA00A cozy room for the night^000000";
 			mes "^00AA001x Heaven's Meal Voucher^000000";
 			mes "  ^777777(Redeem with Chef Goran next door)^000000";
-			mes "^00AA003 hours of rest bonus^000000";
-			mes "  ^777777(HP recovery and SP regeneration)^000000";
+			mes "^00AA001 hour of tavern blessings:^000000";
+			mes "  ^777777- Magnificat Lv5 (SP regen)^000000";
+			mes "  ^777777- Increase AGI Lv10 (speed, ASPD)^000000";
+			mes "  ^777777- Gloria Lv5 (+30 LUK)^000000";
 			mes " ";
 			mes "All for just ^FF000077,000 zeny^000000.";
 			mes "Best deal in Rune-Midgarts, if I";
@@ -409,8 +411,13 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 			Zeny -= 77000;
 			set INN_CHECKIN, gettimetick(2);
 			getitem 50012, 1;
-			sc_start SC_APPLEIDUN, 10800000, 10;
-			sc_start SC_MAGNIFICAT, 10800000, 5;
+			// 1-hour tavern blessings. INN_BUFF_END is stored as absolute server tick
+			// so the clock keeps counting down while the player is logged out —
+			// OnPCLoginEvent re-applies the SC with whatever time is left.
+			set INN_BUFF_END, gettimetick(2) + 3600;
+			sc_start SC_MAGNIFICAT, 3600000, 5;
+			sc_start SC_INCREASEAGI, 3600000, 10;
+			sc_start SC_GLORIA, 3600000, 5;
 
 			mes "[Innkeeper Mara]";
 			mes "She tucks a warm meal voucher";
@@ -668,7 +675,7 @@ L_DonateZeny:
 
 	mes "[Guild Representative]";
 	mes "The exchange rate is straightforward:";
-	mes "^00AA001 zeny = 20 Guild EXP^000000.";
+	mes "^00AA001 zeny = 1 Guild EXP^000000.";
 	mes " ";
 	mes "Your purse holds: ^0055FF" + Zeny + " zeny^000000.";
 	mes " ";
@@ -689,7 +696,7 @@ L_DonateZeny:
 		close;
 	}
 
-	.@gexp = .@amount * 20;
+	.@gexp = .@amount;
 
 	mes "[Guild Representative]";
 	mes "Donating ^0055FF" + .@amount + " zeny^000000.";
@@ -741,7 +748,7 @@ L_DonateEmperium:
 
 	mes "[Guild Representative]";
 	mes "Emperium - now that's a real contribution.";
-	mes "^00AA001 Emperium = 20,000 Guild EXP^000000.";
+	mes "^00AA001 Emperium = 10,000 Guild EXP^000000.";
 	mes " ";
 	mes "You're carrying ^0055FF" + .@emp_count + " Emperium^000000.";
 	mes "How many would you like to donate?";
@@ -761,7 +768,7 @@ L_DonateEmperium:
 		close;
 	}
 
-	.@gexp = .@emp_donate * 20000;
+	.@gexp = .@emp_donate * 10000;
 
 	mes "[Guild Representative]";
 	mes "Donating ^0055FF" + .@emp_donate + " Emperium^000000.";

@@ -9,6 +9,28 @@
 -	script	7thHeaven_Events	-1,{
 
 OnPCLoginEvent:
+	// ---- Innkeeper Mara's tavern blessings (1 hour, persistent) ----
+	// INN_BUFF_END is absolute server tick — the clock ticks down even while
+	// the player is offline. On login, re-apply with whatever time remains.
+	if (INN_BUFF_END > 0) {
+		.@remain = INN_BUFF_END - gettimetick(2);
+		if (.@remain > 0) {
+			.@remain_ms = .@remain * 1000;
+			// Guard each re-apply: if the SC is already active (Priest party buff,
+			// DB-persisted Innkeeper buff, or any other source), don't overwrite —
+			// either it's a fresher/stronger buff or ours is still ticking from
+			// last session. The char var remains the source of truth for entitlement.
+			if (getstatus(SC_MAGNIFICAT) == 0)
+				sc_start SC_MAGNIFICAT, .@remain_ms, 5;
+			if (getstatus(SC_INCREASEAGI) == 0)
+				sc_start SC_INCREASEAGI, .@remain_ms, 10;
+			if (getstatus(SC_GLORIA) == 0)
+				sc_start SC_GLORIA, .@remain_ms, 5;
+		} else {
+			set INN_BUFF_END, 0; // expired — clear the flag
+		}
+	}
+
 	// ---- Beast Master's Leash passive (Lv9-10) ----
 	if (countitem(50011) > 0 && LEASH_LV >= 9) {
 		.@val = LEASH_LV - 8; // Lv9 = +1, Lv10 = +2
