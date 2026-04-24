@@ -16,6 +16,7 @@
 #include "party.hpp"       // party_search, party_isleader (Phase 25)
 #include <common/sql.hpp>  // Sql_Query, mmysql_handle
 #include <common/random.hpp> // rnd_value
+#include <cmath>           // sin, cos, sqrt for roam waypoint angle sweep
 
 extern Sql* mmysql_handle;
 
@@ -420,7 +421,11 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						}
 					}
 
-					// Walk toward destination in stages (stay within max_walk_path limits)
+					// Walk toward destination by finding a REACHABLE intermediate waypoint.
+					// Rather than committing to a straight-line step (which lands in walls when
+					// the direct line is obstructed), we sweep angles around the ideal direction
+					// and pick the nearest waypoint A* can actually reach. This produces natural
+					// "walk around the wall" behavior instead of "bang head and pick new dest".
 					if (sd->autobattle_data.roam_has_dest && sd->ud.walktimer == INVALID_TIMER) {
 						int16 dest_x = sd->autobattle_data.roam_dest_x;
 						int16 dest_y = sd->autobattle_data.roam_dest_y;
@@ -429,52 +434,78 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						int32 adx = abs(dx), ady = abs(dy);
 						int32 approx_dist = (adx > ady) ? (adx + ady / 2) : (ady + adx / 2);
 						if (approx_dist < 1) approx_dist = 1;
-						const int32 STEP_RANGE = 12; // Safe step under max_walk_path
 
-						// Compute first waypoint toward destination
-						int16 walk_x, walk_y;
-						if (approx_dist <= STEP_RANGE) {
-							walk_x = dest_x;
-							walk_y = dest_y;
-						} else {
-							walk_x = sd->x + (int16)((int32)dx * STEP_RANGE / approx_dist);
-							walk_y = sd->y + (int16)((int32)dy * STEP_RANGE / approx_dist);
-							// Clamp to map bounds
-							struct map_data *mapdata = map_getmapdata(sd->m);
-							if (mapdata) {
-								int32 edge = battle_config.map_edge_size;
-								if (walk_x < edge) walk_x = (int16)edge;
-								if (walk_y < edge) walk_y = (int16)edge;
-								if (walk_x >= mapdata->xs - edge) walk_x = (int16)(mapdata->xs - edge - 1);
-								if (walk_y >= mapdata->ys - edge) walk_y = (int16)(mapdata->ys - edge - 1);
+						struct map_data *mapdata = map_getmapdata(sd->m);
+						int32 edge = battle_config.map_edge_size;
+
+						// Normalized ideal direction (float) toward destination
+						double len = sqrt((double)((int32)dx * dx + (int32)dy * dy));
+						if (len < 1.0) len = 1.0;
+						double ux = (double)dx / len;
+						double uy = (double)dy / len;
+
+						bool walked = false;
+
+						// If destination is within A* range, just try it directly first.
+						if (approx_dist <= battle_config.max_walk_path) {
+							walked = (unit_walktoxy((block_list*)sd, dest_x, dest_y, 0) != 0);
+						}
+
+						// Angle sweep around ideal direction. Order matters: 0 is preferred,
+						// then tight deviations, then wide. Sign alternates so the bot doesn't
+						// always favor the same side when a symmetric obstacle splits the path.
+						// Degrees: 0, ±22, ±45, ±67, ±90, ±112, ±135, ±157
+						static const double angle_deg[] = {
+							0.0, 22.5, -22.5, 45.0, -45.0, 67.5, -67.5,
+							90.0, -90.0, 112.5, -112.5, 135.0, -135.0, 157.5, -157.5
+						};
+						static const int32 n_angles = (int32)(sizeof(angle_deg) / sizeof(angle_deg[0]));
+
+						// Radii: prefer a longer step for fluid motion, shrink if nothing reachable.
+						static const int32 radii[] = {12, 8, 5, 3};
+						static const int32 n_radii = (int32)(sizeof(radii) / sizeof(radii[0]));
+
+						for (int32 ri = 0; ri < n_radii && !walked; ri++) {
+							int32 r = radii[ri];
+							if (r > approx_dist) r = approx_dist; // Don't overshoot destination
+
+							for (int32 ai = 0; ai < n_angles && !walked; ai++) {
+								double theta = angle_deg[ai] * 0.017453292519943295; // deg to rad
+								double c = cos(theta), s = sin(theta);
+								// Rotate ideal unit vector by theta
+								double rx = ux * c - uy * s;
+								double ry = ux * s + uy * c;
+								int16 tx = sd->x + (int16)(rx * r);
+								int16 ty = sd->y + (int16)(ry * r);
+
+								// Clamp to map bounds
+								if (mapdata) {
+									if (tx < edge) tx = (int16)edge;
+									if (ty < edge) ty = (int16)edge;
+									if (tx >= mapdata->xs - edge) tx = (int16)(mapdata->xs - edge - 1);
+									if (ty >= mapdata->ys - edge) ty = (int16)(mapdata->ys - edge - 1);
+								}
+
+								// Skip blocked cells before invoking A*
+								if (map_getcell(sd->m, tx, ty, CELL_CHKNOPASS))
+									continue;
+
+								// Validate reachability with A* first. This is the key fix:
+								// we only commit to waypoints we know have a real walkable path.
+								walkpath_data wpd = { 0 };
+								if (!path_search(&wpd, sd->m, sd->x, sd->y, tx, ty, 0, CELL_CHKNOPASS))
+									continue;
+								if (wpd.path_len == 0 || wpd.path_len > battle_config.max_walk_path)
+									continue;
+
+								walked = (unit_walktoxy((block_list*)sd, tx, ty, 0) != 0);
 							}
 						}
 
-						bool walked = (unit_walktoxy((block_list*)sd, walk_x, walk_y, 0) != 0);
-
 						if (!walked) {
-							// Direct step blocked — try progressively shorter steps toward destination.
-							// This helps navigate narrow corridors where the 12-cell waypoint lands in a wall
-							// but a 3- or 1-cell step finds the corridor entrance.
-							static const int32 fallback_steps[] = {6, 3, 1};
-							for (int32 si = 0; si < 3 && !walked; si++) {
-								int32 st = fallback_steps[si];
-								if (approx_dist <= st) continue; // Already tried direct dest above
-								int16 tx = sd->x + (int16)((int32)dx * st / approx_dist);
-								int16 ty = sd->y + (int16)((int32)dy * st / approx_dist);
-								walked = (unit_walktoxy((block_list*)sd, tx, ty, 0) != 0);
-							}
-							// Last resort: random cells near current position (not near the blocked waypoint)
-							for (int32 retry = 0; retry < 5 && !walked; retry++) {
-								int16 rx = sd->x + rnd_value<int16>(-2, 2);
-								int16 ry = sd->y + rnd_value<int16>(-2, 2);
-								walked = (unit_walktoxy((block_list*)sd, rx, ry, 0) != 0);
-							}
-							if (!walked) {
-								// Completely stuck — abandon destination, pick new next tick
-								sd->autobattle_data.roam_has_dest = false;
-								sd->autobattle_data.last_roam_tick = tick;
-							}
+							// Surrounded or truly stuck — abandon destination, pick new next tick.
+							sd->autobattle_data.roam_has_dest = false;
+							sd->autobattle_data.last_roam_tick = tick;
 						}
 					}
 				}
