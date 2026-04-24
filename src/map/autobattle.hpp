@@ -106,6 +106,8 @@ struct s_autobattle_data {
 	bool roam_has_dest;            ///< Whether we have an active roam destination
 	int16 roam_last_x;             ///< Position at previous roam tick (stuck detection)
 	int16 roam_last_y;             ///< Position at previous roam tick (stuck detection)
+	int32 roam_best_dist;          ///< Best (smallest) distance to dest achieved so far (maze escape)
+	t_tick roam_best_tick;         ///< Tick when roam_best_dist was last improved
 
 	// State tracking
 	t_tick last_support_tick;      ///< Throttle support casting

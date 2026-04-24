@@ -384,6 +384,21 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					sd->autobattle_data.roam_last_x = sd->x;
 					sd->autobattle_data.roam_last_y = sd->y;
 
+					// Maze escape: track best (smallest) distance to dest ever achieved.
+					// If >10s with no improvement, destination is in a pocket the angle
+					// sweep can't reach (maze, ring wall) — abandon early so the player
+					// doesn't circle forever. 60s timeout is too long for this case.
+					if (sd->autobattle_data.roam_has_dest) {
+						int32 cur_dist = abs(sd->x - sd->autobattle_data.roam_dest_x) +
+						                 abs(sd->y - sd->autobattle_data.roam_dest_y);
+						if (cur_dist < sd->autobattle_data.roam_best_dist) {
+							sd->autobattle_data.roam_best_dist = cur_dist;
+							sd->autobattle_data.roam_best_tick = tick;
+						} else if (DIFF_TICK(tick, sd->autobattle_data.roam_best_tick) > 10000) {
+							sd->autobattle_data.roam_has_dest = false;
+						}
+					}
+
 					// Check if we need a new ultimate destination
 					bool need_new_dest = !sd->autobattle_data.roam_has_dest;
 					if (sd->autobattle_data.roam_has_dest) {
@@ -417,6 +432,8 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 								sd->autobattle_data.roam_dest_x = rx;
 								sd->autobattle_data.roam_dest_y = ry;
 								sd->autobattle_data.roam_has_dest = true;
+								sd->autobattle_data.roam_best_dist = abs(rx - sd->x) + abs(ry - sd->y);
+								sd->autobattle_data.roam_best_tick = tick;
 							}
 						}
 					}
@@ -465,40 +482,64 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						static const int32 radii[] = {12, 8, 5, 3};
 						static const int32 n_radii = (int32)(sizeof(radii) / sizeof(radii[0]));
 
-						for (int32 ri = 0; ri < n_radii && !walked; ri++) {
-							int32 r = radii[ri];
-							if (r > approx_dist) r = approx_dist; // Don't overshoot destination
+						// Current distance-to-dest — candidates must beat this to count as
+						// "forward progress". In open space any angle deviation from 0 still
+						// gets closer to the dest, so this filter is permissive there.
+						// In maze/U-shape geometry, it prevents the bot from committing to a
+						// waypoint that sends it backward, which was the root cause of circling.
+						int32 cur_to_dest = abs(sd->x - dest_x) + abs(sd->y - dest_y);
 
-							for (int32 ai = 0; ai < n_angles && !walked; ai++) {
-								double theta = angle_deg[ai] * 0.017453292519943295; // deg to rad
-								double c = cos(theta), s = sin(theta);
-								// Rotate ideal unit vector by theta
-								double rx = ux * c - uy * s;
-								double ry = ux * s + uy * c;
-								int16 tx = sd->x + (int16)(rx * r);
-								int16 ty = sd->y + (int16)(ry * r);
+						// Two-pass search:
+						//   pass 0 — only accept waypoints that make forward progress (preferred)
+						//   pass 1 — allow any reachable waypoint (escape hatch for dead-ends)
+						// The 10s stall timer above will kill truly unreachable dests, so this
+						// fallback is just to keep motion fluid while the stall timer counts down.
+						for (int32 pass = 0; pass < 2 && !walked; pass++) {
+							bool require_progress = (pass == 0);
 
-								// Clamp to map bounds
-								if (mapdata) {
-									if (tx < edge) tx = (int16)edge;
-									if (ty < edge) ty = (int16)edge;
-									if (tx >= mapdata->xs - edge) tx = (int16)(mapdata->xs - edge - 1);
-									if (ty >= mapdata->ys - edge) ty = (int16)(mapdata->ys - edge - 1);
+							for (int32 ri = 0; ri < n_radii && !walked; ri++) {
+								int32 r = radii[ri];
+								if (r > approx_dist) r = approx_dist; // Don't overshoot destination
+
+								for (int32 ai = 0; ai < n_angles && !walked; ai++) {
+									double theta = angle_deg[ai] * 0.017453292519943295; // deg to rad
+									double c = cos(theta), s = sin(theta);
+									// Rotate ideal unit vector by theta
+									double rx = ux * c - uy * s;
+									double ry = ux * s + uy * c;
+									int16 tx = sd->x + (int16)(rx * r);
+									int16 ty = sd->y + (int16)(ry * r);
+
+									// Clamp to map bounds
+									if (mapdata) {
+										if (tx < edge) tx = (int16)edge;
+										if (ty < edge) ty = (int16)edge;
+										if (tx >= mapdata->xs - edge) tx = (int16)(mapdata->xs - edge - 1);
+										if (ty >= mapdata->ys - edge) ty = (int16)(mapdata->ys - edge - 1);
+									}
+
+									// Forward-progress filter (pass 0 only): reject waypoints that
+									// would leave us farther from destination than we are now.
+									if (require_progress) {
+										int32 cand_to_dest = abs(tx - dest_x) + abs(ty - dest_y);
+										if (cand_to_dest >= cur_to_dest)
+											continue;
+									}
+
+									// Skip blocked cells before invoking A*
+									if (map_getcell(sd->m, tx, ty, CELL_CHKNOPASS))
+										continue;
+
+									// Validate reachability with A*. Only commit to waypoints
+									// we know have a real walkable path.
+									walkpath_data wpd = { 0 };
+									if (!path_search(&wpd, sd->m, sd->x, sd->y, tx, ty, 0, CELL_CHKNOPASS))
+										continue;
+									if (wpd.path_len == 0 || wpd.path_len > battle_config.max_walk_path)
+										continue;
+
+									walked = (unit_walktoxy((block_list*)sd, tx, ty, 0) != 0);
 								}
-
-								// Skip blocked cells before invoking A*
-								if (map_getcell(sd->m, tx, ty, CELL_CHKNOPASS))
-									continue;
-
-								// Validate reachability with A* first. This is the key fix:
-								// we only commit to waypoints we know have a real walkable path.
-								walkpath_data wpd = { 0 };
-								if (!path_search(&wpd, sd->m, sd->x, sd->y, tx, ty, 0, CELL_CHKNOPASS))
-									continue;
-								if (wpd.path_len == 0 || wpd.path_len > battle_config.max_walk_path)
-									continue;
-
-								walked = (unit_walktoxy((block_list*)sd, tx, ty, 0) != 0);
 							}
 						}
 
