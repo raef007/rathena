@@ -15,7 +15,7 @@ Body:
       Costume_Garment: true
     ArmorLevel: 1
     EquipLevelMin: 1
-    View: 12
+    View: 191
     Trade:
       NoDrop: true
       NoTrade: true

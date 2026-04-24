@@ -21,11 +21,32 @@ OnInit:
 	.guard_name$ = "Nidhoggr's Shadow";
 	.guard_mode = (MD_CANMOVE|MD_AGGRESSIVE|MD_CANATTACK|MD_NORANDOMWALK|MD_TELEPORTBLOCK|MD_DETECTOR|MD_MVP|MD_STATUSIMMUNE|MD_KNOCKBACKIMMUNE);
 	.event_name$ = "Nidhoggr's Midnight Hoard";
+	.schedule_hour = 0;	// Midnight
 	bindatcmd "dragontreasure", "DragonTreasure::OnAtCommand", 60, 99;
+
+	// Safety cleanup: if the server crashed mid-event, $DT_active stays 1
+	// across restarts. Clear the flag and any orphaned mobs on the map.
+	if ($DT_active) {
+		killmonster .map$, "DragonTreasure::OnChestKilled";
+		killmonster .map$, "DragonTreasure::OnGuardKilled";
+		$DT_active = 0;
+		$DT_chest_gid = 0;
+		$DT_guard_gid = 0;
+		$DT_guard_defeated = 0;
+		$DT_guard_home_x = 0;
+		$DT_guard_home_y = 0;
+	}
 	end;
 
-OnClock0000:
+// Poll every hour on the hour. Self-heals after restart: if the server missed
+// the midnight trigger, the next OnMinute00 at hour 0 on a new day still fires
+// the event. Idempotent via $DT_LAST_RUN_DATE.
+OnMinute00:
 	if ($DT_DISABLED) end;
+	if (gettime(HOUR) != .schedule_hour) end;
+	.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+	if ($DT_LAST_RUN_DATE == .@today) end;
+	$DT_LAST_RUN_DATE = .@today;
 	callsub S_EndEvent;
 	callsub S_StartEvent;
 	end;
@@ -163,9 +184,12 @@ OnAtCommand:
 		else
 			$DT_DEBUG_NAME$ = "";
 		dispbottom "[Dragon Treasure] Debug is now " + ($DT_DEBUG ? "ENABLED" : "DISABLED") + ".";
+	} else if (.@arg$ == "time") {
+		dispbottom "[Dragon Treasure] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
+		dispbottom "[Dragon Treasure] Schedule hour: 00 | Last run date: " + $DT_LAST_RUN_DATE;
 	} else {
 		dispbottom "[Dragon Treasure] Status: " + ($DT_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($DT_active ? "YES" : "NO") + " | Debug: " + ($DT_DEBUG ? "ON" : "OFF");
-		dispbottom "[Dragon Treasure] Usage: @dragontreasure start | stop | on | off | debug";
+		dispbottom "[Dragon Treasure] Usage: @dragontreasure start | stop | on | off | debug | time";
 	}
 	end;
 

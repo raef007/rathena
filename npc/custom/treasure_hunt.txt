@@ -22,14 +22,44 @@ OnInit:
 		"alberta_e", "moc_fild01", "moc_fild02", "moc_fild03",
 		"cmd_fild01", "cmd_fild02", "cmd_fild03";
 	.map_count = 33;
+	// Schedule: hours of day when the event should trigger
+	setarray .schedule_hours[0], 8, 20;
+	.schedule_count = 2;
 	bindatcmd "treasurehunt", "TreasureHunt::OnAtCommand", 60, 99;
+
+	// Safety cleanup: if the server crashed mid-event, $TH_active stays 1
+	// across restarts (it's a permanent global). Clear it and any lingering
+	// mapflags / mobs from the previously-active map.
+	if ($TH_active) {
+		if ($TH_map$ != "") {
+			removemapflag $TH_map$, mf_pvp;
+			removemapflag $TH_map$, mf_pvp_noguild;
+			removemapflag $TH_map$, mf_pvp_noparty;
+			killmonsterall $TH_map$;
+		}
+		$TH_active = 0;
+		$TH_map$ = "";
+		$TH_mobgid = 0;
+	}
 	end;
 
-OnClock0800:
-OnClock2000:
+// Poll every hour on the hour. OnMinute00 is timezone-agnostic in the sense
+// that it self-heals after restarts (OnClock#### only fires at the exact
+// moment of transition, so a restart at 08:01 misses the 08:00 trigger).
+OnMinute00:
 	if ($TH_DISABLED) end;
 	if ($TH_active) end;
-	callsub S_StartEvent;
+	.@hour = gettime(HOUR);
+	for (.@i = 0; .@i < .schedule_count; .@i++) {
+		if (.@hour == .schedule_hours[.@i]) {
+			// Idempotency key: year*1000000 + month*10000 + day*100 + hour
+			.@key = (gettime(YEAR) * 1000000) + (gettime(MONTH) * 10000) + (gettime(DAYOFMONTH) * 100) + .@hour;
+			if ($TH_LAST_RUN_KEY == .@key) end;
+			$TH_LAST_RUN_KEY = .@key;
+			callsub S_StartEvent;
+			end;
+		}
+	}
 	end;
 
 S_StartEvent:
@@ -109,9 +139,12 @@ OnAtCommand:
 	} else if (.@arg$ == "off") {
 		$TH_DISABLED = 1;
 		dispbottom "[Treasure Hunt] Scheduled events are now DISABLED.";
+	} else if (.@arg$ == "time") {
+		dispbottom "[Treasure Hunt] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
+		dispbottom "[Treasure Hunt] Schedule hours: 08, 20 | Last run key: " + $TH_LAST_RUN_KEY;
 	} else {
 		dispbottom "[Treasure Hunt] Status: " + ($TH_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($TH_active ? "YES (" + $TH_map$ + ")" : "NO");
-		dispbottom "[Treasure Hunt] Usage: @treasurehunt start | stop | on | off";
+		dispbottom "[Treasure Hunt] Usage: @treasurehunt start | stop | on | off | time";
 	}
 	end;
 }

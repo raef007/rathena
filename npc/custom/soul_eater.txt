@@ -18,6 +18,10 @@ OnInit:
 	.same_target_cd = 600;          // 10 minutes anti-feed cooldown
 	.reward_item_id = 50020;        // Soul Eater costume
 
+	// Schedule: every 3 hours starting at midnight
+	setarray .schedule_hours[0], 0, 3, 6, 9, 12, 15, 18, 21;
+	.schedule_count = 8;
+
 	bindatcmd "souleater", "SoulEaterEvent::OnAtCommand", 60, 99;
 
 	// Safety clean-up on script load.
@@ -32,21 +36,22 @@ OnInit:
 	callsub S_CheckMonthRollover;
 	end;
 
-OnClock0000:
+// Poll every hour on the hour. Replaces 8 separate OnClock#### labels so the
+// schedule self-heals after restarts and is timezone-agnostic relative to the
+// VPS clock. Idempotent via $SE_LAST_RUN_KEY.
+OnMinute00:
 	callsub S_CheckMonthRollover;
 	if ($SE_DISABLED) end;
-	callsub S_StartEvent;
-	end;
-
-OnClock0300:
-OnClock0600:
-OnClock0900:
-OnClock1200:
-OnClock1500:
-OnClock1800:
-OnClock2100:
-	if ($SE_DISABLED) end;
-	callsub S_StartEvent;
+	.@hour = gettime(HOUR);
+	for (.@i = 0; .@i < .schedule_count; .@i++) {
+		if (.@hour == .schedule_hours[.@i]) {
+			.@key = (gettime(YEAR) * 1000000) + (gettime(MONTH) * 10000) + (gettime(DAYOFMONTH) * 100) + .@hour;
+			if ($SE_LAST_RUN_KEY == .@key) end;
+			$SE_LAST_RUN_KEY = .@key;
+			callsub S_StartEvent;
+			end;
+		}
+	}
 	end;
 
 S_StartEvent:
@@ -322,7 +327,12 @@ OnAtCommand:
 		dispbottom "[Soul Eater] Pending Winner: " + ($SE_REWARD_PENDING ? $SE_LAST_WINNER_NAME$ + " (" + $SE_LAST_WINNER_MONTH_KEY + ")" : "none");
 		end;
 	}
+	if (.@arg$ == "time") {
+		dispbottom "[Soul Eater] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
+		dispbottom "[Soul Eater] Schedule hours: 00, 03, 06, 09, 12, 15, 18, 21 | Last run key: " + $SE_LAST_RUN_KEY;
+		end;
+	}
 
-	dispbottom "[Soul Eater] Usage: @souleater start | stop | on | off | status";
+	dispbottom "[Soul Eater] Usage: @souleater start | stop | on | off | status | time";
 	end;
 }

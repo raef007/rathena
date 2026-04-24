@@ -16,8 +16,11 @@ OnInit:
 	callsub S_SyncDailyCap;
 	end;
 
-OnClock0000:
-	callsub S_SyncDailyCap, 1;
+// OnMinute00 fires every hour on the hour. We use it instead of OnClock0000
+// because OnClock can silently skip if the VPS timezone differs from what
+// players expect, and because it self-heals after server restarts.
+OnMinute00:
+	callsub S_SyncDailyCap;
 	end;
 
 OnNPCKillEvent:
@@ -76,9 +79,14 @@ OnAtCommand:
 	} else if (.@arg$ == "test") {
 		getitem 50001, 1;
 		dispbottom "[GCash] Test ticket granted: " + getitemname(50001);
+	} else if (.@arg$ == "time") {
+		.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+		dispbottom "[GCash] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
+		dispbottom "[GCash] Today key: " + .@today + " | Stored reset date: " + $GCASH_RESET_DATE;
+		dispbottom "[GCash] If 'Server time' above does not match YOUR local time, VPS timezone differs. OnClock####/OnMinute## fire on the VPS clock.";
 	} else {
 		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Rate: " + .drop_rate + "% | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
-		dispbottom "[GCash] Usage: @gcash on | @gcash off | @gcash debug | @gcash test";
+		dispbottom "[GCash] Usage: @gcash on | @gcash off | @gcash debug | @gcash test | @gcash time";
 	}
 	end;
 
