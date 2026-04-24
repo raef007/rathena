@@ -397,6 +397,21 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						} else if (DIFF_TICK(tick, sd->autobattle_data.roam_best_tick) > 10000) {
 							sd->autobattle_data.roam_has_dest = false;
 						}
+
+						// Snapshot position into visit ring buffer when we've moved far enough.
+						// 3-cell threshold keeps entries spread out — one entry per "step" not per tick.
+						int32 moved = abs(sd->x - sd->autobattle_data.roam_snapshot_x) +
+						              abs(sd->y - sd->autobattle_data.roam_snapshot_y);
+						if (moved >= 3) {
+							uint8 h = sd->autobattle_data.roam_visit_head;
+							sd->autobattle_data.roam_visit_x[h] = sd->x;
+							sd->autobattle_data.roam_visit_y[h] = sd->y;
+							sd->autobattle_data.roam_visit_head = (h + 1) % 6;
+							if (sd->autobattle_data.roam_visit_count < 6)
+								sd->autobattle_data.roam_visit_count++;
+							sd->autobattle_data.roam_snapshot_x = sd->x;
+							sd->autobattle_data.roam_snapshot_y = sd->y;
+						}
 					}
 
 					// Check if we need a new ultimate destination
@@ -434,6 +449,11 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 								sd->autobattle_data.roam_has_dest = true;
 								sd->autobattle_data.roam_best_dist = abs(rx - sd->x) + abs(ry - sd->y);
 								sd->autobattle_data.roam_best_tick = tick;
+								// Reset visit buffer — old entries are for a different destination
+								sd->autobattle_data.roam_visit_head = 0;
+								sd->autobattle_data.roam_visit_count = 0;
+								sd->autobattle_data.roam_snapshot_x = sd->x;
+								sd->autobattle_data.roam_snapshot_y = sd->y;
 							}
 						}
 					}
@@ -523,6 +543,24 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 									if (require_progress) {
 										int32 cand_to_dest = abs(tx - dest_x) + abs(ty - dest_y);
 										if (cand_to_dest >= cur_to_dest)
+											continue;
+
+										// Recent-visit filter (pass 0 only): reject waypoints within
+										// 4 cells (Manhattan) of any position we visited recently.
+										// Breaks inverted-C oscillations where forward-progress is
+										// satisfied going BOTH into and out of a dead-end pocket —
+										// the mouth of the pocket ends up in the visit buffer,
+										// blocking re-entry and forcing the bot along the wall.
+										bool near_visited = false;
+										for (uint8 vi = 0; vi < sd->autobattle_data.roam_visit_count; vi++) {
+											int32 vdx = abs(tx - sd->autobattle_data.roam_visit_x[vi]);
+											int32 vdy = abs(ty - sd->autobattle_data.roam_visit_y[vi]);
+											if (vdx + vdy < 4) {
+												near_visited = true;
+												break;
+											}
+										}
+										if (near_visited)
 											continue;
 									}
 

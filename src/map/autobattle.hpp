@@ -108,6 +108,15 @@ struct s_autobattle_data {
 	int16 roam_last_y;             ///< Position at previous roam tick (stuck detection)
 	int32 roam_best_dist;          ///< Best (smallest) distance to dest achieved so far (maze escape)
 	t_tick roam_best_tick;         ///< Tick when roam_best_dist was last improved
+	// Recent-visit ring buffer: rejects waypoints too close to cells we just came from.
+	// Breaks inverted-C / hairpin oscillations where the forward-progress filter can be
+	// satisfied going BOTH into and out of a dead-end pocket.
+	int16 roam_visit_x[6];
+	int16 roam_visit_y[6];
+	uint8 roam_visit_head;         ///< Next write position in ring buffer
+	uint8 roam_visit_count;        ///< Number of valid entries (saturates at 6)
+	int16 roam_snapshot_x;         ///< Last position snapshotted into visit buffer
+	int16 roam_snapshot_y;         ///< (only snapshot when we've moved far enough)
 
 	// State tracking
 	t_tick last_support_tick;      ///< Throttle support casting
