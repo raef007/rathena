@@ -79,6 +79,9 @@ OnAtCommand:
 	} else if (.@arg$ == "test") {
 		getitem 50001, 1;
 		dispbottom "[GCash] Test ticket granted: " + getitemname(50001);
+	} else if (.@arg$ == "reset") {
+		callsub S_SyncDailyCap, 1;
+		dispbottom "[GCash] Daily cap manually reset. $GCASH_DAILY_VALUE = " + $GCASH_DAILY_VALUE + ".";
 	} else if (.@arg$ == "time") {
 		.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
 		dispbottom "[GCash] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
@@ -86,7 +89,7 @@ OnAtCommand:
 		dispbottom "[GCash] If 'Server time' above does not match YOUR local time, VPS timezone differs. OnClock####/OnMinute## fire on the VPS clock.";
 	} else {
 		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Rate: " + .drop_rate + "% | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
-		dispbottom "[GCash] Usage: @gcash on | @gcash off | @gcash debug | @gcash test | @gcash time";
+		dispbottom "[GCash] Usage: @gcash on | @gcash off | @gcash debug | @gcash test | @gcash time | @gcash reset";
 	}
 	end;
 
