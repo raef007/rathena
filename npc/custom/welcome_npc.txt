@@ -28,7 +28,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 	next;
 
 	.@choice = select(
-		"I heard you have something for me~",
+		"I heard you have something for me",
 		"Tell me about this place",
 		"I'm just passing through"
 	);
@@ -38,13 +38,13 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 		case 1:
 			// --- REWARD SUB-MENU ---
 			mes "[Tiffy]";
-			mes "Oh, rewards? You bet I do~!";
+			mes "Oh, rewards? You bet I do!";
 			mes "Which one are you here for?";
 			next;
 
 			.@reward = select(
 				"I am kinda new here",
-				"About the Soul Eater reward",
+				"Heard about the Soul Eater?",
 				"Never mind"
 			);
 

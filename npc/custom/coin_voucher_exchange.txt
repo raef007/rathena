@@ -5,7 +5,7 @@
 // Uses the same sprite as Tiffy, but is a separate NPC.
 // ==========================================================================
 
-tavern,50,41,4	script	Lyra#Voucher	4_F_EDEN_MASTER,{
+tavern,55,34,4	script	Lyra#Voucher	4_f_job_blacksmith,{
 
 	mes "[Lyra]";
 	mes "Coin Vouchers, Cash Points,";

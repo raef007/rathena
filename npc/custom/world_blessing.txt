@@ -7,7 +7,7 @@
 // Blessing always ends at 00:00 server time.
 // ============================================================
 
-tavern,68,35,4	script	World Tree Sapling	4_CH1_GRAY_VALKYRIE,{
+tavern,67,36,4	script	World Tree Sapling	4_ch1_branch,{
 	mes "[World Tree Sapling]";
 	mes "^777777* The spirit in the tree hums softly. *^000000";
 	next;

@@ -333,7 +333,7 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 
 	.@sel = select(
 		"Save my respawn here",
-		"Check in (Daily — Meal Package)",
+		"Check in (Daily - Meal Package)",
 		"^777777Just passing through^000000"
 	);
 
