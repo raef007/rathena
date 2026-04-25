@@ -415,8 +415,13 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 			// so the clock keeps counting down while the player is logged out —
 			// OnPCLoginEvent re-applies the SC with whatever time is left.
 			set INN_BUFF_END, gettimetick(2) + 3600;
+			// SC choice notes: SC_MAGNIFICAT and SC_GLORIA are skill SCs (Priest's PR_*),
+			// fine to use directly — there's no common scroll/item that triggers them so
+			// no overwrite risk. SC_INCAGI is the *stat-bonus* family (different from
+			// SC_INCREASEAGI which is the AL_INCAGI skill SC). Using SC_INCAGI here means
+			// an Increase AGI Scroll won't clobber the Innkeeper's bonus and vice versa.
 			sc_start SC_MAGNIFICAT, 3600000, 5;
-			sc_start SC_INCREASEAGI, 3600000, 10;
+			sc_start SC_INCAGI, 3600000, 10;
 			sc_start SC_GLORIA, 3600000, 5;
 
 			mes "[Innkeeper Mara]";
@@ -520,13 +525,18 @@ L_Voucher:
 
 	delitem 50012, 1;
 
+	// Voucher foods use the SC_INC* stat-bonus family instead of SC_FOOD_*_CASH because
+	// rAthena explicitly blocks SC_FOOD_*_CASH from coexisting with SC_*FOOD (the +10
+	// shop versions) — whichever has the higher val1 wins, the other won't apply.
+	// Switching to SC_INC* sidesteps that family entirely so the +20 voucher buff
+	// stacks with the +10 shop food for a true +30 bonus.
 	switch (.@meal) {
-		case 1: sc_start SC_FOOD_STR_CASH, 7200000, 20; .@stat$ = "STR"; .@dish$ = "Warrior's Feast"; break;
-		case 2: sc_start SC_FOOD_AGI_CASH, 7200000, 20; .@stat$ = "AGI"; .@dish$ = "Wind Sprint Soup"; break;
-		case 3: sc_start SC_FOOD_VIT_CASH, 7200000, 20; .@stat$ = "VIT"; .@dish$ = "Iron Belly Stew"; break;
-		case 4: sc_start SC_FOOD_INT_CASH, 7200000, 20; .@stat$ = "INT"; .@dish$ = "Sage's Elixir"; break;
-		case 5: sc_start SC_FOOD_DEX_CASH, 7200000, 20; .@stat$ = "DEX"; .@dish$ = "Hawk Eye Platter"; break;
-		case 6: sc_start SC_FOOD_LUK_CASH, 7200000, 20; .@stat$ = "LUK"; .@dish$ = "Fortune Cookie Bun"; break;
+		case 1: sc_start SC_INCSTR, 7200000, 20; .@stat$ = "STR"; .@dish$ = "Warrior's Feast"; break;
+		case 2: sc_start SC_INCAGI, 7200000, 20; .@stat$ = "AGI"; .@dish$ = "Wind Sprint Soup"; break;
+		case 3: sc_start SC_INCVIT, 7200000, 20; .@stat$ = "VIT"; .@dish$ = "Iron Belly Stew"; break;
+		case 4: sc_start SC_INCINT, 7200000, 20; .@stat$ = "INT"; .@dish$ = "Sage's Elixir"; break;
+		case 5: sc_start SC_INCDEX, 7200000, 20; .@stat$ = "DEX"; .@dish$ = "Hawk Eye Platter"; break;
+		case 6: sc_start SC_INCLUK, 7200000, 20; .@stat$ = "LUK"; .@dish$ = "Fortune Cookie Bun"; break;
 	}
 
 	mes "[Chef Goran]";

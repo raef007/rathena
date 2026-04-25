@@ -394,6 +394,13 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						if (cur_dist < sd->autobattle_data.roam_best_dist) {
 							sd->autobattle_data.roam_best_dist = cur_dist;
 							sd->autobattle_data.roam_best_tick = tick;
+							// Forward progress means the visit buffer is stale — those
+							// cells were "where we got stuck" relative to an old position,
+							// not relative to where we are now. Clearing prevents the
+							// buffer from biting in narrow corridors where we have to
+							// walk THROUGH our own footprints to make progress.
+							sd->autobattle_data.roam_visit_head = 0;
+							sd->autobattle_data.roam_visit_count = 0;
 						} else if (DIFF_TICK(tick, sd->autobattle_data.roam_best_tick) > 10000) {
 							sd->autobattle_data.roam_has_dest = false;
 						}
@@ -509,13 +516,17 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 						// waypoint that sends it backward, which was the root cause of circling.
 						int32 cur_to_dest = abs(sd->x - dest_x) + abs(sd->y - dest_y);
 
-						// Two-pass search:
-						//   pass 0 — only accept waypoints that make forward progress (preferred)
-						//   pass 1 — allow any reachable waypoint (escape hatch for dead-ends)
-						// The 10s stall timer above will kill truly unreachable dests, so this
-						// fallback is just to keep motion fluid while the stall timer counts down.
-						for (int32 pass = 0; pass < 2 && !walked; pass++) {
+						// Three-pass search:
+						//   pass 0 — only accept waypoints that make forward progress (preferred,
+						//            smooth open-terrain motion)
+						//   pass 1 — allow backward motion BUT avoid recently-visited cells
+						//            (handles dead-end retreat without re-entering the pocket)
+						//   pass 2 — unconditional escape hatch (truly surrounded)
+						// The 10s stall timer above will kill destinations that fall through to
+						// pass 2 repeatedly without progress.
+						for (int32 pass = 0; pass < 3 && !walked; pass++) {
 							bool require_progress = (pass == 0);
+							bool avoid_visited = (pass == 1);
 
 							for (int32 ri = 0; ri < n_radii && !walked; ri++) {
 								int32 r = radii[ri];
@@ -540,17 +551,23 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 
 									// Forward-progress filter (pass 0 only): reject waypoints that
 									// would leave us farther from destination than we are now.
+									// In open terrain this is enough — the bot picks the angle
+									// closest to ideal that A* can reach. The visit-buffer filter
+									// USED to live here but it caused false rejections in narrow
+									// corridors where the bot has to walk THROUGH its own footprints
+									// to keep moving forward. Now visit filter is on pass 1 only —
+									// see below.
 									if (require_progress) {
 										int32 cand_to_dest = abs(tx - dest_x) + abs(ty - dest_y);
 										if (cand_to_dest >= cur_to_dest)
 											continue;
+									}
 
-										// Recent-visit filter (pass 0 only): reject waypoints within
-										// 4 cells (Manhattan) of any position we visited recently.
-										// Breaks inverted-C oscillations where forward-progress is
-										// satisfied going BOTH into and out of a dead-end pocket —
-										// the mouth of the pocket ends up in the visit buffer,
-										// blocking re-entry and forcing the bot along the wall.
+									// Recent-visit filter (pass 1 only): when pass 0 found nothing,
+									// pass 1 allows backward motion but avoids cells we just
+									// trampled — that's the actual oscillation case. Pass 2 drops
+									// this filter as final escape hatch if the bot is fully cornered.
+									if (avoid_visited) {
 										bool near_visited = false;
 										for (uint8 vi = 0; vi < sd->autobattle_data.roam_visit_count; vi++) {
 											int32 vdx = abs(tx - sd->autobattle_data.roam_visit_x[vi]);

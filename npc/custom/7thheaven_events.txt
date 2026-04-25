@@ -22,8 +22,10 @@ OnPCLoginEvent:
 			// last session. The char var remains the source of truth for entitlement.
 			if (getstatus(SC_MAGNIFICAT) == 0)
 				sc_start SC_MAGNIFICAT, .@remain_ms, 5;
-			if (getstatus(SC_INCREASEAGI) == 0)
-				sc_start SC_INCREASEAGI, .@remain_ms, 10;
+			// SC_INCAGI (stat-bonus family) — chosen over SC_INCREASEAGI (AL_INCAGI skill
+			// SC) so Increase AGI Scroll doesn't clobber the Innkeeper's bonus.
+			if (getstatus(SC_INCAGI) == 0)
+				sc_start SC_INCAGI, .@remain_ms, 10;
 			if (getstatus(SC_GLORIA) == 0)
 				sc_start SC_GLORIA, .@remain_ms, 5;
 		} else {
