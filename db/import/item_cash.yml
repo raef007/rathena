@@ -63,8 +63,6 @@ Body:
         Price: 250
       - Item: Job_Manual50_Box
         Price: 250
-      - Item: AC_Insurance_Box10
-        Price: 85
       - Item: Giant_Fly_Wing_Box
         Price: 250
       - Item: Megaphone_Box
@@ -108,7 +106,7 @@ Body:
       - Item: C_Orange_Tabby_Cat
         Price: 1500
       # --- Super Saiyan Hair (3000 CP) ---
-      - Item: AC_Super_Saiyan_Hair
+      - Item: C_Hair_Of_The_Strong
         Price: 3000
 
   # ============================================================

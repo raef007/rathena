@@ -1,5 +1,7 @@
 # Asgard City - Custom Shop Items
-# IDs 50031-50050 reserved for this file.
+# IDs 50031, 50040-50041 are new custom items.
+# Items 18740, 20571, 20602, 20988, 480056, 480069, 480408 are overrides
+# of existing official items with added effects.
 
 Header:
   Type: ITEM_DB
@@ -8,7 +10,7 @@ Header:
 Body:
   # -----------------------------------------------------------------------
   # 50031 - Refine Protection Scroll
-  # Protects equipment from breaking/downgrading on one failed refine.
+  # Protects equipment from breaking/downgrading for 1 hour.
   # -----------------------------------------------------------------------
   - Id: 50031
     AegisName: AC_Refine_Protection
@@ -31,218 +33,110 @@ Body:
       dispbottom "A protective aura surrounds your gear for 1 hour. Your equipment will not break or downgrade on the next failed refine!";
 
   # -----------------------------------------------------------------------
-  # 50032 - Life Insurance Box (10 pcs)
-  # -----------------------------------------------------------------------
-  - Id: 50032
-    AegisName: AC_Insurance_Box10
-    Name: Life Insurance Box (10 pcs)
-    Type: Usable
-    Buy: 0
-    Sell: 0
-    Weight: 10
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
-    Script: |
-      getitem Insurance, 10;
-
-  # -----------------------------------------------------------------------
-  # 50033 - Super Saiyan Hair
-  # Based on item 18740 (C_Hair_Of_The_Strong), same sprite/view (879).
+  # 18740 - Super Saiyan Hair (override C_Hair_Of_The_Strong)
   # 5% chance on melee attack: 100% crit + max ASPD + double ATK for 10s,
   # then Silence + double damage taken for 20s.
   # -----------------------------------------------------------------------
-  - Id: 50033
-    AegisName: AC_Super_Saiyan_Hair
+  - Id: 18740
+    AegisName: C_Hair_Of_The_Strong
     Name: Super Saiyan Hair
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
+    Buy: 20
     Locations:
       Costume_Head_Top: true
     ArmorLevel: 1
     View: 879
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
     EquipScript: |
       autobonus "{ bonus bCritical,100; bonus bAspd,200; bonus bAtkRate,100; }",
         500, 10000, BF_WEAPON,
         "{ sc_start SC_SILENCE,20000,0; bonus2 bAddDamageClass,RC_All,100; }";
 
   # -----------------------------------------------------------------------
-  # 50034 - Wings of Choice: Mechanical Butterfly Wings
+  # Wings of Choice — overrides of official costumes
+  # All wings: +50% base/job EXP, +30% drop rate, Teleport Lv1
   # -----------------------------------------------------------------------
-  - Id: 50034
-    AegisName: AC_Wing_MechButterfly
-    Name: Wings of Choice - Mechanical Butterfly
+  - Id: 20988
+    AegisName: C_Mechanical_Butterfly
+    Name: "Costume: Mechanical Butterfly"
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
     Locations:
       Costume_Garment: true
     ArmorLevel: 1
     View: 92
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
     EquipScript: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       skill AL_TELEPORT, 1;
 
-  # -----------------------------------------------------------------------
-  # 50035 - Wings of Choice: Valkyrie Wing
-  # -----------------------------------------------------------------------
-  - Id: 50035
-    AegisName: AC_Wing_Valkyrie
-    Name: Wings of Choice - Valkyrie Wing
+  - Id: 20571
+    AegisName: C_Valkyrie_Wing
+    Name: Costume Valkyrie Wings
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
     Locations:
       Costume_Garment: true
     ArmorLevel: 1
     View: 48
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
+    Script: |
+      hateffect HAT_EF_C_VALKYRIE_WING,true;
+    UnEquipScript: |
+      hateffect HAT_EF_C_VALKYRIE_WING,false;
     EquipScript: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       skill AL_TELEPORT, 1;
 
-  # -----------------------------------------------------------------------
-  # 50036 - Wings of Choice: Seraphim Wing
-  # -----------------------------------------------------------------------
-  - Id: 50036
-    AegisName: AC_Wing_Seraphim
-    Name: Wings of Choice - Seraphim Wing
+  - Id: 20602
+    AegisName: C_Seraphim_Wing_TW
+    Name: "Costume: Seraphim Wing"
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
     Locations:
       Costume_Garment: true
     ArmorLevel: 1
     View: 84
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
     EquipScript: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       skill AL_TELEPORT, 1;
 
-  # -----------------------------------------------------------------------
-  # 50037 - Wings of Choice: Fallen Angel Wing
-  # -----------------------------------------------------------------------
-  - Id: 50037
-    AegisName: AC_Wing_FallenAngel
-    Name: Wings of Choice - Fallen Angel Wing
+  - Id: 480056
+    AegisName: C_Wing_Of_Angel_Move_BK
+    Name: Costume Fallen Angel Wings
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
     Locations:
       Costume_Garment: true
     ArmorLevel: 1
     View: 73
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
     EquipScript: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       skill AL_TELEPORT, 1;
 
-  # -----------------------------------------------------------------------
-  # 50038 - Wings of Choice: Evil Wing
-  # -----------------------------------------------------------------------
-  - Id: 50038
-    AegisName: AC_Wing_Evil
-    Name: Wings of Choice - Evil Wing
+  - Id: 480408
+    AegisName: C_GreatDevilWing2
+    Name: Costume Evil Wing
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
     Locations:
       Costume_Garment: true
     ArmorLevel: 1
     View: 204
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
     EquipScript: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       skill AL_TELEPORT, 1;
 
-  # -----------------------------------------------------------------------
-  # 50039 - Wings of Choice: Angel Wing
-  # -----------------------------------------------------------------------
-  - Id: 50039
-    AegisName: AC_Wing_Angel
-    Name: Wings of Choice - Angel Wing
+  - Id: 480069
+    AegisName: C_Wing_Of_Angel_Move
+    Name: Costume Angel Wings
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
     Locations:
       Costume_Garment: true
     ArmorLevel: 1
     View: 61
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
     EquipScript: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
