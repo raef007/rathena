@@ -10,66 +10,121 @@ Header:
 
 Body:
   # ============================================================
-  # NEW tab – flagship custom items
-  # ============================================================
-  - Tab: New
-    Items:
-      - Item: VIP_Pass_30d
-        Price: 500
-
-  # ============================================================
-  # HOT tab – popular EXP / drop boosts
+  # HOT tab
   # ============================================================
   - Tab: Hot
     Items:
-      - Item: Battle_Manual
-        Price: 50
-      - Item: HE_Battle_Manual
-        Price: 100
-      - Item: Bubble_Gum
-        Price: 50
-      - Item: HE_Bubble_Gum
-        Price: 100
-      - Item: Job_Manual25
-        Price: 50
-      - Item: Job_Manual50
-        Price: 100
-
-  # ============================================================
-  # CONSUMABLES tab – stat food buffs (+10 all stats, 30 min)
-  # ============================================================
-  - Tab: Consumables
-    Items:
-      - Item: Str_Dish10_M
-        Price: 20
-      - Item: Agi_Dish10_M
-        Price: 20
-      - Item: Int_Dish10_M
-        Price: 20
-      - Item: Dex_Dish10_M
-        Price: 20
-      - Item: Luk_Dish10_M
-        Price: 20
-      - Item: Vit_Dish10_M
-        Price: 20
-
-  # ============================================================
-  # PERMANENT tab – VIP passes
-  # ============================================================
-  - Tab: Permanent
-    Items:
       - Item: VIP_Pass_30d
         Price: 500
 
   # ============================================================
-  # RENTAL tab – time-limited automation items (30 days)
+  # CONSUMABLES tab
   # ============================================================
-  - Tab: Rental
+  - Tab: Consumables
     Items:
-      - Item: Auto_Battle_Pass
-        Price: 200
-        Duration: 2592000
-      - Item: Auto_Support_Capsule
-        Price: 150
-        Duration: 2592000
+      # --- Single scrolls ---
+      - Item: Inc_Agi_10_Scroll
+        Price: 3
+      - Item: Blessing_10_Scroll
+        Price: 3
+      - Item: Magnificat_5_Scroll
+        Price: 3
 
+      - Item: Comp_Battle_Manual
+        Price: 30
+      - Item: Job_Manual50
+        Price: 30
+      - Item: Bubble_Gum
+        Price: 50
+      - Item: Insurance
+        Price: 10
+      - Item: Giant_Fly_Wing
+        Price: 25
+      - Item: Megaphone_
+        Price: 20
+
+      - Item: Abrasive
+        Price: 25
+      - Item: Poison_Bottle
+        Price: 15
+      - Item: Acid_Bottle
+        Price: 15
+
+      # --- Scroll boxes (10 pcs) ---
+      - Item: Inc_Agi_10_Box10
+        Price: 25
+      - Item: Blessing_10_Scroll_Box
+        Price: 25
+      - Item: Magnificat_5_Scroll_Box
+        Price: 40
+
+      # --- Item boxes (10 pcs) ---
+      - Item: Battle_Manual_Box1
+        Price: 250
+      - Item: Job_Manual50_Box
+        Price: 250
+      - Item: AC_Insurance_Box10
+        Price: 85
+      - Item: Giant_Fly_Wing_Box
+        Price: 250
+      - Item: Megaphone_Box
+        Price: 175
+
+  # ============================================================
+  # COSTUME tab
+  # ============================================================
+  - Tab: Other
+    Items:
+      # --- 1200 CP costumes ---
+      - Item: C_Gold_Spirit_Chain
+        Price: 1200
+      - Item: C_Darkness_Helm
+        Price: 1200
+      - Item: C_Dragon_Skull
+        Price: 1200
+      - Item: C_Elder_Devil_Horn
+        Price: 1200
+      - Item: C_L_Magestic_Goat
+        Price: 1200
+      - Item: Horo_Ears
+        Price: 1200
+      - Item: C_Ear_Of_Puppy
+        Price: 1200
+      - Item: C_White_Baby_Cat_Ears
+        Price: 1200
+      - Item: C_Whikebain_Ears
+        Price: 1200
+      - Item: C_Avenger
+        Price: 1200
+      - Item: C_Lady_Tanee_TW
+        Price: 1200
+      # --- 1500 CP costumes ---
+      - Item: C_Tiger
+        Price: 1500
+      - Item: C_Baby_Panda
+        Price: 1500
+      - Item: C_Shiba_Inu
+        Price: 1500
+      - Item: C_Orange_Tabby_Cat
+        Price: 1500
+      # --- Super Saiyan Hair (3000 CP) ---
+      - Item: AC_Super_Saiyan_Hair
+        Price: 3000
+
+  # ============================================================
+  # USABLE tab (Scrolls category reused for usables)
+  # ============================================================
+  - Tab: Scrolls
+    Items:
+      - Item: Token_Of_Siegfried
+        Price: 30
+      - Item: Max_Weight_Up_Scroll
+        Price: 50
+      - Item: Inventory_Ex
+        Price: 75
+      - Item: AC_Refine_Protection
+        Price: 500
+      - Item: Token_Of_Siegfried_Box
+        Price: 250
+      - Item: Max_Weight_Up_Scroll_Box10
+        Price: 450

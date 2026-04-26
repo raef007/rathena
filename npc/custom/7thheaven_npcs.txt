@@ -823,3 +823,119 @@ L_Quests:
 OnInit:
 	end;
 }
+
+// ==========================================================================
+// Mimir — Wings of Choice
+// Gives one set of wings (per character, one-time) from six options.
+// Wings grant: +50% base/job EXP, +30% drop rate, Teleport Lv1.
+// ==========================================================================
+tavern,50,44,4	script	Mimir#wings	4_M_WIZARD2,{
+
+	mes "[Mimir]";
+	mes "^777777* An old man sits motionless at the";
+	mes "corner of the tavern, eyes closed, hands";
+	mes "folded over a gnarled walking staff.";
+	mes "As you approach, one eye opens. *^000000";
+	next;
+
+	mes "[Mimir]";
+	mes "Ah. Another one searching for wings.";
+	mes "Everyone wants to fly, sooner or later.";
+	next;
+
+	if (WINGS_CHOICE_CLAIMED) {
+		mes "[Mimir]";
+		mes "^777777* He opens both eyes and looks at";
+		mes "your back with a knowing grin. *^000000";
+		mes " ";
+		mes "You already carry your wings,";
+		mes "young one. I can see them from here.";
+		mes " ";
+		mes "They serve you well. Fly far.";
+		close;
+	}
+
+	mes "[Mimir]";
+	mes "I offer wings to those who are ready.";
+	mes "Not armor, not fashion.";
+	mes "Something that will carry you further.";
+	mes " ";
+	mes "Each pair grants:";
+	mes "^00AA00+50% Base and Job Experience^000000";
+	mes "^00AA00+30% Item Drop Rate^000000";
+	mes "^00AA00Teleport (Lv1) skill^000000";
+	mes " ";
+	mes "Choose once. Choose well.";
+	next;
+
+	.@wing = select(
+		"Mechanical Butterfly Wings",
+		"Valkyrie Wing",
+		"Seraphim Wing",
+		"Fallen Angel Wing",
+		"Evil Wing",
+		"Angel Wing",
+		"^777777I am not ready yet^000000"
+	);
+
+	if (.@wing == 7) {
+		mes "[Mimir]";
+		mes "^777777* He closes his eye again. *^000000";
+		mes " ";
+		mes "Come back when you are.";
+		mes "I will be here.";
+		close;
+	}
+
+	switch (.@wing) {
+		case 1: .@item_id = 50023; .@wing_name$ = "Mechanical Butterfly Wings"; break;
+		case 2: .@item_id = 50024; .@wing_name$ = "Valkyrie Wing"; break;
+		case 3: .@item_id = 50025; .@wing_name$ = "Seraphim Wing"; break;
+		case 4: .@item_id = 50026; .@wing_name$ = "Fallen Angel Wing"; break;
+		case 5: .@item_id = 50027; .@wing_name$ = "Evil Wing"; break;
+		case 6: .@item_id = 50028; .@wing_name$ = "Angel Wing"; break;
+	}
+
+	mes "[Mimir]";
+	mes "^777777* He nods slowly. *^000000";
+	mes " ";
+	mes "The ^00AA00" + .@wing_name$ + "^000000.";
+	mes "A worthy choice.";
+	next;
+
+	mes "[Mimir]";
+	mes "Once I give these to you,";
+	mes "I cannot give you another pair.";
+	mes " ";
+	mes "Are you certain?";
+	next;
+
+	if (select(" ~ Yes, these are the ones: ~ ^777777Let me think more^000000") == 2) {
+		mes "[Mimir]";
+		mes "Good instinct. Come back when";
+		mes "you have no doubts.";
+		close;
+	}
+
+	if (checkweight(.@item_id, 1) == 0) {
+		mes "[Mimir]";
+		mes "Your pack is full.";
+		mes "Make room, then return.";
+		mes "The wings will wait.";
+		close;
+	}
+
+	set WINGS_CHOICE_CLAIMED, 1;
+	getitem .@item_id, 1;
+
+	mes "[Mimir]";
+	mes "^777777* He rises slowly, places a hand on";
+	mes "your shoulder, and the wings appear as";
+	mes "if they had always been there. *^000000";
+	mes " ";
+	mes "They are yours now.";
+	mes "Carry them with honor.";
+	mes " ";
+	mes "Fly far, young one.";
+	close;
+}

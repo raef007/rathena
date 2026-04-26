@@ -1,0 +1,350 @@
+# Asgard City - Custom Shop Items
+# IDs 50020-50039 reserved for this file.
+
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+  # -----------------------------------------------------------------------
+  # 50020 - Refine Protection
+  # A scroll that protects equipment from breaking/downgrading on one
+  # failed refine attempt. Consumed on use.
+  # -----------------------------------------------------------------------
+  - Id: 50020
+    AegisName: AC_Refine_Protection
+    Name: Refine Protection Scroll
+    Type: Usable
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      sc_start SC_NOEQUIPWEAPON, 0, 0;
+      bonus_script "bonus bNoBreakWeapon,1; bonus bNoBreakArmor,1;", 3600000, 0, 0, EFST_NOEQUIPWEAPON;
+      specialeffect2 EF_MAPPILLAR;
+      dispbottom "A protective aura surrounds your gear for 1 hour. Your equipment will not break or downgrade on the next failed refine!";
+
+  # -----------------------------------------------------------------------
+  # 50021 - Life Insurance Box (10 pcs)
+  # Gives 10x Life Insurance on use.
+  # -----------------------------------------------------------------------
+  - Id: 50021
+    AegisName: AC_Insurance_Box10
+    Name: Life Insurance Box (10 pcs)
+    Type: Usable
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      getitem Insurance, 10;
+
+  # -----------------------------------------------------------------------
+  # 50022 - Super Saiyan Hair
+  # Based on item 18740 (C_Hair_Of_The_Strong), same sprite/view (879).
+  # Effect: melee attack has 5% chance to trigger 10s power burst
+  #   - 100% crit, max ASPD, double damage for 10s
+  #   - After 10s: silence + double damage taken for 20s
+  # -----------------------------------------------------------------------
+  - Id: 50022
+    AegisName: AC_Super_Saiyan_Hair
+    Name: Super Saiyan Hair
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    View: 879
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      // 5% chance on melee attack: 100% crit + max ASPD + double ATK for 10s, then silence + double damage taken for 20s
+      autobonus "{ bonus bCritical,100; bonus bAspd,200; bonus bAtkRate,100; }",
+        500, 10000, BF_WEAPON,
+        "{ sc_start SC_SILENCE,20000,0; bonus2 bAddDamageClass,RC_All,100; }";
+
+  # -----------------------------------------------------------------------
+  # 50023 - Wings of Choice: Mechanical Butterfly Wings
+  # Not for sale. Effect: +50% base/job EXP, +30% drop rate, Teleport Lv1.
+  # -----------------------------------------------------------------------
+  - Id: 50023
+    AegisName: AC_Wing_MechButterfly
+    Name: Wings of Choice - Mechanical Butterfly
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    View: 92
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      bonus bExpAddRate, 50;
+      bonus bJobExpAddRate, 50;
+      bonus bDropAddRate, 30;
+      skill AL_TELEPORT, 1;
+
+  # -----------------------------------------------------------------------
+  # 50024 - Wings of Choice: Valkyrie Wing
+  # -----------------------------------------------------------------------
+  - Id: 50024
+    AegisName: AC_Wing_Valkyrie
+    Name: Wings of Choice - Valkyrie Wing
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    View: 48
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      bonus bExpAddRate, 50;
+      bonus bJobExpAddRate, 50;
+      bonus bDropAddRate, 30;
+      skill AL_TELEPORT, 1;
+
+  # -----------------------------------------------------------------------
+  # 50025 - Wings of Choice: Seraphim Wing
+  # -----------------------------------------------------------------------
+  - Id: 50025
+    AegisName: AC_Wing_Seraphim
+    Name: Wings of Choice - Seraphim Wing
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    View: 84
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      bonus bExpAddRate, 50;
+      bonus bJobExpAddRate, 50;
+      bonus bDropAddRate, 30;
+      skill AL_TELEPORT, 1;
+
+  # -----------------------------------------------------------------------
+  # 50026 - Wings of Choice: Fallen Angel Wing
+  # -----------------------------------------------------------------------
+  - Id: 50026
+    AegisName: AC_Wing_FallenAngel
+    Name: Wings of Choice - Fallen Angel Wing
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    View: 73
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      bonus bExpAddRate, 50;
+      bonus bJobExpAddRate, 50;
+      bonus bDropAddRate, 30;
+      skill AL_TELEPORT, 1;
+
+  # -----------------------------------------------------------------------
+  # 50027 - Wings of Choice: Evil Wing
+  # -----------------------------------------------------------------------
+  - Id: 50027
+    AegisName: AC_Wing_Evil
+    Name: Wings of Choice - Evil Wing
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    View: 204
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      bonus bExpAddRate, 50;
+      bonus bJobExpAddRate, 50;
+      bonus bDropAddRate, 30;
+      skill AL_TELEPORT, 1;
+
+  # -----------------------------------------------------------------------
+  # 50028 - Wings of Choice: Angel Wing
+  # -----------------------------------------------------------------------
+  - Id: 50028
+    AegisName: AC_Wing_Angel
+    Name: Wings of Choice - Angel Wing
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    View: 61
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      bonus bExpAddRate, 50;
+      bonus bJobExpAddRate, 50;
+      bonus bDropAddRate, 30;
+      skill AL_TELEPORT, 1;
+
+  # -----------------------------------------------------------------------
+  # 50029 - Adventurer's Bag
+  # One-time per character gift from Tiffy.
+  # Scaling bonuses by player base level.
+  # -----------------------------------------------------------------------
+  - Id: 50029
+    AegisName: AC_Adventurers_Bag
+    Name: Adventurer's Bag
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    View: 107
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      if (BaseLevel >= 10)  { bonus bExpAddRate, 20; bonus bJobExpAddRate, 20; }
+      if (BaseLevel >= 20)  { bonus bMaxHP, 500; bonus bAddMaxWeight, 300; }
+      if (BaseLevel >= 30)  { bonus bMaxSP, 100; bonus bAddMaxWeight, 300; }
+      if (BaseLevel >= 40)  { bonus bDropAddRate, 5; }
+      if (BaseLevel >= 50)  { bonus bAspdRate, 1; }
+      if (BaseLevel >= 60)  { bonus bAllStats, 1; }
+      if (BaseLevel >= 70)  { bonus bAtk, 5; bonus bMatk, 5; }
+      if (BaseLevel >= 80)  { bonus bAllStats, 4; }
+      if (BaseLevel >= 90)  {
+        bonus bExpAddRate, -20; bonus bJobExpAddRate, -20;
+        bonus bMaxHP, -500; bonus bAddMaxWeight, -300;
+        bonus bMaxSP, -100; bonus bAddMaxWeight, -300;
+        bonus bDropAddRate, -5;
+        bonus bAspdRate, -1;
+        bonus bAllStats, -1;
+        bonus bAtk, -5; bonus bMatk, -5;
+        bonus bAllStats, -4;
+        bonus bExpAddRate, 30; bonus bJobExpAddRate, 30;
+        bonus bDropAddRate, 10;
+      }
+
+  # -----------------------------------------------------------------------
+  # 50030 - Traveller's Bag
+  # One-time per character gift from Tiffy.
+  # Same scaling bonuses as Adventurer's Bag but different look (view 137).
+  # -----------------------------------------------------------------------
+  - Id: 50030
+    AegisName: AC_Travellers_Bag
+    Name: Traveller's Bag
+    Type: Armor
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    View: 137
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    EquipScript: |
+      if (BaseLevel >= 10)  { bonus bExpAddRate, 20; bonus bJobExpAddRate, 20; }
+      if (BaseLevel >= 20)  { bonus bMaxHP, 500; bonus bAddMaxWeight, 300; }
+      if (BaseLevel >= 30)  { bonus bMaxSP, 100; bonus bAddMaxWeight, 300; }
+      if (BaseLevel >= 40)  { bonus bDropAddRate, 5; }
+      if (BaseLevel >= 50)  { bonus bAspdRate, 1; }
+      if (BaseLevel >= 60)  { bonus bAllStats, 1; }
+      if (BaseLevel >= 70)  { bonus bAtk, 5; bonus bMatk, 5; }
+      if (BaseLevel >= 80)  { bonus bAllStats, 4; }
+      if (BaseLevel >= 90)  {
+        bonus bExpAddRate, -20; bonus bJobExpAddRate, -20;
+        bonus bMaxHP, -500; bonus bAddMaxWeight, -300;
+        bonus bMaxSP, -100; bonus bAddMaxWeight, -300;
+        bonus bDropAddRate, -5;
+        bonus bAspdRate, -1;
+        bonus bAllStats, -1;
+        bonus bAtk, -5; bonus bMatk, -5;
+        bonus bAllStats, -4;
+        bonus bExpAddRate, 30; bonus bJobExpAddRate, 30;
+        bonus bDropAddRate, 10;
+      }
+
+Footer:

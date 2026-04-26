@@ -348,3 +348,4 @@ Footer:
   - Path: db/import/coin_voucher.yml
   - Path: db/import/7thheaven_items.yml
   - Path: db/import/soul_eater_items.yml
+  - Path: db/import/asgard_shop_items.yml
