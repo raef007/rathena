@@ -34,8 +34,10 @@ Body:
 
   # -----------------------------------------------------------------------
   # 18740 - Super Saiyan Hair (override C_Hair_Of_The_Strong)
-  # 5% chance on melee attack: 100% crit + max ASPD + double ATK for 10s,
-  # then Silence + double damage taken for 20s.
+  # On melee attack 5% chance to grant 10s power burst:
+  #   100% crit + max ASPD + double ATK
+  # Transformation cost (paid on proc): -30% current HP, -90% current SP.
+  # The SP drain acts as a natural cooldown.
   # -----------------------------------------------------------------------
   - Id: 18740
     AegisName: C_Hair_Of_The_Strong
@@ -46,10 +48,8 @@ Body:
       Costume_Head_Top: true
     ArmorLevel: 1
     View: 879
-    EquipScript: |
-      autobonus2 "{ bonus bCritical,100; bonus bAspd,200; bonus bAtkRate,100; }",
-        500, 10000, BF_WEAPON,
-        "{ set @sp,0; }", 60000;
+    Script: |
+      autobonus "{ bonus bCritical,100; bonus bAspd,200; bonus bAtkRate,100; }", 50, 10000, BF_WEAPON, "{ percentheal -30,-90; specialeffect2 EF_LEVEL99_4; }";
 
   # -----------------------------------------------------------------------
   # Wings of Choice — overrides of official costumes
