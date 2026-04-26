@@ -107,7 +107,7 @@ Body:
         Price: 1500
       # --- Super Saiyan Hair (3000 CP) ---
       - Item: C_Hair_Of_The_Strong
-        Price: 3000
+        Price: 5000
 
   # ============================================================
   # USABLE tab (Scrolls category reused for usables)
