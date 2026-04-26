@@ -204,9 +204,9 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 
 			set TIFFY_BAG_CLAIMED, 1;
 			if (.@bag == 1) {
-				getitem 50029, 1;   // Adventurer's Bag
+				getitem 50040, 1;   // Adventurer's Bag
 			} else {
-				getitem 50030, 1;   // Traveller's Bag
+				getitem 50041, 1;   // Traveller's Bag
 			}
 			close;
 

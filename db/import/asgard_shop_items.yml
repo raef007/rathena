@@ -1,5 +1,5 @@
 # Asgard City - Custom Shop Items
-# IDs 50020-50039 reserved for this file.
+# IDs 50031-50050 reserved for this file.
 
 Header:
   Type: ITEM_DB
@@ -7,11 +7,10 @@ Header:
 
 Body:
   # -----------------------------------------------------------------------
-  # 50020 - Refine Protection
-  # A scroll that protects equipment from breaking/downgrading on one
-  # failed refine attempt. Consumed on use.
+  # 50031 - Refine Protection Scroll
+  # Protects equipment from breaking/downgrading on one failed refine.
   # -----------------------------------------------------------------------
-  - Id: 50020
+  - Id: 50031
     AegisName: AC_Refine_Protection
     Name: Refine Protection Scroll
     Type: Usable
@@ -27,16 +26,14 @@ Body:
       NoMail: true
       NoAuction: true
     Script: |
-      sc_start SC_NOEQUIPWEAPON, 0, 0;
       bonus_script "bonus bNoBreakWeapon,1; bonus bNoBreakArmor,1;", 3600000, 0, 0, EFST_NOEQUIPWEAPON;
       specialeffect2 EF_MAPPILLAR;
       dispbottom "A protective aura surrounds your gear for 1 hour. Your equipment will not break or downgrade on the next failed refine!";
 
   # -----------------------------------------------------------------------
-  # 50021 - Life Insurance Box (10 pcs)
-  # Gives 10x Life Insurance on use.
+  # 50032 - Life Insurance Box (10 pcs)
   # -----------------------------------------------------------------------
-  - Id: 50021
+  - Id: 50032
     AegisName: AC_Insurance_Box10
     Name: Life Insurance Box (10 pcs)
     Type: Usable
@@ -55,13 +52,12 @@ Body:
       getitem Insurance, 10;
 
   # -----------------------------------------------------------------------
-  # 50022 - Super Saiyan Hair
+  # 50033 - Super Saiyan Hair
   # Based on item 18740 (C_Hair_Of_The_Strong), same sprite/view (879).
-  # Effect: melee attack has 5% chance to trigger 10s power burst
-  #   - 100% crit, max ASPD, double damage for 10s
-  #   - After 10s: silence + double damage taken for 20s
+  # 5% chance on melee attack: 100% crit + max ASPD + double ATK for 10s,
+  # then Silence + double damage taken for 20s.
   # -----------------------------------------------------------------------
-  - Id: 50022
+  - Id: 50033
     AegisName: AC_Super_Saiyan_Hair
     Name: Super Saiyan Hair
     Type: Armor
@@ -81,16 +77,14 @@ Body:
       NoMail: true
       NoAuction: true
     EquipScript: |
-      // 5% chance on melee attack: 100% crit + max ASPD + double ATK for 10s, then silence + double damage taken for 20s
       autobonus "{ bonus bCritical,100; bonus bAspd,200; bonus bAtkRate,100; }",
         500, 10000, BF_WEAPON,
         "{ sc_start SC_SILENCE,20000,0; bonus2 bAddDamageClass,RC_All,100; }";
 
   # -----------------------------------------------------------------------
-  # 50023 - Wings of Choice: Mechanical Butterfly Wings
-  # Not for sale. Effect: +50% base/job EXP, +30% drop rate, Teleport Lv1.
+  # 50034 - Wings of Choice: Mechanical Butterfly Wings
   # -----------------------------------------------------------------------
-  - Id: 50023
+  - Id: 50034
     AegisName: AC_Wing_MechButterfly
     Name: Wings of Choice - Mechanical Butterfly
     Type: Armor
@@ -116,9 +110,9 @@ Body:
       skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------
-  # 50024 - Wings of Choice: Valkyrie Wing
+  # 50035 - Wings of Choice: Valkyrie Wing
   # -----------------------------------------------------------------------
-  - Id: 50024
+  - Id: 50035
     AegisName: AC_Wing_Valkyrie
     Name: Wings of Choice - Valkyrie Wing
     Type: Armor
@@ -144,9 +138,9 @@ Body:
       skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------
-  # 50025 - Wings of Choice: Seraphim Wing
+  # 50036 - Wings of Choice: Seraphim Wing
   # -----------------------------------------------------------------------
-  - Id: 50025
+  - Id: 50036
     AegisName: AC_Wing_Seraphim
     Name: Wings of Choice - Seraphim Wing
     Type: Armor
@@ -172,9 +166,9 @@ Body:
       skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------
-  # 50026 - Wings of Choice: Fallen Angel Wing
+  # 50037 - Wings of Choice: Fallen Angel Wing
   # -----------------------------------------------------------------------
-  - Id: 50026
+  - Id: 50037
     AegisName: AC_Wing_FallenAngel
     Name: Wings of Choice - Fallen Angel Wing
     Type: Armor
@@ -200,9 +194,9 @@ Body:
       skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------
-  # 50027 - Wings of Choice: Evil Wing
+  # 50038 - Wings of Choice: Evil Wing
   # -----------------------------------------------------------------------
-  - Id: 50027
+  - Id: 50038
     AegisName: AC_Wing_Evil
     Name: Wings of Choice - Evil Wing
     Type: Armor
@@ -228,9 +222,9 @@ Body:
       skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------
-  # 50028 - Wings of Choice: Angel Wing
+  # 50039 - Wings of Choice: Angel Wing
   # -----------------------------------------------------------------------
-  - Id: 50028
+  - Id: 50039
     AegisName: AC_Wing_Angel
     Name: Wings of Choice - Angel Wing
     Type: Armor
@@ -256,11 +250,10 @@ Body:
       skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------
-  # 50029 - Adventurer's Bag
-  # One-time per character gift from Tiffy.
-  # Scaling bonuses by player base level.
+  # 50040 - Adventurer's Bag
+  # One-time per character gift from Tiffy. Scales with base level.
   # -----------------------------------------------------------------------
-  - Id: 50029
+  - Id: 50040
     AegisName: AC_Adventurers_Bag
     Name: Adventurer's Bag
     Type: Armor
@@ -302,11 +295,10 @@ Body:
       }
 
   # -----------------------------------------------------------------------
-  # 50030 - Traveller's Bag
-  # One-time per character gift from Tiffy.
-  # Same scaling bonuses as Adventurer's Bag but different look (view 137).
+  # 50041 - Traveller's Bag
+  # One-time per character gift from Tiffy. Same bonuses, different look.
   # -----------------------------------------------------------------------
-  - Id: 50030
+  - Id: 50041
     AegisName: AC_Travellers_Bag
     Name: Traveller's Bag
     Type: Armor
