@@ -47,9 +47,9 @@ Body:
     ArmorLevel: 1
     View: 879
     EquipScript: |
-      autobonus "{ bonus bCritical,100; bonus bAspd,200; bonus bAtkRate,100; }",
+      autobonus2 "{ bonus bCritical,100; bonus bAspd,200; bonus bAtkRate,100; }",
         500, 10000, BF_WEAPON,
-        "{ sc_start SC_SILENCE,20000,0; bonus2 bAddDamageClass,RC_All,100; }";
+        "{ set @sp,0; }", 60000;
 
   # -----------------------------------------------------------------------
   # Wings of Choice — overrides of official costumes
