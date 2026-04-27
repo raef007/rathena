@@ -53,7 +53,7 @@ Body:
         skill "MO_EXPLOSIONSPIRITS",5;
       }
       autobonus3 "{ bonus bCritical,20; }",1000,300000,"MO_EXPLOSIONSPIRITS";
-      bonus3 bAutoSpell,"BS_ADRENALINE",1,30;
+      autobonus "{}",30,30000,BF_WEAPON,"{ sc_start SC_ADRENALINE,30000,1; }";
 
   # -----------------------------------------------------------------------
   # Wings of Choice — overrides of official costumes
