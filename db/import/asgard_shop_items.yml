@@ -49,7 +49,7 @@ Body:
     View: 879
     Script: |
       if (BaseJob != Job_Monk) {
-        bonus3 bAutoSpell,"MO_CALLSPIRITS",5,200;
+        bonus3 bAutoSpell,"MO_CALLSPIRITS",5,50;
         skill "MO_EXPLOSIONSPIRITS",5;
       }
       autobonus3 "{ bonus bCritical,20; }",1000,300000,"MO_EXPLOSIONSPIRITS";
@@ -71,6 +71,7 @@ Body:
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
+      bonus bAddMaxWeight, 1500;
       skill AL_TELEPORT, 1;
 
   - Id: 20571
@@ -89,6 +90,7 @@ Body:
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
+      bonus bAddMaxWeight, 1500;
       skill AL_TELEPORT, 1;
 
   - Id: 20602
@@ -103,6 +105,7 @@ Body:
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
+      bonus bAddMaxWeight, 1500;
       skill AL_TELEPORT, 1;
 
   - Id: 480056
@@ -117,6 +120,7 @@ Body:
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
+      bonus bAddMaxWeight, 1500;
       skill AL_TELEPORT, 1;
 
   - Id: 480408
@@ -131,6 +135,7 @@ Body:
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
+      bonus bAddMaxWeight, 1500;
       skill AL_TELEPORT, 1;
 
   - Id: 480069
@@ -145,6 +150,7 @@ Body:
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
+      bonus bAddMaxWeight, 1500;
       skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------

@@ -30,7 +30,6 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 	.@choice = select(
 		"I heard you have something for me",
 		"Tell me about this place",
-		"Can I borrow a bag?",
 		"I'm just passing through"
 	);
 
@@ -46,6 +45,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 			.@reward = select(
 				"I am kinda new here",
 				"Heard about the Soul Eater?",
+				"Can I get a bag?",
 				"Never mind"
 			);
 
@@ -100,6 +100,86 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					end;
 
 				case 3:
+					// ===== BAG REWARD =====
+					if (TIFFY_BAG_CLAIMED) {
+						mes "[Tiffy]";
+						mes "^777777* She tilts her head and gives you a look. *^000000";
+						mes " ";
+						mes "Hey, I already gave you one,";
+						mes "remember? A girl's gotta keep";
+						mes "her stock, you know~";
+						mes " ";
+						mes "One per adventurer!";
+						close;
+					}
+
+					mes "[Tiffy]";
+					mes "^777777* Her eyes light up. *^000000";
+					mes " ";
+					mes "Oh, a bag? Sure thing!";
+					mes "I've got two kinds here.";
+					mes "Which one do you want?";
+					next;
+
+					.@bag = select(
+						"Adventurer's Bag",
+						"Traveller's Bag",
+						"Actually, never mind"
+					);
+
+					if (.@bag == 3) {
+						mes "[Tiffy]";
+						mes "No worries! Come back if you";
+						mes "change your mind, okay~?";
+						close;
+					}
+
+					mes "[Tiffy]";
+					if (.@bag == 1) {
+						mes "^777777* She pulls out a sturdy pack and";
+						mes "sets it on the counter with a thump. *^000000";
+						mes " ";
+						mes "Here you go! The Adventurer's Bag.";
+						mes "It'll grow with you as you level up.";
+						mes "The more you push yourself,";
+						mes "the more it gives back~";
+					} else {
+						mes "^777777* She rummages behind the counter";
+						mes "and produces a well-worn satchel. *^000000";
+						mes " ";
+						mes "Ah, a traveller at heart!";
+						mes "The Traveller's Bag.";
+						mes "Same as the other one really,";
+						mes "just more... stylish~";
+					}
+					next;
+
+					mes "[Tiffy]";
+					mes "Oh! One thing though.";
+					mes "These bags scale with your";
+					mes "base level, so the higher";
+					mes "you climb, the better it gets!";
+					mes " ";
+					mes "But at level 90 it switches focus,";
+					mes "so pay attention to that, okay~?";
+					next;
+
+					mes "[Tiffy]";
+					mes "^777777* She winks and slides the bag";
+					mes "across the counter. *^000000";
+					mes " ";
+					mes "Take good care of it!";
+					mes "And come back if you need anything~";
+
+					set TIFFY_BAG_CLAIMED, 1;
+					if (.@bag == 1) {
+						getitem 480110, 1;  // Adventurer's Bag (C_Adventure_Cat_Bag)
+					} else {
+						getitem 480207, 1;  // Traveller's Bag (C_Traveller_Bag)
+					}
+					close;
+
+				case 4:
 					// --- Never mind ---
 					mes "[Tiffy]";
 					mes "No worries! Come back anytime~";
@@ -131,86 +211,6 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 			close;
 
 		case 3:
-			// --- BAG LENDING ---
-			if (TIFFY_BAG_CLAIMED) {
-				mes "[Tiffy]";
-				mes "^777777* She tilts her head and gives you a look. *^000000";
-				mes " ";
-				mes "Hey, I already lent you one,";
-				mes "remember? A girl's gotta keep";
-				mes "her stock, you know~";
-				mes " ";
-				mes "One per adventurer!";
-				close;
-			}
-
-			mes "[Tiffy]";
-			mes "^777777* Her eyes light up. *^000000";
-			mes " ";
-			mes "Oh, a bag? Sure thing!";
-			mes "I've got two kinds here.";
-			mes "Which one do you want?";
-			next;
-
-			.@bag = select(
-				"Adventurer's Bag (View: Standard Pack)",
-				"Traveller's Bag (View: Stylish Satchel)",
-				"Actually, never mind"
-			);
-
-			if (.@bag == 3) {
-				mes "[Tiffy]";
-				mes "No worries! Come back if you";
-				mes "change your mind, okay~?";
-				close;
-			}
-
-			mes "[Tiffy]";
-			if (.@bag == 1) {
-				mes "^777777* She pulls out a sturdy pack and";
-				mes "sets it on the counter with a thump. *^000000";
-				mes " ";
-				mes "Here you go! The Adventurer's Bag.";
-				mes "It'll grow with you as you level up.";
-				mes "The more you push yourself,";
-				mes "the more it gives back~";
-			} else {
-				mes "^777777* She rummages behind the counter";
-				mes "and produces a well-worn satchel. *^000000";
-				mes " ";
-				mes "Ah, a traveller at heart!";
-				mes "The Traveller's Bag.";
-				mes "Same as the other one really,";
-				mes "just more... stylish~";
-			}
-			next;
-
-			mes "[Tiffy]";
-			mes "Oh! One thing though.";
-			mes "These bags scale with your";
-			mes "base level, so the higher";
-			mes "you climb, the better it gets!";
-			mes " ";
-			mes "But at level 90 it switches focus,";
-			mes "so pay attention to that, okay~?";
-			next;
-
-			mes "[Tiffy]";
-			mes "^777777* She winks and slides the bag";
-			mes "across the counter. *^000000";
-			mes " ";
-			mes "Take good care of it!";
-			mes "And come back if you need anything~";
-
-			set TIFFY_BAG_CLAIMED, 1;
-			if (.@bag == 1) {
-				getitem 480110, 1;  // Adventurer's Bag (C_Adventure_Cat_Bag)
-			} else {
-				getitem 480207, 1;  // Traveller's Bag (C_Traveller_Bag)
-			}
-			close;
-
-		case 4:
 			// --- FAREWELL ---
 			mes "[Tiffy]";
 			mes "Safe travels, adventurer~!";
