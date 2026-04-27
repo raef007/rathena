@@ -34,10 +34,9 @@ Body:
 
   # -----------------------------------------------------------------------
   # 18740 - Super Saiyan Hair (override C_Hair_Of_The_Strong)
-  # On melee attack 5% chance to grant 10s power burst:
-  #   100% crit + max ASPD + double ATK
-  # Transformation cost (paid on proc): -30% current HP, -90% current SP.
-  # The SP drain acts as a natural cooldown.
+  # Non-Monk: gain spirit spheres on melee + grants Critical Explosion skill
+  # Monk/Champ: +20 crit while in Critical Explosion state
+  # Both: Adrenaline Rush Lv1 when HP < 40% on melee
   # -----------------------------------------------------------------------
   - Id: 18740
     AegisName: C_Hair_Of_The_Strong
@@ -49,7 +48,12 @@ Body:
     ArmorLevel: 1
     View: 879
     Script: |
-      autobonus "{ bonus bCritical,100; bonus bAspd,200; bonus bAtkRate,100; }", 50, 10000, BF_WEAPON, "{ percentheal -30,-90; specialeffect2 EF_LEVEL99_4; }";
+      if (BaseJob != Job_Monk) {
+        bonus3 bAutoSpell,"MO_CALLSPIRITS",5,200;
+        skill "MO_EXPLOSIONSPIRITS",5;
+      }
+      autobonus3 "{ bonus bCritical,20; }",1000,300000,"MO_EXPLOSIONSPIRITS";
+      bonus3 bAutoSpell,"BS_ADRENALINE",1,30;
 
   # -----------------------------------------------------------------------
   # Wings of Choice — overrides of official costumes
@@ -144,29 +148,18 @@ Body:
       skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------
-  # 50040 - Adventurer's Bag
+  # 480110 - Adventurer's Bag (override C_Adventure_Cat_Bag)
   # One-time per character gift from Tiffy. Scales with base level.
   # -----------------------------------------------------------------------
-  - Id: 50040
-    AegisName: AC_Adventurers_Bag
+  - Id: 480110
+    AegisName: C_Adventure_Cat_Bag
     Name: Adventurer's Bag
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
     Locations:
       Costume_Garment: true
     ArmorLevel: 1
     View: 107
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
-    EquipScript: |
+    Script: |
       if (BaseLevel >= 10)  { bonus bExpAddRate, 20; bonus bJobExpAddRate, 20; }
       if (BaseLevel >= 20)  { bonus bMaxHP, 500; bonus bAddMaxWeight, 300; }
       if (BaseLevel >= 30)  { bonus bMaxSP, 100; bonus bAddMaxWeight, 300; }
@@ -189,29 +182,18 @@ Body:
       }
 
   # -----------------------------------------------------------------------
-  # 50041 - Traveller's Bag
+  # 480207 - Traveller's Bag (override C_Traveller_Bag)
   # One-time per character gift from Tiffy. Same bonuses, different look.
   # -----------------------------------------------------------------------
-  - Id: 50041
-    AegisName: AC_Travellers_Bag
+  - Id: 480207
+    AegisName: C_Traveller_Bag
     Name: Traveller's Bag
     Type: Armor
-    Buy: 0
-    Sell: 0
-    Weight: 10
     Locations:
       Costume_Garment: true
     ArmorLevel: 1
     View: 137
-    Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
-    EquipScript: |
+    Script: |
       if (BaseLevel >= 10)  { bonus bExpAddRate, 20; bonus bJobExpAddRate, 20; }
       if (BaseLevel >= 20)  { bonus bMaxHP, 500; bonus bAddMaxWeight, 300; }
       if (BaseLevel >= 30)  { bonus bMaxSP, 100; bonus bAddMaxWeight, 300; }
