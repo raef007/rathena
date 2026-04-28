@@ -43,15 +43,26 @@ OnInit:
 	}
 	end;
 
-// Poll every hour on the hour. OnMinute00 is timezone-agnostic in the sense
-// that it self-heals after restarts (OnClock#### only fires at the exact
-// moment of transition, so a restart at 08:01 misses the 08:00 trigger).
+// Poll several times during the first 30 minutes of a scheduled hour so the
+// event still starts if the exact top-of-hour tick was missed.
 OnMinute00:
+OnMinute10:
+OnMinute20:
+	callsub S_CheckSchedule;
+	end;
+
+OnPCLoginEvent:
+	callsub S_CheckSchedule;
+	end;
+
+S_CheckSchedule:
 	if ($TH_DISABLED) end;
 	if ($TH_active) end;
 	.@hour = gettime(HOUR);
+	.@minute = gettime(MINUTE);
 	for (.@i = 0; .@i < .schedule_count; .@i++) {
 		if (.@hour == .schedule_hours[.@i]) {
+			if (.@minute >= 30) end;
 			// Idempotency key: year*1000000 + month*10000 + day*100 + hour
 			.@key = (gettime(YEAR) * 1000000) + (gettime(MONTH) * 10000) + (gettime(DAYOFMONTH) * 100) + .@hour;
 			if ($TH_LAST_RUN_KEY == .@key) end;

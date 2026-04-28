@@ -72,7 +72,8 @@ Body:
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
-      skill AL_TELEPORT, 1;
+      if (Class != Job_Acolyte)
+        skill AL_TELEPORT, 1;
 
   - Id: 20571
     AegisName: C_Valkyrie_Wing
@@ -91,7 +92,8 @@ Body:
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
-      skill AL_TELEPORT, 1;
+      if (Class != Job_Acolyte)
+        skill AL_TELEPORT, 1;
 
   - Id: 20602
     AegisName: C_Seraphim_Wing_TW
@@ -106,7 +108,8 @@ Body:
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
-      skill AL_TELEPORT, 1;
+      if (Class != Job_Acolyte)
+        skill AL_TELEPORT, 1;
 
   - Id: 480056
     AegisName: C_Wing_Of_Angel_Move_BK
@@ -121,7 +124,8 @@ Body:
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
-      skill AL_TELEPORT, 1;
+      if (Class != Job_Acolyte)
+        skill AL_TELEPORT, 1;
 
   - Id: 480408
     AegisName: C_GreatDevilWing2
@@ -136,7 +140,8 @@ Body:
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
-      skill AL_TELEPORT, 1;
+      if (Class != Job_Acolyte)
+        skill AL_TELEPORT, 1;
 
   - Id: 480069
     AegisName: C_Wing_Of_Angel_Move
@@ -151,11 +156,12 @@ Body:
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
-      skill AL_TELEPORT, 1;
+      if (Class != Job_Acolyte)
+        skill AL_TELEPORT, 1;
 
   # -----------------------------------------------------------------------
   # 480110 - Adventurer's Bag (override C_Adventure_Cat_Bag)
-  # One-time per character gift from Tiffy. Scales with base level.
+  # One-time per account gift from Tiffy. Scales with base level.
   # -----------------------------------------------------------------------
   - Id: 480110
     AegisName: C_Adventure_Cat_Bag
@@ -165,6 +171,14 @@ Body:
       Costume_Garment: true
     ArmorLevel: 1
     View: 107
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
     Script: |
       if (BaseLevel >= 10)  { bonus bExpAddRate, 20; bonus bJobExpAddRate, 20; }
       if (BaseLevel >= 20)  { bonus bMaxHP, 500; bonus bAddMaxWeight, 300; }
@@ -189,7 +203,7 @@ Body:
 
   # -----------------------------------------------------------------------
   # 480207 - Traveller's Bag (override C_Traveller_Bag)
-  # One-time per character gift from Tiffy. Same bonuses, different look.
+  # One-time per account gift from Tiffy. Same bonuses, different look.
   # -----------------------------------------------------------------------
   - Id: 480207
     AegisName: C_Traveller_Bag
@@ -199,6 +213,14 @@ Body:
       Costume_Garment: true
     ArmorLevel: 1
     View: 137
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
     Script: |
       if (BaseLevel >= 10)  { bonus bExpAddRate, 20; bonus bJobExpAddRate, 20; }
       if (BaseLevel >= 20)  { bonus bMaxHP, 500; bonus bAddMaxWeight, 300; }

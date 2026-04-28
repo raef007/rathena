@@ -10,10 +10,38 @@ Header:
 
 Body:
   # ============================================================
+  # New tab
+  # ============================================================
+  - Tab: New
+    Items:
+      - Item: VIP_Pass_1d
+        Price: 20
+      - Item: VIP_Pass_7d
+        Price: 120
+      - Item: C_Hair_Of_The_Strong
+        Price: 6000
+
+  # ============================================================
   # HOT tab
   # ============================================================
   - Tab: Hot
     Items:
+      - Item: VIP_Pass_7d
+        Price: 120
+      - Item: VIP_Pass_30d
+        Price: 500
+      - Item: C_Hair_Of_The_Strong
+        Price: 6000
+
+  # ============================================================
+  # Rental tab
+  # ============================================================
+  - Tab: Rental
+    Items:
+      - Item: VIP_Pass_1d
+        Price: 20
+      - Item: VIP_Pass_7d
+        Price: 120
       - Item: VIP_Pass_30d
         Price: 500
 
@@ -107,7 +135,7 @@ Body:
         Price: 1500
       # --- Super Saiyan Hair (3000 CP) ---
       - Item: C_Hair_Of_The_Strong
-        Price: 5000
+        Price: 6000
 
   # ============================================================
   # USABLE tab (Scrolls category reused for usables)

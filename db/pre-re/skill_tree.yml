@@ -181,19 +181,6 @@ Body:
         MaxLevel: 1
       - Name: AL_PNEUMA
         MaxLevel: 1
-        Requires:
-          - Name: AL_WARP
-            Level: 4
-      - Name: AL_TELEPORT
-        MaxLevel: 2
-        Requires:
-          - Name: AL_RUWACH
-            Level: 1
-      - Name: AL_WARP
-        MaxLevel: 4
-        Requires:
-          - Name: AL_TELEPORT
-            Level: 2
       - Name: AL_HEAL
         MaxLevel: 10
       - Name: AL_INCAGI
@@ -1614,19 +1601,6 @@ Body:
         MaxLevel: 1
       - Name: AL_PNEUMA
         MaxLevel: 1
-        Requires:
-          - Name: AL_WARP
-            Level: 4
-      - Name: AL_TELEPORT
-        MaxLevel: 2
-        Requires:
-          - Name: AL_RUWACH
-            Level: 1
-      - Name: AL_WARP
-        MaxLevel: 4
-        Requires:
-          - Name: AL_TELEPORT
-            Level: 2
       - Name: AL_HEAL
         MaxLevel: 10
       - Name: AL_INCAGI
@@ -2862,19 +2836,6 @@ Body:
         MaxLevel: 1
       - Name: AL_PNEUMA
         MaxLevel: 1
-        Requires:
-          - Name: AL_WARP
-            Level: 4
-      - Name: AL_TELEPORT
-        MaxLevel: 2
-        Requires:
-          - Name: AL_RUWACH
-            Level: 1
-      - Name: AL_WARP
-        MaxLevel: 4
-        Requires:
-          - Name: AL_TELEPORT
-            Level: 2
       - Name: AL_HEAL
         MaxLevel: 10
       - Name: AL_INCAGI

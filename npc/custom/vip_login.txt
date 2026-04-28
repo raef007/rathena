@@ -65,7 +65,7 @@ OnVipStatus:
 }
 
 // ==========================================================================
-// VIP Pass activation dialog (called from item 30002 Script via callfunc)
+// VIP Pass activation dialog (called from VIP pass items via callfunc)
 // Must be a function script so mes/next/select work from an item context.
 // ==========================================================================
 // NOTE: item script context cannot resume after `next` or `select` (fake NPC GID —
@@ -73,15 +73,20 @@ OnVipStatus:
 // Only `mes` + `close` are safe here. `close` terminates without waiting for client.
 // Activation happens inline — using the item IS the confirmation.
 function	script	F_VIPPassMenu	{
+	.@item_id = getarg(0, 30002);
+	.@minutes = getarg(1, 43200);
+	.@days = getarg(2, .@minutes / 1440);
+	.@label$ = getarg(3, .@days + " day" + (.@days == 1 ? "" : "s"));
+
 	mes "[VIP System]";
 	if (vip_status(VIP_STATUS_ACTIVE)) {
 		.@remaining = vip_status(VIP_STATUS_REMAINING);
-		.@days = .@remaining / 86400;
+		.@days_left = .@remaining / 86400;
 		.@hours = (.@remaining % 86400) / 3600;
-		mes "You already have ^0000FF" + .@days + "d " + .@hours + "h^000000 of VIP remaining.";
-		mes "This pass will ^00AA00add 30 more days^000000 to your time.";
+		mes "You already have ^0000FF" + .@days_left + "d " + .@hours + "h^000000 of VIP remaining.";
+		mes "This pass will ^00AA00add " + .@label$ + "^000000 to your time.";
 	} else {
-		mes "Activating ^0000FF30 days^000000 of VIP membership...";
+		mes "Activating ^0000FF" + .@label$ + "^000000 of VIP membership...";
 	}
 	mes " ";
 	mes "^0055FFVIP Benefits:^000000";
@@ -93,14 +98,9 @@ function	script	F_VIPPassMenu	{
 	mes "- ^00CC00+6^000000 extra character slots";
 	mes "- ^00CC002x^000000 Autobattle daily time";
 	mes " ";
-	delitem 30002, 1;
-	vip_time 43200;
-	if (vip_status(VIP_STATUS_ACTIVE)) {
-		.@r = vip_status(VIP_STATUS_REMAINING);
-		.@d = .@r / 86400;
-		.@h = (.@r % 86400) / 3600;
-		mes "^00AA00VIP activated! Active for " + .@d + "d " + .@h + "h.^000000";
-	}
+	delitem .@item_id, 1;
+	vip_time .@minutes;
+	mes "^00AA00VIP time added: " + .@label$ + ".^000000";
 	mes "^FF0000Relog^000000 to apply storage and character slot expansion.";
 	close;
 }

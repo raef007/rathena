@@ -79,7 +79,47 @@ Body:
       NoMail: true
       NoAuction: true
     Script: |
-      callfunc "F_VIPPassMenu";
+      callfunc "F_VIPPassMenu", 30002, 43200, 30, "30 days";
+
+  - Id: 30003
+    AegisName: VIP_Pass_1d
+    Name: VIP Black Card (1 Day)
+    Type: Usable
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      NoConsume: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc "F_VIPPassMenu", 30003, 1440, 1, "1 day";
+
+  - Id: 30004
+    AegisName: VIP_Pass_7d
+    Name: VIP Black Card (7 Days)
+    Type: Usable
+    Buy: 0
+    Sell: 0
+    Weight: 0
+    Flags:
+      NoConsume: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc "F_VIPPassMenu", 30004, 10080, 7, "7 days";
 
 # -----------------------------------------------------------------------
 # Revo-Classic: God Items disabled

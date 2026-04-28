@@ -36,15 +36,27 @@ OnInit:
 	callsub S_CheckMonthRollover;
 	end;
 
-// Poll every hour on the hour. Replaces 8 separate OnClock#### labels so the
-// schedule self-heals after restarts and is timezone-agnostic relative to the
-// VPS clock. Idempotent via $SE_LAST_RUN_KEY.
+// Poll several times during the first 30 minutes of each scheduled hour so the
+// event still starts if the exact top-of-hour tick was missed. Idempotent via
+// $SE_LAST_RUN_KEY.
 OnMinute00:
+OnMinute10:
+OnMinute20:
+	callsub S_CheckSchedule;
+	end;
+
+OnPCLoginEvent:
+	callsub S_CheckSchedule;
+	end;
+
+S_CheckSchedule:
 	callsub S_CheckMonthRollover;
 	if ($SE_DISABLED) end;
 	.@hour = gettime(HOUR);
+	.@minute = gettime(MINUTE);
 	for (.@i = 0; .@i < .schedule_count; .@i++) {
 		if (.@hour == .schedule_hours[.@i]) {
+			if (.@minute >= 30) end;
 			.@key = (gettime(YEAR) * 1000000) + (gettime(MONTH) * 10000) + (gettime(DAYOFMONTH) * 100) + .@hour;
 			if ($SE_LAST_RUN_KEY == .@key) end;
 			$SE_LAST_RUN_KEY = .@key;

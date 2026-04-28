@@ -75,6 +75,8 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					mes "^00FF001x Mr. Smile^000000";
 					mes "^00FF005x Field Manual^000000";
 					mes "^00FF005x Job Manual^000000";
+					mes "^00FF001x Auto-Battle Capsule^000000";
+					mes "^00FF001x Auto-Support Orb^000000";
 					mes "^00FF001x Bubble Gum^000000";
 					mes " ";
 					mes "Use them wisely~!";
@@ -85,6 +87,8 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					getitem 2278, 1;    // Mr. Smile
 					getitem 12263, 5;   // Field Manual
 					getitem 14592, 5;   // Job Manual (50%)
+					getitem 30000, 1;   // Auto-Battle Capsule
+					getitem 30001, 1;   // Auto-Support Orb
 					getitem 12210, 1;   // Bubble Gum
 
 					mes "[Tiffy]";
@@ -101,22 +105,82 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 
 				case 3:
 					// ===== BAG REWARD =====
-					if (TIFFY_BAG_CLAIMED) {
+					if (#TIFFY_BAG_CLAIMED) {
 						mes "[Tiffy]";
 						mes "^777777* She tilts her head and gives you a look. *^000000";
 						mes " ";
-						mes "Hey, I already gave you one,";
-						mes "remember? A girl's gotta keep";
-						mes "her stock, you know~";
+						mes "Hey, your account already";
+						mes "claimed one, remember?";
 						mes " ";
-						mes "One per adventurer!";
+						mes "A girl's gotta keep her stock~";
+						mes "One bag per account!";
+						mes " ";
+						mes "If you tucked it into storage,";
+						mes "any of your other adventurers";
+						mes "can pull it out and use it~";
+						close;
+					}
+
+					mes "[Tiffy]";
+					mes "Oh, the bag~!";
+					mes " ";
+					mes "I keep a couple of those tucked";
+					mes "behind the counter. They're";
+					mes "^0055FFhand-stitched by the tavern's";
+					mes "regulars^000000, you know? Real";
+					mes "labour-of-love stuff.";
+					next;
+
+					mes "[Tiffy]";
+					mes "^777777* She leans in a little, lowering her voice. *^000000";
+					mes " ";
+					mes "Here's the thing though...";
+					mes "I used to hand them out to";
+					mes "anyone who walked in, but";
+					mes "the tavern can't afford that";
+					mes "anymore.";
+					next;
+
+					mes "[Tiffy]";
+					mes "These days, the bags are a";
+					mes "little ^FF5500thank you^000000 from us to";
+					mes "the folks who keep Asgard's";
+					mes "lights on~";
+					mes " ";
+					mes "If your account has chipped in";
+					mes "at least ^FF550050 Cash Points^000000 worth";
+					mes "of donations, I can hand one";
+					mes "right over!";
+					next;
+
+					.@account_id = getcharid(3);
+					.@donated_cash = 0;
+					query_sql(
+						"SELECT COALESCE(SUM(d.cash_credited), 0) " +
+						"FROM `donation_submissions` d " +
+						"INNER JOIN `char` c ON c.name = d.ingame_name " +
+						"WHERE d.status = 'approved' AND c.account_id = " + .@account_id,
+						.@donated_cash
+					);
+
+					if (.@donated_cash < 50) {
+						mes "[Tiffy]";
+						mes "^777777* She thumbs through a small ledger and frowns gently. *^000000";
+						mes " ";
+						mes "Hmm... I'm only seeing";
+						mes "^0000FF" + .@donated_cash + " Cash Points^000000 from";
+						mes "your account so far.";
+						mes " ";
+						mes "Come back once you've crossed";
+						mes "the 50 mark and the bag is";
+						mes "yours~ No hard feelings!";
 						close;
 					}
 
 					mes "[Tiffy]";
 					mes "^777777* Her eyes light up. *^000000";
 					mes " ";
-					mes "Oh, a bag? Sure thing!";
+					mes "Oh, a donor bag? Sure thing!";
 					mes "I've got two kinds here.";
 					mes "Which one do you want?";
 					next;
@@ -131,6 +195,14 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 						mes "[Tiffy]";
 						mes "No worries! Come back if you";
 						mes "change your mind, okay~?";
+						close;
+					}
+
+					.@bag_item = (.@bag == 1) ? 480110 : 480207;
+					if (checkweight(.@bag_item, 1) == 0 || checkweight(30003, 1) == 0) {
+						mes "[Tiffy]";
+						mes "Your inventory is too packed right now.";
+						mes "Make room for the bag and VIP card first.";
 						close;
 					}
 
@@ -155,28 +227,38 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					next;
 
 					mes "[Tiffy]";
-					mes "Oh! One thing though.";
-					mes "These bags scale with your";
-					mes "base level, so the higher";
-					mes "you climb, the better it gets!";
+					mes "Oh! One thing though~";
 					mes " ";
-					mes "But at level 90 it switches focus,";
-					mes "so pay attention to that, okay~?";
+					mes "These bags ^0055FFgrow with you^000000.";
+					mes "The higher your base level,";
+					mes "the more it gives back!";
+					mes " ";
+					mes "But once you hit ^FF5500level 90^000000,";
+					mes "the focus changes, so keep";
+					mes "an eye on it, okay?";
 					next;
 
 					mes "[Tiffy]";
-					mes "^777777* She winks and slides the bag";
-					mes "across the counter. *^000000";
+					mes "^777777* She winks and slides a small";
+					mes "black card across the counter. *^000000";
 					mes " ";
-					mes "Take good care of it!";
-					mes "And come back if you need anything~";
+					mes "And because you've been good";
+					mes "to us, I've tucked in a";
+					mes "^0000FF1-day VIP card^000000 on the house~";
+					next;
 
-					set TIFFY_BAG_CLAIMED, 1;
-					if (.@bag == 1) {
-						getitem 480110, 1;  // Adventurer's Bag (C_Adventure_Cat_Bag)
-					} else {
-						getitem 480207, 1;  // Traveller's Bag (C_Traveller_Bag)
-					}
+					mes "[Tiffy]";
+					mes "Oh! And since this one's an";
+					mes "account gift, you can pop it";
+					mes "into ^0055FFstorage^000000 and any of your";
+					mes "other adventurers can pull it";
+					mes "out and use it too~";
+					mes " ";
+					mes "Take care out there!";
+
+					set #TIFFY_BAG_CLAIMED, 1;
+					getitem .@bag_item, 1;
+					getitem 30003, 1;      // VIP Black Card (1 Day)
 					close;
 
 				case 4:

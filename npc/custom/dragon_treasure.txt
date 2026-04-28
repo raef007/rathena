@@ -38,12 +38,23 @@ OnInit:
 	}
 	end;
 
-// Poll every hour on the hour. Self-heals after restart: if the server missed
-// the midnight trigger, the next OnMinute00 at hour 0 on a new day still fires
-// the event. Idempotent via $DT_LAST_RUN_DATE.
+// Poll several times during the first 30 minutes after midnight so the event
+// still starts if the exact 00:00 tick was missed. Idempotent via
+// $DT_LAST_RUN_DATE.
 OnMinute00:
+OnMinute10:
+OnMinute20:
+	callsub S_CheckSchedule;
+	end;
+
+OnPCLoginEvent:
+	callsub S_CheckSchedule;
+	end;
+
+S_CheckSchedule:
 	if ($DT_DISABLED) end;
 	if (gettime(HOUR) != .schedule_hour) end;
+	if (gettime(MINUTE) >= 30) end;
 	.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
 	if ($DT_LAST_RUN_DATE == .@today) end;
 	$DT_LAST_RUN_DATE = .@today;
