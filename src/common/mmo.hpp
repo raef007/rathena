@@ -97,7 +97,8 @@ typedef uint32 t_itemid;
 #define MAX_STORAGE 600 ///Max number of storage slots a player can have
 #define MAX_GUILD_STORAGE 600 ///Max number of storage slots a guild
 #define MAX_PARTY 12 ///Max party member
-#define MAX_GUILD 16+10*6	///Increased max guild members +6 per 1 extension levels [Lupus]
+#define GUILD_EXTENSION_BONUS 2	///Additional guild member slots per Guild Extension level
+#define MAX_GUILD 16+10*GUILD_EXTENSION_BONUS	///16 base members + Guild Extension growth up to max skill level
 #define MAX_GUILDPOSITION 20	///Increased max guild positions to accommodate for all members [Valaris] (removed) [PoW]
 #define MAX_GUILDEXPULSION 32 ///Max Guild expulsion
 #define MAX_GUILDALLIANCE 16 ///Max Guild alliance

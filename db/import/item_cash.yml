@@ -26,6 +26,8 @@ Body:
   # ============================================================
   - Tab: Hot
     Items:
+      - Item: VIP_Pass_30d
+        Price: 500
       - Item: Helm_Of_Dragoon
         Price: 1000
       - Item: Black_Rabbit_Hat
@@ -97,9 +99,9 @@ Body:
         Price: 175
 
   # ============================================================
-  # COSTUME tab
+  # Permanent tab
   # ============================================================
-  - Tab: Other
+  - Tab: Permanent
     Items:
       - Item: Lif_Doll_Hat
         Price: 1000
@@ -201,6 +203,47 @@ Body:
         Price: 700
       - Item: Ice_Wing_Ear
         Price: 1500
+
+  # ============================================================
+  # COSTUME tab
+  # ============================================================
+  - Tab: Other
+    Items:
+      # --- 1200 CP costumes ---
+      - Item: C_Gold_Spirit_Chain
+        Price: 1200
+      - Item: C_Darkness_Helm
+        Price: 1200
+      - Item: C_Dragon_Skull
+        Price: 1200
+      - Item: C_Elder_Devil_Horn
+        Price: 1200
+      - Item: C_L_Magestic_Goat
+        Price: 1200
+      - Item: Horo_Ears
+        Price: 1200
+      - Item: C_Ear_Of_Puppy
+        Price: 1200
+      - Item: C_White_Baby_Cat_Ears
+        Price: 1200
+      - Item: C_Whikebain_Ears
+        Price: 1200
+      - Item: C_Avenger
+        Price: 1200
+      - Item: C_Lady_Tanee_TW
+        Price: 1200
+      # --- 1500 CP costumes ---
+      - Item: C_Tiger
+        Price: 1500
+      - Item: C_Baby_Panda
+        Price: 1500
+      - Item: C_Shiba_Inu
+        Price: 1500
+      - Item: C_Orange_Tabby_Cat
+        Price: 1500
+      # --- Featured costume carried over from previous shop set ---
+      - Item: C_Hair_Of_The_Strong
+        Price: 6000
 
   # ============================================================
   # USABLE tab (Scrolls category reused for usables)
