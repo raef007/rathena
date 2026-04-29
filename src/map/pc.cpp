@@ -6557,6 +6557,7 @@ int32 pc_useitem(map_session_data *sd,int32 n)
 
 	// Save the old script the player was attached to
 	struct script_state* previous_st = sd->st;
+	int32 previous_npc_id = sd->npc_id;
 
 	// Only if there was an old script
 	if( previous_st != nullptr ){
@@ -6566,13 +6567,18 @@ int32 pc_useitem(map_session_data *sd,int32 n)
 
 	run_script( script, 0, sd->id, fake_nd->id );
 
-	if( sd->st != nullptr ){
+	if( sd->st != nullptr && sd->st->state == END ){
 		script_free_state( sd->st );
 		sd->st = nullptr;
 	}
 
-	// If an old script is present
-	if( previous_st != nullptr ){
+	// If the item script paused for player input/menu/etc., keep it attached so
+	// the matching client reply can resume the same script state.
+	if( sd->st != nullptr && previous_st != nullptr ){
+		previous_st->rid = sd->id;
+		sd->st->bk_st = previous_st;
+		sd->st->bk_npcid = previous_npc_id;
+	}else if( sd->st == nullptr && previous_st != nullptr ){
 		// Because of detach the RID will be removed, so we need to restore it
 		previous_st->rid = sd->id;
 
