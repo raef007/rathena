@@ -31,7 +31,7 @@ class status_change;
  * Max Refine available to your server
  **/
 #ifdef RENEWAL
-#	define MAX_REFINE 10
+#	define MAX_REFINE 20
 #else
 #	define MAX_REFINE 10
 #endif
