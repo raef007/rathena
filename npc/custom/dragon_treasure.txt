@@ -53,9 +53,9 @@ OnPCLoginEvent:
 
 S_CheckSchedule:
 	if ($DT_DISABLED) end;
-	if (gettime(HOUR) != .schedule_hour) end;
-	if (gettime(MINUTE) >= 30) end;
-	.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+	if (gettime(DT_HOUR) != .schedule_hour) end;
+	if (gettime(DT_MINUTE) >= 30) end;
+	.@today = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
 	if ($DT_LAST_RUN_DATE == .@today) end;
 	$DT_LAST_RUN_DATE = .@today;
 	callsub S_EndEvent;
@@ -196,7 +196,7 @@ OnAtCommand:
 			$DT_DEBUG_NAME$ = "";
 		dispbottom "[Dragon Treasure] Debug is now " + ($DT_DEBUG ? "ENABLED" : "DISABLED") + ".";
 	} else if (.@arg$ == "time") {
-		dispbottom "[Dragon Treasure] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
+		dispbottom "[Dragon Treasure] Server time: " + gettime(DT_YEAR) + "-" + gettime(DT_MONTH) + "-" + gettime(DT_DAYOFMONTH) + " " + gettime(DT_HOUR) + ":" + gettime(DT_MINUTE) + ":" + gettime(DT_SECOND);
 		dispbottom "[Dragon Treasure] Schedule hour: 00 | Last run date: " + $DT_LAST_RUN_DATE;
 	} else {
 		dispbottom "[Dragon Treasure] Status: " + ($DT_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($DT_active ? "YES" : "NO") + " | Debug: " + ($DT_DEBUG ? "ON" : "OFF");

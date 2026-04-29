@@ -105,7 +105,7 @@ OnInit:
 
 	bindatcmd "worldblessing", "WorldBlessingController::OnAtCommand", 60, 99;
 
-	.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+	.@today = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
 	if ($WB_ACTIVE && $WB_ACTIVE_DATE != .@today) {
 		$WB_ACTIVE = 0;
 		$WB_ACTIVE_DATE = 0;
@@ -131,7 +131,7 @@ OnBlessingActivate:
 
 	$WB_ACTIVE = 1;
 	$WB_CURRENT_ZENY = 0;
-	$WB_ACTIVE_DATE = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+	$WB_ACTIVE_DATE = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
 
 	callsub S_ApplyRates;
 	announce "[ World Blessing ] Offerings reached the target. +50% Base/Job EXP and +25% Drop Rates until midnight!", bc_all|bc_yellow;

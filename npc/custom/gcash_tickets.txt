@@ -83,8 +83,8 @@ OnAtCommand:
 		callsub S_SyncDailyCap, 1;
 		dispbottom "[GCash] Daily cap manually reset. $GCASH_DAILY_VALUE = " + $GCASH_DAILY_VALUE + ".";
 	} else if (.@arg$ == "time") {
-		.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
-		dispbottom "[GCash] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
+	.@today = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
+	dispbottom "[GCash] Server time: " + gettime(DT_YEAR) + "-" + gettime(DT_MONTH) + "-" + gettime(DT_DAYOFMONTH) + " " + gettime(DT_HOUR) + ":" + gettime(DT_MINUTE) + ":" + gettime(DT_SECOND);
 		dispbottom "[GCash] Today key: " + .@today + " | Stored reset date: " + $GCASH_RESET_DATE;
 		dispbottom "[GCash] If 'Server time' above does not match YOUR local time, VPS timezone differs. OnClock####/OnMinute## fire on the VPS clock.";
 	} else {
@@ -97,7 +97,7 @@ S_CanShowDebug:
 	return ($GCASH_DEBUG && getgmlevel() >= 60);
 
 S_SyncDailyCap:
-	.@today = (gettime(YEAR) * 10000) + (gettime(MONTH) * 100) + gettime(DAYOFMONTH);
+	.@today = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
 	if (getarg(0, 0) || $GCASH_RESET_DATE != .@today) {
 		$GCASH_DAILY_VALUE = 0;
 		$GCASH_RESET_DATE = .@today;

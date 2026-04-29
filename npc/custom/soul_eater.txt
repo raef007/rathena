@@ -52,12 +52,12 @@ OnPCLoginEvent:
 S_CheckSchedule:
 	callsub S_CheckMonthRollover;
 	if ($SE_DISABLED) end;
-	.@hour = gettime(HOUR);
-	.@minute = gettime(MINUTE);
+	.@hour = gettime(DT_HOUR);
+	.@minute = gettime(DT_MINUTE);
 	for (.@i = 0; .@i < .schedule_count; .@i++) {
 		if (.@hour == .schedule_hours[.@i]) {
 			if (.@minute >= 30) end;
-			.@key = (gettime(YEAR) * 1000000) + (gettime(MONTH) * 10000) + (gettime(DAYOFMONTH) * 100) + .@hour;
+			.@key = (gettime(DT_YEAR) * 1000000) + (gettime(DT_MONTH) * 10000) + (gettime(DT_DAYOFMONTH) * 100) + .@hour;
 			if ($SE_LAST_RUN_KEY == .@key) end;
 			$SE_LAST_RUN_KEY = .@key;
 			callsub S_StartEvent;
@@ -189,12 +189,12 @@ OnClaimFromTiffy:
 	close;
 
 S_SecondsToMonthEnd:
-	.@year = gettime(YEAR);
-	.@month = gettime(MONTH);
-	.@day = gettime(DAYOFMONTH);
-	.@hour = gettime(HOUR);
-	.@min = gettime(MINUTE);
-	.@sec = gettime(SECOND);
+	.@year = gettime(DT_YEAR);
+	.@month = gettime(DT_MONTH);
+	.@day = gettime(DT_DAYOFMONTH);
+	.@hour = gettime(DT_HOUR);
+	.@min = gettime(DT_MINUTE);
+	.@sec = gettime(DT_SECOND);
 
 	if (.@month == 1 || .@month == 3 || .@month == 5 || .@month == 7 || .@month == 8 || .@month == 10 || .@month == 12)
 		.@dim = 31;
@@ -213,7 +213,7 @@ S_SecondsToMonthEnd:
 	return (.@days_left_after_today * 86400) + .@secs_left_today;
 
 S_MonthKey:
-	return (gettime(YEAR) * 100) + gettime(MONTH);
+	return (gettime(DT_YEAR) * 100) + gettime(DT_MONTH);
 
 S_CheckMonthRollover:
 	.@current_key = callsub(S_MonthKey);
@@ -340,7 +340,7 @@ OnAtCommand:
 		end;
 	}
 	if (.@arg$ == "time") {
-		dispbottom "[Soul Eater] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
+		dispbottom "[Soul Eater] Server time: " + gettime(DT_YEAR) + "-" + gettime(DT_MONTH) + "-" + gettime(DT_DAYOFMONTH) + " " + gettime(DT_HOUR) + ":" + gettime(DT_MINUTE) + ":" + gettime(DT_SECOND);
 		dispbottom "[Soul Eater] Schedule hours: 00, 03, 06, 09, 12, 15, 18, 21 | Last run key: " + $SE_LAST_RUN_KEY;
 		end;
 	}

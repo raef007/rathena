@@ -58,13 +58,13 @@ OnPCLoginEvent:
 S_CheckSchedule:
 	if ($TH_DISABLED) end;
 	if ($TH_active) end;
-	.@hour = gettime(HOUR);
-	.@minute = gettime(MINUTE);
+	.@hour = gettime(DT_HOUR);
+	.@minute = gettime(DT_MINUTE);
 	for (.@i = 0; .@i < .schedule_count; .@i++) {
 		if (.@hour == .schedule_hours[.@i]) {
 			if (.@minute >= 30) end;
 			// Idempotency key: year*1000000 + month*10000 + day*100 + hour
-			.@key = (gettime(YEAR) * 1000000) + (gettime(MONTH) * 10000) + (gettime(DAYOFMONTH) * 100) + .@hour;
+			.@key = (gettime(DT_YEAR) * 1000000) + (gettime(DT_MONTH) * 10000) + (gettime(DT_DAYOFMONTH) * 100) + .@hour;
 			if ($TH_LAST_RUN_KEY == .@key) end;
 			$TH_LAST_RUN_KEY = .@key;
 			callsub S_StartEvent;
@@ -151,7 +151,7 @@ OnAtCommand:
 		$TH_DISABLED = 1;
 		dispbottom "[Treasure Hunt] Scheduled events are now DISABLED.";
 	} else if (.@arg$ == "time") {
-		dispbottom "[Treasure Hunt] Server time: " + gettime(YEAR) + "-" + gettime(MONTH) + "-" + gettime(DAYOFMONTH) + " " + gettime(HOUR) + ":" + gettime(MINUTE) + ":" + gettime(SECOND);
+		dispbottom "[Treasure Hunt] Server time: " + gettime(DT_YEAR) + "-" + gettime(DT_MONTH) + "-" + gettime(DT_DAYOFMONTH) + " " + gettime(DT_HOUR) + ":" + gettime(DT_MINUTE) + ":" + gettime(DT_SECOND);
 		dispbottom "[Treasure Hunt] Schedule hours: 08, 20 | Last run key: " + $TH_LAST_RUN_KEY;
 	} else {
 		dispbottom "[Treasure Hunt] Status: " + ($TH_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($TH_active ? "YES (" + $TH_map$ + ")" : "NO");
