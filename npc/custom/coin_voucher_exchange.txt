@@ -8,6 +8,11 @@
 tavern,55,34,4	script	Lyra#Voucher	4_f_job_blacksmith,{
 
 	mes "[Lyra]";
+	if (.exchange_disabled) {
+		mes "Voucher exchange is temporarily unavailable.";
+		close;
+	}
+
 	mes "Coin Vouchers, Cash Points,";
 	mes "GCash Tickets.";
 	mes "Pick which ledger you want me";
@@ -75,13 +80,26 @@ S_VoucherToCash:
 		mes "You only have ^0055FF" + .@owned + "^000000 Coin Vouchers.";
 		return;
 	}
+	if (.@amount > .max_exchange_amount) {
+		mes "[Lyra]";
+		mes "I can only process ^0055FF" + .max_exchange_amount + "^000000";
+		mes "Coin Vouchers at once.";
+		return;
+	}
+
+	.@cash_reward = .@amount * .coin_to_cash_rate;
+	if (#CASHPOINTS > .max_cash_points - .@cash_reward) {
+		mes "[Lyra]";
+		mes "That would exceed the Cash Point limit.";
+		return;
+	}
 
 	delitem .coin_voucher_id, .@amount;
-	set #CASHPOINTS, #CASHPOINTS + (.@amount * .coin_to_cash_rate);
+	set #CASHPOINTS, #CASHPOINTS + .@cash_reward;
 
 	mes "[Lyra]";
 	mes "Converted ^0055FF" + .@amount + "^000000 Coin Vouchers";
-	mes "into ^0055FF" + (.@amount * .coin_to_cash_rate) + "^000000 Cash Points.";
+	mes "into ^0055FF" + .@cash_reward + "^000000 Cash Points.";
 	mes " ";
 	mes "New Cash Point balance: ^0055FF" + #CASHPOINTS + "^000000";
 	return;
@@ -111,6 +129,12 @@ S_CashToVoucher:
 		mes "[Lyra]";
 		mes "Your Cash Point balance only covers";
 		mes "^0055FF" + .@max_vouchers + "^000000 Coin Vouchers.";
+		return;
+	}
+	if (.@amount > .max_exchange_amount) {
+		mes "[Lyra]";
+		mes "I can only mint ^0055FF" + .max_exchange_amount + "^000000";
+		mes "Coin Vouchers at once.";
 		return;
 	}
 	if (checkweight(.coin_voucher_id, .@amount) == 0) {
@@ -178,8 +202,15 @@ OnInit:
 	.coin_voucher_id = 50008;
 	.coin_to_cash_rate = 1;
 	.cash_to_coin_rate = 1;
+	.max_cash_points = 2000000000;
+	.max_exchange_amount = 30000;
+	.exchange_disabled = 0;
 	setarray .gcash_items[0], 50001, 50002, 50003, 50004, 50005, 50006, 50007;
 	setarray .gcash_values[0], 1, 2, 3, 5, 8, 13, 21;
 	.ticket_types = getarraysize(.gcash_items);
+	if (.coin_to_cash_rate <= 0 || .cash_to_coin_rate <= 0 || .cash_to_coin_rate < .coin_to_cash_rate || .coin_to_cash_rate > .max_cash_points / .max_exchange_amount) {
+		.exchange_disabled = 1;
+		debugmes "Lyra#Voucher disabled: unsafe Coin Voucher/Cash Point rates.";
+	}
 	end;
 }

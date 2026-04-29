@@ -26,12 +26,12 @@ Body:
   # ============================================================
   - Tab: Hot
     Items:
-      - Item: VIP_Pass_7d
-        Price: 120
-      - Item: VIP_Pass_30d
-        Price: 500
-      - Item: C_Hair_Of_The_Strong
-        Price: 6000
+      - Item: Helm_Of_Dragoon
+        Price: 1000
+      - Item: Black_Rabbit_Hat
+        Price: 3200
+      - Item: Robo_Eye
+        Price: 1250
 
   # ============================================================
   # Rental tab
@@ -101,41 +101,106 @@ Body:
   # ============================================================
   - Tab: Other
     Items:
-      # --- 1200 CP costumes ---
-      - Item: C_Gold_Spirit_Chain
-        Price: 1200
-      - Item: C_Darkness_Helm
-        Price: 1200
-      - Item: C_Dragon_Skull
-        Price: 1200
-      - Item: C_Elder_Devil_Horn
-        Price: 1200
-      - Item: C_L_Magestic_Goat
-        Price: 1200
-      - Item: Horo_Ears
-        Price: 1200
-      - Item: C_Ear_Of_Puppy
-        Price: 1200
-      - Item: C_White_Baby_Cat_Ears
-        Price: 1200
-      - Item: C_Whikebain_Ears
-        Price: 1200
-      - Item: C_Avenger
-        Price: 1200
-      - Item: C_Lady_Tanee_TW
-        Price: 1200
-      # --- 1500 CP costumes ---
-      - Item: C_Tiger
+      - Item: Lif_Doll_Hat
+        Price: 1000
+      - Item: Rabbit_Magic_Hat
+        Price: 1000
+      - Item: Helm_Of_Dragoon
+        Price: 1000
+      - Item: Pecopeco_Hairband
+        Price: 1250
+      - Item: Wondering_Wolf_Helm
+        Price: 1250
+      - Item: Lovecap_China
         Price: 1500
-      - Item: C_Baby_Panda
+      - Item: Chicken_Hat
+        Price: 1800
+      - Item: Asgard_Blessing
+        Price: 4750
+      - Item: Helm_Of_Abyss
+        Price: 3000
+      - Item: Dress_Hat
+        Price: 1250
+      - Item: Drooping_White_Kitty
+        Price: 2000
+      - Item: Yellow_Bandana
+        Price: 1250
+      - Item: Large_Hibiscus
+        Price: 1250
+      - Item: Kettle_Hat
+        Price: 1700
+      - Item: Antler_Fedora
+        Price: 1700
+      - Item: Bird_Nest_Hat
+        Price: 1200
+      - Item: Black_Musang_Hat
+        Price: 1200
+      - Item: Black_Rabbit_Hat
+        Price: 3200
+      - Item: Blue_Ribbon
+        Price: 1200
+      - Item: Bone_Head
+        Price: 1200
+      - Item: Campfire_Hat
+        Price: 1200
+      - Item: Cookie_Hat
+        Price: 2000
+      - Item: Puppy_Hat
+        Price: 1700
+      - Item: Orange_Hat
+        Price: 1200
+      - Item: Octopus_Hat
+        Price: 1200
+      - Item: Dokkaebi_Egg
         Price: 1500
-      - Item: C_Shiba_Inu
+      - Item: Pecopeco_Wing_Ears
+        Price: 1250
+      - Item: Censor_Bar
+        Price: 700
+      - Item: Cyclops_Visor
+        Price: 1250
+      - Item: Ninja_Scroll
+        Price: 750
+      - Item: Pirate_Dagger
+        Price: 750
+      - Item: Donut_In_Mouth
+        Price: 1000
+      - Item: Choco_Donut_In_Mouth
+        Price: 1000
+      - Item: Fish_In_Mouth
+        Price: 1250
+      - Item: Angry_Mouth_C
+        Price: 700
+      - Item: Antique_Pipe
+        Price: 1250
+      - Item: Choco_Stick_In_Mouth
+        Price: 1200
+      - Item: Red_Pencil_In_Mouth
+        Price: 700
+      - Item: Miracle_Blue_Rose
         Price: 1500
-      - Item: C_Orange_Tabby_Cat
+      - Item: Tongue_Charm
+        Price: 1200
+      - Item: Long_Tongue
+        Price: 1700
+      - Item: Sigrun's_Wing
+        Price: 1250
+      - Item: Angel_Spirit
+        Price: 1250
+      - Item: Hawk_Eyes02
+        Price: 800
+      - Item: Baron_Evil_Eye
         Price: 1500
-      # --- Super Saiyan Hair (3000 CP) ---
-      - Item: C_Hair_Of_The_Strong
-        Price: 6000
+      - Item: Black_Glasses
+        Price: 1000
+      - Item: Robo_Eye
+        Price: 1250
+      - Item: Blush_Of_Groom
+        Price: 1500
+      - Item: Observer
+        Price: 700
+      - Item: Ice_Wing_Ear
+        Price: 1500
 
   # ============================================================
   # USABLE tab (Scrolls category reused for usables)
