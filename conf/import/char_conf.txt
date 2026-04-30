@@ -6,6 +6,9 @@ char_del_option: 2
 // Novice only (no Summoner/Doram); Renewal default would be 3
 allowed_job_flag: 1
 
+// Pincode system
+pincode_enabled: no
+
 // Use pre-renewal Training Grounds as starting point instead of Izlude boat
 start_point: new_1-1,53,111
 start_point_pre: new_1-1,53,111

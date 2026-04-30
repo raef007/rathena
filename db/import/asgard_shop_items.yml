@@ -10,7 +10,7 @@ Header:
 Body:
   # -----------------------------------------------------------------------
   # 50031 - Refine Protection Scroll
-  # Protects equipment from breaking/downgrading for 1 hour.
+  # Protects equipment from the next failed refine within 1 hour.
   # -----------------------------------------------------------------------
   - Id: 50031
     AegisName: AC_Refine_Protection
@@ -28,9 +28,9 @@ Body:
       NoMail: true
       NoAuction: true
     Script: |
-      bonus_script "bonus bNoBreakWeapon,1; bonus bNoBreakArmor,1;", 3600000, 0, 0, EFST_NOEQUIPWEAPON;
+      AC_REFINE_PROTECTION_UNTIL = gettimetick(2) + 3600;
       specialeffect2 EF_MAPPILLAR;
-      dispbottom "A protective aura surrounds your gear for 1 hour. Your equipment will not break or downgrade on the next failed refine!";
+      dispbottom "A protective aura surrounds your gear for 1 hour. Your equipment will not break or downgrade on the next failed refine. The protection is consumed when it activates.";
 
   # -----------------------------------------------------------------------
   # 18740 - Super Saiyan Hair (override C_Hair_Of_The_Strong)

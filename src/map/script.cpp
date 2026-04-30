@@ -9814,6 +9814,15 @@ BUILDIN_FUNC(failedrefitem) {
 	if (equip_index_check(pos))
 		i = pc_checkequip(sd,equip_bitmask[pos]);
 	if (i >= 0) {
+		if( pc_consume_refine_protection( sd ) ){
+			clif_refine( *sd, i, ITEMREFINING_FAILURE2 );
+			clif_misceffect( *sd, NOTIFYEFFECT_REFINE_FAILURE );
+			clif_displaymessage( sd->fd, "Your Refine Protection Scroll protected the item and has been consumed." );
+			achievement_update_objective(sd, AG_ENCHANT_FAIL, 1, 1);
+			script_pushint(st, 1);
+			return SCRIPT_CMD_SUCCESS;
+		}
+
 		sd->inventory.u.items_inventory[i].refine = 0;
 		pc_unequipitem(sd,i,3); //recalculate bonus
 		clif_refine( *sd, i, ITEMREFINING_FAILURE);
@@ -9850,6 +9859,15 @@ BUILDIN_FUNC(downrefitem) {
 	if (equip_index_check(pos))
 		i = pc_checkequip(sd,equip_bitmask[pos]);
 	if (i >= 0) {
+		if( pc_consume_refine_protection( sd ) ){
+			clif_refine( *sd, i, ITEMREFINING_FAILURE2 );
+			clif_misceffect( *sd, NOTIFYEFFECT_REFINE_FAILURE );
+			clif_displaymessage( sd->fd, "Your Refine Protection Scroll protected the item and has been consumed." );
+			achievement_update_objective(sd, AG_ENCHANT_FAIL, 1, sd->inventory.u.items_inventory[i].refine);
+			script_pushint(st, sd->inventory.u.items_inventory[i].refine);
+			return SCRIPT_CMD_SUCCESS;
+		}
+
 		uint32 ep = sd->inventory.u.items_inventory[i].equip;
 
 		//Logs items, got from (N)PC scripts [Lupus]

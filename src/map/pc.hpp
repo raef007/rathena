@@ -1569,6 +1569,8 @@ int64 pc_readparam( const map_session_data* sd, int64 type );
 bool pc_setparam(map_session_data *sd, int64 type, int64 val);
 int64 pc_readreg( const map_session_data* sd, int64 reg );
 bool pc_setreg(map_session_data *sd, int64 reg, int64 val);
+bool pc_refine_protection_active( const map_session_data* sd );
+bool pc_consume_refine_protection( map_session_data* sd );
 char *pc_readregstr( const map_session_data* sd, int64 reg );
 bool pc_setregstr(map_session_data *sd, int64 reg, const char *str);
 int64 pc_readregistry( const map_session_data* sd, int64 reg );

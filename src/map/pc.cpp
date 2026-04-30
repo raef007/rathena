@@ -4,6 +4,7 @@
 #include "pc.hpp"
 
 #include <cmath>
+#include <ctime>
 #include <cstdlib>
 #include <map>
 
@@ -11418,6 +11419,24 @@ bool pc_setreg(map_session_data* sd, int64 reg, int64 val)
 			script_array_update(&sd->regs, reg, true);
 	}
 
+	return true;
+}
+
+bool pc_refine_protection_active( const map_session_data* sd )
+{
+	nullpo_retr(false, sd);
+
+	return pc_readglobalreg( sd, add_str( "AC_REFINE_PROTECTION_UNTIL" ) ) > time( nullptr );
+}
+
+bool pc_consume_refine_protection( map_session_data* sd )
+{
+	nullpo_retr(false, sd);
+
+	if( !pc_refine_protection_active( sd ) )
+		return false;
+
+	pc_setglobalreg( sd, add_str( "AC_REFINE_PROTECTION_UNTIL" ), 0 );
 	return true;
 }
 

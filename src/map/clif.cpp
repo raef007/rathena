@@ -22808,6 +22808,11 @@ void clif_parse_refineui_refine( int32 fd, map_session_data* sd ){
 		if( blacksmith_amount > 0 ){
 			clif_refine( *sd, index, ITEMREFINING_FAILURE2 );
 			clif_refineui_info( sd, index );
+		// Refine Protection Scroll prevents the next failed refine within its duration
+		}else if( pc_consume_refine_protection( sd ) ){
+			clif_refine( *sd, index, ITEMREFINING_FAILURE2 );
+			clif_refineui_info( sd, index );
+			clif_displaymessage( sd->fd, "Your Refine Protection Scroll protected the item and has been consumed." );
 		// Delete the item if it is breakable
 		}else if( cost->breaking_rate > 0 && ( rnd() % 10000 ) < cost->breaking_rate ){
 			clif_refine( *sd, index, ITEMREFINING_FAILURE );
