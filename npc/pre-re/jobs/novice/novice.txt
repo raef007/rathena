@@ -132,31 +132,8 @@ new_1-2,100,29,4	script	Receptionist#nv1	86,{
 			set nov_3_magician,0;
 			set nov_3_acolyte,0;
 			set nov_3_merchant,0;
-			switch(rand(6)) {
-			case 0:
-				savepoint "prontera",273,354,1,1;
-				warp "prontera",273,354;
-				break;
-			case 1:
-				savepoint "morocc",160,94,1,1;
-				warp "morocc",160,94;
-				break;
-			case 2:
-				savepoint "geffen",120,100,1,1;
-				warp "geffen",120,100;
-				break;
-			case 3:
-				savepoint "payon",70,100,1,1;
-				warp "payon",70,100;
-				break;
-			case 4:
-				savepoint "alberta",116,57,1,1;
-				warp "alberta",116,57;
-				break;
-			case 5:
-				savepoint "izlude",94,103,1,1;
-				warp "izlude",94,103;
-			}
+			savepoint "tavern",100,100,1,1;
+			warp "tavern",100,100;
 			end;
 		case 3:
 			mes "[Training Grounds Receptionist]";
@@ -1306,44 +1283,11 @@ new_1-2,118,108,3	script	Kafra Employee#nv1	117,{
 			mes "^003399Alberta^000000, the port city, is where the Merchant Guild is located. You must also go to Alberta if you wish to travel by sea.";
 			next;
 			mes "[Kafra Employee]";
-			mes "Please choose";
-			mes "your destination.";
+			mes "Asgard City receives all new adventurers";
+			mes "at the 7th Heaven Tavern.";
 			next;
-			switch(select("Prontera:Morocc:Payon:Alberta:Geffen")) {
-			case 1:
-				set .@dest$,"Prontera";
-				set .@mapn$,"prontera";
-				set .@saveX,117; set .@saveY,72;
-				set .@warpX,150; set .@warpY,50;
-				break;
-			case 2:
-				set .@dest$,"Morocc";
-				set .@mapn$,"morocc";
-				set .@saveX,150; set .@saveY,99;
-				set .@warpX,155; set .@warpY,110;
-				break;
-			case 3:
-				set .@dest$,"Payon";
-				set .@mapn$,"payon";
-				set .@saveX,70; set .@saveY,100;
-				set .@warpX,166; set .@warpY,67;
-				break;
-			case 4:
-				set .@dest$,"Alberta";
-				set .@mapn$,"alberta";
-				set .@saveX,30; set .@saveY,232;
-				set .@warpX,114; set .@warpY,58;
-				break;
-			case 5:
-				set .@dest$,"Geffen";
-				set .@mapn$,"geffen";
-				set .@saveX,119; set .@saveY,37;
-				set .@warpX,122; set .@warpY,65;
-				break;
-			}
 			mes "[Kafra Employee]";
-			mes "You have decided";
-			mes "to go to "+.@dest$+".";
+			mes "I will send you there now.";
 			mes "May God be with you.";
 			close2;
 			if (nov_get_item05 < 11) {
@@ -1367,12 +1311,12 @@ new_1-2,118,108,3	script	Kafra Employee#nv1	117,{
 			set nov_3_magician,0;
 			set nov_3_acolyte,0;
 			set nov_3_merchant,0;
-			savepoint .@mapn$,.@saveX,.@saveY,1,1;
-			warp .@mapn$,.@warpX,.@warpY;
+			savepoint "tavern",100,100,1,1;
+			warp "tavern",100,100;
 			end;
 		}
 		else {
-			switch(select("Field Combat Course:Prontera:Morocc:Payon:Alberta:Geffen")) {
+			switch(select("Field Combat Course:7th Heaven Tavern")) {
 			case 1:
 				mes "[Kafra Employee]";
 				mes "Thank you, let";
@@ -1382,34 +1326,7 @@ new_1-2,118,108,3	script	Kafra Employee#nv1	117,{
 				warp "new_1-2",28,178;
 				end;
 			case 2:
-				set .@dest$,"Prontera";
-				set .@mapn$,"prontera";
-				set .@saveX,117; set .@saveY,72;
-				set .@warpX,150; set .@warpY,50;
-				break;
-			case 3:
-				set .@dest$,"Morocc";
-				set .@mapn$,"morocc";
-				set .@saveX,150; set .@saveY,99;
-				set .@warpX,155; set .@warpY,110;
-				break;
-			case 4:
-				set .@dest$,"Payon";
-				set .@mapn$,"payon";
-				set .@saveX,70; set .@saveY,100;
-				set .@warpX,166; set .@warpY,67;
-				break;
-			case 5:
-				set .@dest$,"Alberta";
-				set .@mapn$,"alberta";
-				set .@saveX,30; set .@saveY,232;
-				set .@warpX,114; set .@warpY,58;
-				break;
-			case 6:
-				set .@dest$,"Geffen";
-				set .@mapn$,"geffen";
-				set .@saveX,119; set .@saveY,37;
-				set .@warpX,122; set .@warpY,65;
+				set .@dest$,"7th Heaven Tavern";
 				break;
 			}
 			mes "[Kafra Employee]";
@@ -1430,8 +1347,8 @@ new_1-2,118,108,3	script	Kafra Employee#nv1	117,{
 			set nov_3_magician,0;
 			set nov_3_acolyte,0;
 			set nov_3_merchant,0;
-			savepoint .@mapn$,.@saveX,.@saveY,1,1;
-			warp .@mapn$,.@warpX,.@warpY;
+			savepoint "tavern",100,100,1,1;
+			warp "tavern",100,100;
 			end;
 		}
 	}
@@ -3372,8 +3289,8 @@ new_1-4,100,29,1	script	Hanson#nv	46,{
 					set nov_3_magician,0;
 					set nov_3_acolyte,0;
 					set nov_3_merchant,0;
-					savepoint "izlude",93,104,1,1;
-					warp "izlude_in",74,167;
+					savepoint "tavern",100,100,1,1;
+					warp "tavern",100,100;
 					end;
 				case 2:
 					callsub S_UserJobchoice,"Swordsman";
@@ -3444,8 +3361,8 @@ new_1-4,100,29,1	script	Hanson#nv	46,{
 					set nov_3_magician,0;
 					set nov_3_acolyte,0;
 					set nov_3_merchant,0;
-					savepoint "geffen",119,37,1,1;
-					warp "geffen_in",163,98;
+					savepoint "tavern",100,100,1,1;
+					warp "tavern",100,100;
 					end;
 				case 2:
 					callsub S_UserJobchoice,"Mage";
@@ -3515,8 +3432,8 @@ new_1-4,100,29,1	script	Hanson#nv	46,{
 					set nov_3_magician,0;
 					set nov_3_acolyte,0;
 					set nov_3_merchant,0;
-					savepoint "alberta",30,232,1,1;
-					warp "alberta_in",62,44;
+					savepoint "tavern",100,100,1,1;
+					warp "tavern",100,100;
 					end;
 				case 2:
 					callsub S_UserJobchoice,"Merchant";
@@ -3583,8 +3500,8 @@ new_1-4,100,29,1	script	Hanson#nv	46,{
 					mes "^A62A2A" + strcharinfo(0) + "^000000";
 					mes "and farewell.";
 					close2;
-					savepoint "morocc",150,99,1,1;
-					warp "moc_ruins",155,44;
+					savepoint "tavern",100,100,1,1;
+					warp "tavern",100,100;
 					end;
 				case 2:
 					callsub S_UserJobchoice,"Thief";
@@ -3652,8 +3569,8 @@ new_1-4,100,29,1	script	Hanson#nv	46,{
 					set nov_3_magician,0;
 					set nov_3_acolyte,0;
 					set nov_3_merchant,0;
-					savepoint "payon",70,100,1,1;
-					warp "payon_in02",64,65;
+					savepoint "tavern",100,100,1,1;
+					warp "tavern",100,100;
 					end;
 				case 2:
 					callsub S_UserJobchoice,"Archer";
@@ -3724,8 +3641,8 @@ new_1-4,100,29,1	script	Hanson#nv	46,{
 					set nov_3_magician,0;
 					set nov_3_acolyte,0;
 					set nov_3_merchant,0;
-					savepoint "prontera",117,72,1,1;
-					warp "prt_church",172,19;
+					savepoint "tavern",100,100,1,1;
+					warp "tavern",100,100;
 					end;
 				case 2:
 					callsub S_UserJobchoice,"Acolyte";
@@ -3759,31 +3676,8 @@ new_1-4,100,29,1	script	Hanson#nv	46,{
 			set nov_3_magician,0;
 			set nov_3_acolyte,0;
 			set nov_3_merchant,0;
-			set .@startmap,rand(1,6);
-			if ((.@startmap > 0) && (.@startmap < 2)) {
-				savepoint "prontera",117,72,1,1;
-				warp "prt_fild08",170,371;
-			}
-			else if ((.@startmap > 1) && (.@startmap < 3)) {
-				savepoint "geffen",119,37,1,1;
-				warp "gef_fild07",327,188;
-			}
-			else if ((.@startmap > 2) && (.@startmap < 4)) {
-				savepoint "alberta",30,232,1,1;
-				warp "pay_fild03",388,70;
-			}
-			else if ((.@startmap > 3) && (.@startmap < 5)) {
-				savepoint "morocc",150,99,1,1;
-				warp "moc_fild07",198,39;
-			}
-			else if ((.@startmap > 4) && (.@startmap < 6)) {
-				savepoint "payon",256,242,1,1;
-				warp "pay_fild01",334,354;
-			}
-			else if ((.@startmap > 5) && (.@startmap < 7)) {
-				savepoint "izlude",93,104,1,1;
-				warp "prt_fild08",357,212;
-			}
+			savepoint "tavern",100,100,1,1;
+			warp "tavern",100,100;
 			end;
 		}
 	}
@@ -3810,31 +3704,8 @@ new_1-4,100,29,1	script	Hanson#nv	46,{
 		set nov_3_magician,0;
 		set nov_3_acolyte,0;
 		set nov_3_merchant,0;
-		set .@startmap,rand(1,6);
-		if ((.@startmap > 0) && (.@startmap < 2)) {
-			savepoint "prontera",117,72,1,1;
-			warp "prt_fild08",170,371;
-		}
-		else if ((.@startmap > 1) && (.@startmap < 3)) {
-			savepoint "geffen",119,37,1,1;
-			warp "gef_fild07",327,188;
-		}
-		else if ((.@startmap > 2) && (.@startmap < 4)) {
-			savepoint "alberta",30,232,1,1;
-			warp "pay_fild03",388,70;
-		}
-		else if ((.@startmap > 3) && (.@startmap < 5)) {
-			savepoint "morocc",150,99,1,1;
-			warp "moc_fild07",198,39;
-		}
-		else if ((.@startmap > 4) && (.@startmap < 6)) {
-			savepoint "payon",70,100,1,1;
-			warp "pay_fild01",334,354;
-		}
-		else if ((.@startmap > 5) && (.@startmap < 7)) {
-			savepoint "izlude",93,104,1,1;
-			warp "prt_fild08",357,212;
-		}
+		savepoint "tavern",100,100,1,1;
+		warp "tavern",100,100;
 		end;
 	}
 	else {
@@ -3959,28 +3830,28 @@ S_UserJobchoice:
 	set nov_3_acolyte,0;
 	set nov_3_merchant,0;
 	if(@menu == 1) {
-		savepoint "izlude",93,104,1,1;
-		warp "izlude_in",74,167;
+		savepoint "tavern",100,100,1,1;
+		warp "tavern",100,100;
 	}
 	else if (@menu == 2) {
-		savepoint "geffen",119,37,1,1;
-		warp "geffen_in",163,98;
+		savepoint "tavern",100,100,1,1;
+		warp "tavern",100,100;
 	}
 	else if (@menu == 3) {
-		savepoint "alberta",30,232,1,1;
-		warp "alberta_in",62,44;
+		savepoint "tavern",100,100,1,1;
+		warp "tavern",100,100;
 	}
 	else if (@menu == 4) {
-		savepoint "morocc",150,99,1,1;
-		warp "moc_ruins",155,44;
+		savepoint "tavern",100,100,1,1;
+		warp "tavern",100,100;
 	}
 	else if (@menu == 5) {
-		savepoint "payon",70,100,1,1;
-		warp "payon_in02",64,65;
+		savepoint "tavern",100,100,1,1;
+		warp "tavern",100,100;
 	}
 	else {
-		savepoint "prontera",117,72,1,1;
-		warp "prt_church",172,19;
+		savepoint "tavern",100,100,1,1;
+		warp "tavern",100,100;
 	}
 	return;
 }
