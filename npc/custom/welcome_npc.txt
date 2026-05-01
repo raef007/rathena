@@ -46,6 +46,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 				"I am kinda new here",
 				"Heard about the Soul Eater?",
 				"Can I get a bag?",
+				"Any supplies for today's stream?",
 				"Never mind"
 			);
 
@@ -262,6 +263,90 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					close;
 
 				case 4:
+					// ===== STREAMER DAILY SUPPLY =====
+					.@account_id = getcharid(3);
+					.@is_streamer = 0;
+					query_sql(
+						"SELECT COUNT(*) " +
+						"FROM `affiliates` " +
+						"WHERE `account_id` = " + .@account_id + " AND `is_active` = 1",
+						.@is_streamer
+					);
+
+					if (!.@is_streamer) {
+						mes "[Tiffy]";
+						mes "^777777* She checks a little card box";
+						mes "behind the counter, then smiles";
+						mes "apologetically. *^000000";
+						mes " ";
+						mes "Hmm... I don't see your";
+						mes "account on my streamer list.";
+						mes " ";
+						mes "If that sounds wrong, ask";
+						mes "the staff to check the";
+						mes "affiliate ledger for me, okay~?";
+						close;
+					}
+
+					.@today = (gettimetick(2) + 28800) / 86400; // Philippines day key
+					if (#TIFFY_STREAMER_SUPPLY_DATE == .@today) {
+						mes "[Tiffy]";
+						mes "^777777* She taps today's entry in";
+						mes "her notebook with a grin. *^000000";
+						mes " ";
+						mes "I already packed today's";
+						mes "stream supplies for you~";
+						mes " ";
+						mes "Come back after midnight,";
+						mes "Philippines time, and I'll";
+						mes "have another bundle ready.";
+						close;
+					}
+
+					setarray .@items[0], 13534, 11502, 12263, 14592, 30003, 12210;
+					setarray .@amounts[0], 2, 50, 5, 5, 1, 5;
+
+					if (!checkweight2(.@items, .@amounts)) {
+						mes "[Tiffy]";
+						mes "Your inventory is packed tight!";
+						mes " ";
+						mes "Make room for today's";
+						mes "stream supply bundle first,";
+						mes "then come right back~";
+						close;
+					}
+
+					mes "[Tiffy]";
+					mes "Oh! Going live today?";
+					mes "Perfect timing~";
+					mes " ";
+					mes "^777777* She lifts a neatly tied";
+					mes "bundle from under the counter. *^000000";
+					mes " ";
+					mes "I packed your daily stream";
+					mes "supplies so you can keep the";
+					mes "show rolling:";
+					mes " ";
+					mes "^00FF002x Light White Potion Box^000000";
+					mes "^00FF0050x Light Blue Potion^000000";
+					mes "^00FF005x Field Manual^000000";
+					mes "^00FF005x Job Manual^000000";
+					mes "^00FF001x VIP Black Card (1 Day)^000000";
+					mes "^00FF005x Bubble Gum^000000";
+					next;
+
+					#TIFFY_STREAMER_SUPPLY_DATE = .@today;
+					for (.@i = 0; .@i < getarraysize(.@items); .@i++)
+						getitem .@items[.@i], .@amounts[.@i];
+
+					mes "[Tiffy]";
+					mes "There we go~";
+					mes " ";
+					mes "Show them the good side of";
+					mes "Asgard City for me, okay?";
+					close;
+
+				case 5:
 					// --- Never mind ---
 					mes "[Tiffy]";
 					mes "No worries! Come back anytime~";

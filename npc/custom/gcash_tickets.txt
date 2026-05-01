@@ -3,7 +3,7 @@
 // ============================================================
 // Drops GCash Tickets (items 50001-50007) when players kill mobs
 // Fibonacci denominations: 1, 2, 3, 5, 8, 13, 21 PHP
-// Daily value cap resets at midnight
+// Daily value cap resets at midnight Philippines time
 // GM Commands: @gcash [on|off|debug|test]  (GM level 60+)
 // ============================================================
 
@@ -16,9 +16,8 @@ OnInit:
 	callsub S_SyncDailyCap;
 	end;
 
-// OnMinute00 fires every hour on the hour. We use it instead of OnClock0000
-// because OnClock can silently skip if the VPS timezone differs from what
-// players expect, and because it self-heals after server restarts.
+// OnMinute00 fires every hour on the hour. The day key below is offset to
+// Philippines time, so midnight PHT is handled even while the VPS stays UTC.
 OnMinute00:
 	callsub S_SyncDailyCap;
 	end;
@@ -83,10 +82,9 @@ OnAtCommand:
 		callsub S_SyncDailyCap, 1;
 		dispbottom "[GCash] Daily cap manually reset. $GCASH_DAILY_VALUE = " + $GCASH_DAILY_VALUE + ".";
 	} else if (.@arg$ == "time") {
-	.@today = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
-	dispbottom "[GCash] Server time: " + gettime(DT_YEAR) + "-" + gettime(DT_MONTH) + "-" + gettime(DT_DAYOFMONTH) + " " + gettime(DT_HOUR) + ":" + gettime(DT_MINUTE) + ":" + gettime(DT_SECOND);
+		.@today = (gettimetick(2) + 28800) / 86400;
+		dispbottom "[GCash] Philippines time: " + gettimestr("%Y-%m-%d %H:%M:%S", 20, gettimetick(2) + 28800);
 		dispbottom "[GCash] Today key: " + .@today + " | Stored reset date: " + $GCASH_RESET_DATE;
-		dispbottom "[GCash] If 'Server time' above does not match YOUR local time, VPS timezone differs. OnClock####/OnMinute## fire on the VPS clock.";
 	} else {
 		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Rate: 0.5% | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
 		dispbottom "[GCash] Usage: @gcash on | @gcash off | @gcash debug | @gcash test | @gcash time | @gcash reset";
@@ -97,7 +95,7 @@ S_CanShowDebug:
 	return ($GCASH_DEBUG && getgmlevel() >= 60);
 
 S_SyncDailyCap:
-	.@today = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
+	.@today = (gettimetick(2) + 28800) / 86400;
 	if (getarg(0, 0) || $GCASH_RESET_DATE != .@today) {
 		$GCASH_DAILY_VALUE = 0;
 		$GCASH_RESET_DATE = .@today;

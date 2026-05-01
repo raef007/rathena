@@ -22,7 +22,7 @@ OnInit:
 		"alberta_e", "moc_fild01", "moc_fild02", "moc_fild03",
 		"cmd_fild01", "cmd_fild02", "cmd_fild03";
 	.map_count = 33;
-	// Schedule: hours of day when the event should trigger
+	// Schedule: hours of day in Philippines time when the event should trigger
 	setarray .schedule_hours[0], 8, 20;
 	.schedule_count = 2;
 	bindatcmd "treasurehunt", "TreasureHunt::OnAtCommand", 60, 99;
@@ -58,13 +58,13 @@ OnPCLoginEvent:
 S_CheckSchedule:
 	if ($TH_DISABLED) end;
 	if ($TH_active) end;
-	.@hour = gettime(DT_HOUR);
-	.@minute = gettime(DT_MINUTE);
+	.@pht_seconds = (gettimetick(2) + 28800) % 86400;
+	.@hour = .@pht_seconds / 3600;
+	.@minute = (.@pht_seconds % 3600) / 60;
 	for (.@i = 0; .@i < .schedule_count; .@i++) {
 		if (.@hour == .schedule_hours[.@i]) {
 			if (.@minute >= 30) end;
-			// Idempotency key: year*1000000 + month*10000 + day*100 + hour
-			.@key = (gettime(DT_YEAR) * 1000000) + (gettime(DT_MONTH) * 10000) + (gettime(DT_DAYOFMONTH) * 100) + .@hour;
+			.@key = (((gettimetick(2) + 28800) / 86400) * 100) + .@hour;
 			if ($TH_LAST_RUN_KEY == .@key) end;
 			$TH_LAST_RUN_KEY = .@key;
 			callsub S_StartEvent;
@@ -151,8 +151,8 @@ OnAtCommand:
 		$TH_DISABLED = 1;
 		dispbottom "[Treasure Hunt] Scheduled events are now DISABLED.";
 	} else if (.@arg$ == "time") {
-		dispbottom "[Treasure Hunt] Server time: " + gettime(DT_YEAR) + "-" + gettime(DT_MONTH) + "-" + gettime(DT_DAYOFMONTH) + " " + gettime(DT_HOUR) + ":" + gettime(DT_MINUTE) + ":" + gettime(DT_SECOND);
-		dispbottom "[Treasure Hunt] Schedule hours: 08, 20 | Last run key: " + $TH_LAST_RUN_KEY;
+		dispbottom "[Treasure Hunt] Philippines time: " + gettimestr("%Y-%m-%d %H:%M:%S", 20, gettimetick(2) + 28800);
+		dispbottom "[Treasure Hunt] Schedule hours: 08, 20 PHT | Last run key: " + $TH_LAST_RUN_KEY;
 	} else {
 		dispbottom "[Treasure Hunt] Status: " + ($TH_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($TH_active ? "YES (" + $TH_map$ + ")" : "NO");
 		dispbottom "[Treasure Hunt] Usage: @treasurehunt start | stop | on | off | time";

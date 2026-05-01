@@ -4,7 +4,7 @@
 // Tavern NPC that accepts Zeny donations.
 // When target is reached:
 //   +50% Base EXP, +50% Job EXP, +25% Drop Rates
-// Blessing always ends at 00:00 server time.
+// Blessing always ends at 00:00 Philippines time.
 // ============================================================
 
 tavern,67,36,4	script	World Tree Sapling	4_ch1_branch,{
@@ -29,7 +29,8 @@ L_Donate:
 	if ($WB_ACTIVE) {
 		mes "[World Tree Sapling]";
 		mes "The blessing is already active.";
-		mes "Return after midnight for the next cycle.";
+		mes "Return after midnight Philippines time";
+		mes "for the next cycle.";
 		close;
 	}
 
@@ -71,14 +72,16 @@ L_Info:
 	mes "^00AA00+50%^000000 Job EXP";
 	mes "^00AA00+25%^000000 Drop Rates";
 	mes " ";
-	mes "The blessing always ends at midnight.";
+	mes "The blessing always ends at midnight";
+	mes "Philippines time.";
 	close;
 
 S_ShowStatus:
 	mes "[World Tree Sapling]";
 	if ($WB_ACTIVE) {
 		mes "Blessing status: ^00AA00ACTIVE^000000";
-		mes "It will end at midnight.";
+		mes "It will end at midnight";
+		mes "Philippines time.";
 	} else {
 		.@remain = $WB_TARGET_ZENY - $WB_CURRENT_ZENY;
 		if (.@remain < 0) .@remain = 0;
@@ -105,7 +108,7 @@ OnInit:
 
 	bindatcmd "worldblessing", "WorldBlessingController::OnAtCommand", 60, 99;
 
-	.@today = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
+	.@today = callsub(S_GetPHTDayKey);
 	if ($WB_ACTIVE && $WB_ACTIVE_DATE != .@today) {
 		$WB_ACTIVE = 0;
 		$WB_ACTIVE_DATE = 0;
@@ -117,7 +120,7 @@ OnInit:
 	}
 	end;
 
-OnClock0000:
+OnClock1600:	// 00:00 Philippines time while the VPS clock is UTC.
 	if ($WB_ACTIVE) {
 		callsub S_ResetRates;
 		$WB_ACTIVE = 0;
@@ -131,11 +134,14 @@ OnBlessingActivate:
 
 	$WB_ACTIVE = 1;
 	$WB_CURRENT_ZENY = 0;
-	$WB_ACTIVE_DATE = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
+	$WB_ACTIVE_DATE = callsub(S_GetPHTDayKey);
 
 	callsub S_ApplyRates;
-	announce "[ World Blessing ] Offerings reached the target. +50% Base/Job EXP and +25% Drop Rates until midnight!", bc_all|bc_yellow;
+	announce "[ World Blessing ] Offerings reached the target. +50% Base/Job EXP and +25% Drop Rates until midnight PHT!", bc_all|bc_yellow;
 	end;
+
+S_GetPHTDayKey:
+	return ((gettimetick(2) + 28800) / 86400);
 
 S_ApplyRates:
 	.@base_rate = $WB_BASE_RATE_DEFAULT + ($WB_BASE_RATE_DEFAULT * $WB_BASE_BONUS_PCT / 100);

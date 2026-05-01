@@ -21,7 +21,7 @@ OnInit:
 	.guard_name$ = "Nidhoggr's Shadow";
 	.guard_mode = (MD_CANMOVE|MD_AGGRESSIVE|MD_CANATTACK|MD_NORANDOMWALK|MD_TELEPORTBLOCK|MD_DETECTOR|MD_MVP|MD_STATUSIMMUNE|MD_KNOCKBACKIMMUNE);
 	.event_name$ = "Nidhoggr's Midnight Hoard";
-	.schedule_hour = 0;	// Midnight
+	.schedule_hour = 0;	// Midnight, Philippines time
 	bindatcmd "dragontreasure", "DragonTreasure::OnAtCommand", 60, 99;
 
 	// Safety cleanup: if the server crashed mid-event, $DT_active stays 1
@@ -53,9 +53,12 @@ OnPCLoginEvent:
 
 S_CheckSchedule:
 	if ($DT_DISABLED) end;
-	if (gettime(DT_HOUR) != .schedule_hour) end;
-	if (gettime(DT_MINUTE) >= 30) end;
-	.@today = (gettime(DT_YEAR) * 10000) + (gettime(DT_MONTH) * 100) + gettime(DT_DAYOFMONTH);
+	.@pht_seconds = (gettimetick(2) + 28800) % 86400;
+	.@pht_hour = .@pht_seconds / 3600;
+	.@pht_minute = (.@pht_seconds % 3600) / 60;
+	if (.@pht_hour != .schedule_hour) end;
+	if (.@pht_minute >= 30) end;
+	.@today = (gettimetick(2) + 28800) / 86400;
 	if ($DT_LAST_RUN_DATE == .@today) end;
 	$DT_LAST_RUN_DATE = .@today;
 	callsub S_EndEvent;
@@ -196,8 +199,8 @@ OnAtCommand:
 			$DT_DEBUG_NAME$ = "";
 		dispbottom "[Dragon Treasure] Debug is now " + ($DT_DEBUG ? "ENABLED" : "DISABLED") + ".";
 	} else if (.@arg$ == "time") {
-		dispbottom "[Dragon Treasure] Server time: " + gettime(DT_YEAR) + "-" + gettime(DT_MONTH) + "-" + gettime(DT_DAYOFMONTH) + " " + gettime(DT_HOUR) + ":" + gettime(DT_MINUTE) + ":" + gettime(DT_SECOND);
-		dispbottom "[Dragon Treasure] Schedule hour: 00 | Last run date: " + $DT_LAST_RUN_DATE;
+		dispbottom "[Dragon Treasure] Philippines time: " + gettimestr("%Y-%m-%d %H:%M:%S", 20, gettimetick(2) + 28800);
+		dispbottom "[Dragon Treasure] Schedule hour: 00 PHT | Last run day: " + $DT_LAST_RUN_DATE;
 	} else {
 		dispbottom "[Dragon Treasure] Status: " + ($DT_DISABLED ? "DISABLED" : "ENABLED") + " | Active: " + ($DT_active ? "YES" : "NO") + " | Debug: " + ($DT_DEBUG ? "ON" : "OFF");
 		dispbottom "[Dragon Treasure] Usage: @dragontreasure start | stop | on | off | debug | time";
