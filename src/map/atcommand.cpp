@@ -11936,17 +11936,20 @@ ACMD_FUNC(autosupport) {
 		else if (strcmp(arg1, "target") == 0) {
 			if (argc >= 2 && strcmp(arg2, "all") == 0) {
 				sd->autobattle_data.support_target_mode = 0;
-				clif_displaymessage(fd, "Support target: All party members.");
+				sd->autobattle_data.follow_target_id = -1;
+				clif_displaymessage(fd, "Support target: Auto-lock one party member.");
 				return 0;
 			}
 			if (argc >= 2 && strcmp(arg2, "leader") == 0) {
 				sd->autobattle_data.support_target_mode = 1;
+				sd->autobattle_data.follow_target_id = -1;
 				clif_displaymessage(fd, "Support target: Party leader only.");
 				return 0;
 			}
 			if (argc >= 2) {
 				// Treat arg2 as player name
 				sd->autobattle_data.support_target_mode = 2;
+				sd->autobattle_data.follow_target_id = -1;
 				safestrncpy(sd->autobattle_data.support_target_name, arg2, sizeof(sd->autobattle_data.support_target_name));
 				sprintf(atcmd_output, "Support target: Specific member '%s'.", arg2);
 				clif_displaymessage(fd, atcmd_output);
@@ -11954,7 +11957,7 @@ ACMD_FUNC(autosupport) {
 			}
 			// No args — show current target mode
 			switch (sd->autobattle_data.support_target_mode) {
-				case 0: clif_displaymessage(fd, "Support target: All party members"); break;
+				case 0: clif_displaymessage(fd, "Support target: Auto-lock one party member"); break;
 				case 1: clif_displaymessage(fd, "Support target: Party leader only"); break;
 				case 2:
 					sprintf(atcmd_output, "Support target: %s", sd->autobattle_data.support_target_name);

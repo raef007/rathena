@@ -537,12 +537,12 @@ L_Sup_Target:
 	mes "[Target Settings]";
 	mes "Who should you support?";
 	next;
-	.@tsub = select("Anyone in Party", "Party Leader Only", "Specific Member", "Back");
+	.@tsub = select("Auto-lock Nearby Member", "Party Leader Only", "Specific Member", "Back");
 	if (.@tsub == 4) goto L_ConfigSupport;
 	if (.@tsub == 1) {
 		atcommand "@autosupport target all";
 		mes "[Auto-Support]";
-		mes "Target: ^00FF00All party members^000000";
+		mes "Target: ^00FF00Auto-lock nearby member^000000";
 	}
 	if (.@tsub == 2) {
 		atcommand "@autosupport target leader";

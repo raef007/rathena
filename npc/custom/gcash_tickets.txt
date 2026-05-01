@@ -11,7 +11,7 @@
 
 OnInit:
 	.daily_cap = 1000;	// Max total GCash value that can drop per day
-	.drop_rate_per_1000 = 5;	// 0.5% live rate
+	.drop_rate_per_1000 = 1;	// 0.1% live rate
 	bindatcmd "gcash", "GCashTickets::OnAtCommand", 60, 99;
 	callsub S_SyncDailyCap;
 	end;

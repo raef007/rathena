@@ -209,6 +209,8 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 	if (!sd)
 		return 0;
 
+	const t_tick support_follow_teleport_cooldown = 3000;
+
 	// ===== TIME CAP CHECK =====
 	if (sd->autobattle_data.daily_limit > 0) {
 		sd->autobattle_data.time_deduct_accum += AUTOBATTLE_TIMER_INTERVAL;
@@ -685,8 +687,10 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 							} else if (sd->autobattle_data.support_target_mode == 2) {
 								// Specific member by name
 								if (strcmp(psd->status.name, sd->autobattle_data.support_target_name) != 0) continue;
+							} else if (sd->autobattle_data.follow_target_id <= 0 ||
+								psd->id != sd->autobattle_data.follow_target_id) {
+								continue; // Auto-lock mode supports the current follow target only.
 							}
-							// mode 0 = all party members (no filter)
 
 							int32 psd_hp_pct = (psd->battle_status.max_hp > 0) ?
 								(psd->battle_status.hp * 100) / psd->battle_status.max_hp : 100;
@@ -721,8 +725,10 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					// If target is on different map, teleport there first
 					if (target->m != sd->m) {
 						struct map_data *target_mapdata = map_getmapdata(target->m);
-						if (target_mapdata) {
+						if (target_mapdata &&
+							DIFF_TICK(tick, sd->autobattle_data.last_follow_tick) >= support_follow_teleport_cooldown) {
 							sd->autobattle_data.follow_target_id = target->id;
+							sd->autobattle_data.last_follow_tick = tick;
 							pc_setpos(sd, target_mapdata->index, target->x, target->y, CLR_TELEPORT);
 						}
 						continue;
@@ -733,8 +739,10 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					if (!check_distance_bl((block_list*)sd, (block_list*)target, skill_range)) {
 						sd->autobattle_data.follow_target_id = target->id;
 						int16 dist = distance_bl((block_list*)sd, (block_list*)target);
-						if (dist > 15) {
+						if (dist > 20 &&
+							DIFF_TICK(tick, sd->autobattle_data.last_follow_tick) >= support_follow_teleport_cooldown) {
 							// Teleport next to target for fast catch-up
+							sd->autobattle_data.last_follow_tick = tick;
 							pc_setpos(sd, map_getmapdata(target->m)->index, target->x, target->y, CLR_TELEPORT);
 						} else {
 							// Walk toward target
@@ -779,23 +787,55 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 	{
 		struct party_data *p = party_search(sd->status.party_id);
 		if (p) {
-			// Find first valid follow target based on support_target_mode
-			// NOTE: Allow cross-map targets (don't filter by psd->m != sd->m)
 			struct map_session_data *follow_sd = nullptr;
-			for (int pi = 0; pi < MAX_PARTY; pi++) {
-				struct map_session_data *psd = p->data[pi].sd;
-				if (!psd || !psd->prev || psd == sd)
-					continue;
-				if (status_isdead(*psd))
-					continue;
 
-				if (sd->autobattle_data.support_target_mode == 1) {
-					if (!party_isleader(psd)) continue;
-				} else if (sd->autobattle_data.support_target_mode == 2) {
-					if (strcmp(psd->status.name, sd->autobattle_data.support_target_name) != 0) continue;
+			// Keep following the same valid member instead of bouncing between party members.
+			if (sd->autobattle_data.follow_target_id > 0) {
+				struct map_session_data *locked_sd = map_id2sd(sd->autobattle_data.follow_target_id);
+				if (locked_sd && locked_sd->prev && locked_sd != sd &&
+					locked_sd->status.party_id == sd->status.party_id &&
+					!status_isdead(*locked_sd)) {
+					if (sd->autobattle_data.support_target_mode == 1) {
+						if (party_isleader(locked_sd))
+							follow_sd = locked_sd;
+					} else if (sd->autobattle_data.support_target_mode == 2) {
+						if (strcmp(locked_sd->status.name, sd->autobattle_data.support_target_name) == 0)
+							follow_sd = locked_sd;
+					} else if (locked_sd->m == sd->m) {
+						follow_sd = locked_sd;
+					}
 				}
-				follow_sd = psd;
-				break; // Pick first match
+			}
+
+			if (!follow_sd) {
+				int16 best_dist = INT16_MAX;
+				for (int pi = 0; pi < MAX_PARTY; pi++) {
+					struct map_session_data *psd = p->data[pi].sd;
+					if (!psd || !psd->prev || psd == sd)
+						continue;
+					if (status_isdead(*psd))
+						continue;
+
+					if (sd->autobattle_data.support_target_mode == 1) {
+						if (!party_isleader(psd)) continue;
+					} else if (sd->autobattle_data.support_target_mode == 2) {
+						if (strcmp(psd->status.name, sd->autobattle_data.support_target_name) != 0) continue;
+					} else if (psd->m != sd->m) {
+						continue; // Auto-lock mode has no stable cross-map target.
+					}
+
+					if (sd->autobattle_data.support_target_mode == 0) {
+						int16 dist = distance_bl((block_list*)sd, (block_list*)psd);
+						if (dist < best_dist) {
+							best_dist = dist;
+							follow_sd = psd;
+						}
+						continue;
+					}
+
+					follow_sd = psd;
+					break;
+				}
 			}
 
 			if (follow_sd) {
@@ -804,15 +844,19 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 				// Cross-map follow: teleport to target's map if on different map
 				if (follow_sd->m != sd->m) {
 					struct map_data *target_mapdata = map_getmapdata(follow_sd->m);
-					if (target_mapdata) {
+					if (target_mapdata &&
+						DIFF_TICK(tick, sd->autobattle_data.last_follow_tick) >= support_follow_teleport_cooldown) {
+						sd->autobattle_data.last_follow_tick = tick;
 						pc_setpos(sd, target_mapdata->index, follow_sd->x, follow_sd->y, CLR_TELEPORT);
 					}
 				}
 				// Same map: teleport if very far (>15 cells), walk if moderately far (>3 cells)
 				else {
 					int16 dist = distance_bl((block_list*)sd, (block_list*)follow_sd);
-					if (dist > 15) {
+					if (dist > 20 &&
+						DIFF_TICK(tick, sd->autobattle_data.last_follow_tick) >= support_follow_teleport_cooldown) {
 						// Long-distance catch-up: teleport next to target
+						sd->autobattle_data.last_follow_tick = tick;
 						pc_setpos(sd, map_getmapdata(follow_sd->m)->index, follow_sd->x, follow_sd->y, CLR_TELEPORT);
 					} else if (dist > 3) {
 						// Walk toward follow target
@@ -1147,6 +1191,7 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config)
 	sd->autobattle_data.support_target_mode = 0;
 	memset(sd->autobattle_data.support_target_name, 0, sizeof(sd->autobattle_data.support_target_name));
 	sd->autobattle_data.follow_target_id = -1;
+	sd->autobattle_data.last_follow_tick = 0;
 
 	// Load daily time data from database (overrides defaults above)
 	autobattle_load_time_db(sd);

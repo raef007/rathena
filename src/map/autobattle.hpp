@@ -150,9 +150,10 @@ struct s_autobattle_data {
 	uint8 attack_skill_lv;         ///< Skill level to use
 
 	// Phase 25: Auto-Support Enhancement
-	uint8 support_target_mode;     ///< 0=all party, 1=leader, 2=specific member
+	uint8 support_target_mode;     ///< 0=auto-lock party member, 1=leader, 2=specific member
 	char support_target_name[24];  ///< For specific member mode
-	int32 follow_target_id;        ///< Account ID of current follow target (-1 = none)
+	int32 follow_target_id;        ///< Block ID of current follow target (-1 = none)
+	t_tick last_follow_tick;       ///< Throttle long-distance follow teleports
 };
 
 /**

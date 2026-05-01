@@ -179,6 +179,16 @@ Body:
             Level: 3
       - Name: AL_RUWACH
         MaxLevel: 1
+      - Name: AL_TELEPORT
+        MaxLevel: 2
+        Requires:
+          - Name: AL_RUWACH
+            Level: 1
+      - Name: AL_WARP
+        MaxLevel: 4
+        Requires:
+          - Name: AL_TELEPORT
+            Level: 2
       - Name: AL_PNEUMA
         MaxLevel: 1
       - Name: AL_HEAL
@@ -1599,6 +1609,16 @@ Body:
             Level: 3
       - Name: AL_RUWACH
         MaxLevel: 1
+      - Name: AL_TELEPORT
+        MaxLevel: 2
+        Requires:
+          - Name: AL_RUWACH
+            Level: 1
+      - Name: AL_WARP
+        MaxLevel: 4
+        Requires:
+          - Name: AL_TELEPORT
+            Level: 2
       - Name: AL_PNEUMA
         MaxLevel: 1
       - Name: AL_HEAL
@@ -2834,6 +2854,16 @@ Body:
             Level: 3
       - Name: AL_RUWACH
         MaxLevel: 1
+      - Name: AL_TELEPORT
+        MaxLevel: 2
+        Requires:
+          - Name: AL_RUWACH
+            Level: 1
+      - Name: AL_WARP
+        MaxLevel: 4
+        Requires:
+          - Name: AL_TELEPORT
+            Level: 2
       - Name: AL_PNEUMA
         MaxLevel: 1
       - Name: AL_HEAL

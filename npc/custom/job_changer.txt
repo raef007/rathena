@@ -628,7 +628,7 @@ function Confirm_Change {
 		mes "Rebirth is not without cost.";
 		mes "The thread of fate demands:";
 		mes " ";
-		mes "^00AA00200,000 zeny^000000";
+		mes "^00AA0030,000 zeny^000000";
 		mes "^00AA003x Opal^000000";
 		mes " ";
 		mes "Do you accept these terms?";
@@ -638,9 +638,9 @@ function Confirm_Change {
 			mes "Return when you are prepared.";
 			close;
 		}
-		if (Zeny < 200000) {
+		if (Zeny < 30000) {
 			mes .NPCName$;
-			mes "You do not have 200,000 zeny.";
+			mes "You do not have 30,000 zeny.";
 			close;
 		}
 		if (countitem(727) < 3) {
@@ -648,7 +648,7 @@ function Confirm_Change {
 			mes "You lack the ^8800FF3 Opals^000000 required.";
 			close;
 		}
-		Zeny -= 200000;
+		Zeny -= 30000;
 		delitem 727, 3;
 	}
 
@@ -704,16 +704,16 @@ function Do_JobChange {
 L_PlatinumShop:
 	.@eac = eaclass();
 	if (.@eac & (EAJL_2 | EAJL_UPPER)) {
-		.@plat_cost = 50000;
+		.@plat_cost = 20000;
 		.@tier$ = "2nd job";
 	} else if (.@eac & EAJL_2) {
-		.@plat_cost = 50000;
+		.@plat_cost = 20000;
 		.@tier$ = "2nd job";
 	} else if ((.@eac & EAJ_BASEMASK) > 0) {
-		.@plat_cost = 30000;
+		.@plat_cost = 10000;
 		.@tier$ = "1st job";
 	} else {
-		.@plat_cost = 20000;
+		.@plat_cost = 5000;
 		.@tier$ = "novice";
 	}
 
@@ -755,9 +755,7 @@ L_StatReset:
 	mes "have walked — but fate charges for it.";
 	mes " ";
 	mes "^FF0000Stat Reset costs:^000000";
-	mes "^00AA003,000,000 zeny^000000";
-	mes "^00AA005x Opal^000000";
-	mes "^00AA001x Fragment of Darkness^000000";
+	mes "^00AA0050,000 zeny^000000";
 	next;
 
 	if (select(" ~ Reset my stats: ~ ^777777Cancel^000000") == 2) {
@@ -766,25 +764,13 @@ L_StatReset:
 		close;
 	}
 
-	if (Zeny < 3000000) {
+	if (Zeny < 50000) {
 		mes .NPCName$;
-		mes "You need 3,000,000 zeny.";
-		close;
-	}
-	if (countitem(727) < 5) {
-		mes .NPCName$;
-		mes "You need ^8800FF5 Opals^000000.";
-		close;
-	}
-	if (countitem(7798) < 1) {
-		mes .NPCName$;
-		mes "You need ^8800FF1 Fragment of Darkness^000000.";
+		mes "You need 50,000 zeny.";
 		close;
 	}
 
-	Zeny -= 3000000;
-	delitem 727, 5;
-	delitem 7798, 1;
+	Zeny -= 50000;
 	resetstatus;
 
 	mes .NPCName$;
@@ -803,9 +789,7 @@ L_SkillReset:
 	mes "mastered — but not without cost.";
 	mes " ";
 	mes "^FF0000Skill Reset costs:^000000";
-	mes "^00AA001,000,000 zeny^000000";
-	mes "^00AA005x Opal^000000";
-	mes "^00AA001x Fragment of Darkness^000000";
+	mes "^00AA0050,000 zeny^000000";
 	next;
 
 	if (select(" ~ Reset my skills: ~ ^777777Cancel^000000") == 2) {
@@ -814,25 +798,13 @@ L_SkillReset:
 		close;
 	}
 
-	if (Zeny < 1000000) {
+	if (Zeny < 50000) {
 		mes .NPCName$;
-		mes "You need 1,000,000 zeny.";
-		close;
-	}
-	if (countitem(727) < 5) {
-		mes .NPCName$;
-		mes "You need ^8800FF5 Opals^000000.";
-		close;
-	}
-	if (countitem(7798) < 1) {
-		mes .NPCName$;
-		mes "You need ^8800FF1 Fragment of Darkness^000000.";
+		mes "You need 50,000 zeny.";
 		close;
 	}
 
-	Zeny -= 1000000;
-	delitem 727, 5;
-	delitem 7798, 1;
+	Zeny -= 50000;
 	resetskill;
 
 	mes .NPCName$;
