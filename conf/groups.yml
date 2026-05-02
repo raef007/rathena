@@ -188,7 +188,6 @@ Body:
     Level: 0
     Commands:
       rates: true
-      who: true
       go: true
       autoloot: true
   - Id: 10
