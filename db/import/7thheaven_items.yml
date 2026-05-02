@@ -47,6 +47,7 @@ Body:
       NoAuction: true
     Script: |
       setmounting();
+      doevent "7thHeaven_Events::OnApplyLeash";
     UnEquipScript: |
       if (ismounting())
         setmounting();

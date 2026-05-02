@@ -29,6 +29,7 @@ tavern,39,36,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 		"I need a Falcon",
 		"Craft me a Beast Master's Leash",
 		"Upgrade my Leash",
+		"What does the Leash do?",
 		"^777777Just looking^000000"
 	);
 
@@ -37,7 +38,8 @@ tavern,39,36,4	script	Beast Master#7th	4_M_THAIONGBAK,{
 		case 2: goto L_RentFalcon;
 		case 3: goto L_CraftLeash;
 		case 4: goto L_UpgradeLeash;
-		case 5:
+		case 5: goto L_LeashEffects;
+		case 6:
 			mes "[Beast Master]";
 			mes "He grunts and goes back to";
 			mes "eating.";
@@ -193,7 +195,7 @@ L_CraftLeash:
 	mes "Materials:";
 	mes "^00AA0010x Oridecon^000000";
 	mes "^00AA0010x Elunium^000000";
-	mes "^00AA003,000,000 zeny^000000";
+	mes "^00AA00300,000 zeny^000000";
 	next;
 	if (select(" ~ Craft it: ~ ^777777That's steep...^000000") == 2) {
 		mes "[Beast Master]";
@@ -201,7 +203,7 @@ L_CraftLeash:
 		mes "you're serious.";
 		close;
 	}
-	if (countitem(984) < 10 || countitem(985) < 10 || Zeny < 3000000) {
+	if (countitem(984) < 10 || countitem(985) < 10 || Zeny < 300000) {
 		mes "[Beast Master]";
 		mes "He counts through your materials";
 		mes "and frowns.";
@@ -212,7 +214,7 @@ L_CraftLeash:
 	}
 	delitem 984, 10;
 	delitem 985, 10;
-	Zeny -= 3000000;
+	Zeny -= 300000;
 	getitem 50011, 1;
 	set LEASH_LV, 1;
 	mes "[Beast Master]";
@@ -304,6 +306,53 @@ L_UpgradeLeash:
 	}
 	close;
 
+// -------------------------------------------------------
+L_LeashEffects:
+	mes "[Beast Master]";
+	mes "He sets down his bowl and";
+	mes "wipes his hands on a rag.";
+	mes " ";
+	mes "Right. Listen carefully -";
+	mes "a leash isn't just a strap.";
+	mes "Each upgrade binds another spirit";
+	mes "to the beast you ride.";
+	next;
+
+	mes "[Beast Master]";
+	mes "^0055FFWhile mounted:^000000";
+	mes "  Lv1 - +5% Max HP";
+	mes "  Lv2 - +6% HP, mild SP regen";
+	mes "  Lv3 - +8% HP, stronger regen";
+	mes "  Lv4 - +10% HP, stronger regen";
+	mes "  Lv5 - +12% HP, full regen aura";
+	next;
+
+	mes "[Beast Master]";
+	mes "^FF8800Mounted, advanced bindings:^000000";
+	mes "  Lv6 - all of Lv5 + Def/MDef/Flee +10";
+	mes "  Lv7 - same, +20";
+	mes "  Lv8 - same, +30";
+	next;
+
+	mes "[Beast Master]";
+	mes "^FF0000Beyond mortal craft:^000000";
+	mes "  Lv9  - +1 to ALL stats (passive)";
+	mes "  Lv10 - +2 to ALL stats (passive)";
+	mes " ";
+	mes "Lv9 and 10 don't need a mount -";
+	mes "just keep the leash in your bag.";
+	next;
+
+	mes "[Beast Master]";
+	mes "Your current leash: ^8800FFLv " + LEASH_LV + "^000000.";
+	if (LEASH_LV == 0)
+		mes "Get one crafted and we'll go from there.";
+	else if (LEASH_LV >= 10)
+		mes "End of the road, friend.";
+	else
+		mes "Bring me materials and we'll push it further.";
+	close;
+
 OnInit:
 	setarray .SuccessRate[1], 50,44,37,30,23,17,12,7,5;
 	end;
@@ -385,7 +434,7 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 			mes "  ^777777- Increase AGI Lv10 (speed, ASPD)^000000";
 			mes "  ^777777- Gloria Lv5 (+30 LUK)^000000";
 			mes " ";
-			mes "All for just ^FF000077,000 zeny^000000.";
+			mes "All for just ^FF00007,000 zeny^000000.";
 			mes "Best deal in Rune-Midgarts, if I";
 			mes "do say so myself";
 			next;
@@ -397,18 +446,18 @@ tavern,58,49,4	script	Innkeeper Mara#7th	4_f_chndress3,{
 				close;
 			}
 
-			if (Zeny < 77000) {
+			if (Zeny < 7000) {
 				mes "[Innkeeper Mara]";
 				mes "^777777* She winces apologetically. *^000000";
 				mes " ";
 				mes "I wish I could waive it, truly.";
-				mes "But a room costs 77,000 zeny - the";
+				mes "But a room costs 7,000 zeny - the";
 				mes "tavern doesn't run on goodwill alone.";
 				mes "Come back when you can, okay?";
 				close;
 			}
 
-			Zeny -= 77000;
+			Zeny -= 7000;
 			set INN_CHECKIN, gettimetick(2);
 			getitem 50012, 1;
 			// 1-hour tavern blessings. INN_BUFF_END is stored as absolute server tick
@@ -470,7 +519,7 @@ tavern,55,43,4	script	Chef Goran#7th	4_cook,{
 
 	.@sel = select(
 		"Redeem a Meal Voucher",
-		"Order a la carte (20,000z)",
+		"Order a la carte (5,000z)",
 		"^777777Not hungry^000000"
 	);
 
@@ -555,7 +604,7 @@ L_Shop:
 	mes "[Chef Goran]";
 	mes "A la carte. These keep - you can eat";
 	mes "them whenever you're ready.";
-	mes "^00AA0030,000 zeny^000000 each.";
+	mes "^00AA005,000 zeny^000000 each.";
 	mes " ";
 	mes "What do you want?";
 	next;
@@ -585,7 +634,7 @@ L_Shop:
 	}
 
 	mes "[Chef Goran]";
-	mes "^00AA00" + .@dish$ + "^000000 - 30,000z each.";
+	mes "^00AA00" + .@dish$ + "^000000 - 5,000z each.";
 	mes "How many do you want?";
 	next;
 
@@ -597,7 +646,7 @@ L_Shop:
 		close;
 	}
 
-	.@total = .@qty * 30000;
+	.@total = .@qty * 5000;
 
 	if (Zeny < .@total) {
 		mes "[Chef Goran]";
@@ -825,7 +874,7 @@ OnInit:
 }
 
 // ==========================================================================
-// Streamer Gacha — Spends Streamer Coins (item 50050) for randomized rewards
+// Norn's Wheel — Spends Streamer Coins (item 50050) for randomized rewards
 // ==========================================================================
 // Tiers:
 //   Common      89.5%  : potions / staples
@@ -833,55 +882,54 @@ OnInit:
 //   Legendary    0.5%  : Costume Fallen Angel Wings (480056)
 // Roll: rand(1000) — 0..994 = Common, 995..999 = adjusted below.
 // ==========================================================================
-tavern,65,46,4	script	Streamer Gacha#7th	4_ep21_galaxia_b,{
+tavern,65,46,4	script	Norn's Wheel#7th	4_ep21_galaxia_b,{
 
-	mes "[Streamer Gacha]";
-	mes "He's covered in cheap medals and clutching";
-	mes "a glass jar overflowing with shiny coins.";
-	mes "When he sees you he grins like he just won";
-	mes "the lottery — except he's the one running it.";
+	mes "[Keeper of Norn's Wheel]";
+	mes "A hooded figure stands over a great";
+	mes "spinning wheel of polished oak, runes";
+	mes "carved deep along its rim. The wheel";
+	mes "turns on its own, faintly humming.";
 	next;
 
-	mes "[Streamer Gacha]";
-	mes "Step right up, step right up~!";
+	mes "[Keeper of Norn's Wheel]";
+	mes "The Norns weave the fates of mortals.";
 	mes " ";
-	mes "One ^0055FFStreamer Coin^000000, one pull.";
-	mes "Could be staples, could be a feast,";
-	mes "could be a pair of fallen wings.";
-	mes "Lady Luck calls the shots.";
+	mes "Offer one ^0055FFStreamer Coin^000000 to the wheel,";
+	mes "and the threads will decide what falls";
+	mes "into your hands.";
 	next;
 
 	.@coins = countitem(50050);
-	mes "[Streamer Gacha]";
-	mes "You've got ^00AA00" + .@coins + "^000000 coin" + (.@coins == 1 ? "" : "s") + " on you.";
+	mes "[Keeper of Norn's Wheel]";
+	mes "You carry ^00AA00" + .@coins + "^000000 coin" + (.@coins == 1 ? "" : "s") + ".";
 	mes " ";
-	mes "What'll it be?";
+	mes "Will you spin?";
 	next;
 
 	.@sel = select(
-		"Pull once (1 coin)",
+		"Spin the Wheel (1 coin)",
 		"Show me the prize pool",
 		"^777777Walk away^000000"
 	);
 
 	if (.@sel == 3) {
-		mes "[Streamer Gacha]";
-		mes "Suit yourself. Coins don't spend";
-		mes "themselves~";
+		mes "[Keeper of Norn's Wheel]";
+		mes "The wheel turns whether you watch";
+		mes "or not. Return when fate calls you.";
 		close;
 	}
 
 	if (.@sel == 2) {
-		mes "[Streamer Gacha]";
-		mes "^0055FFCommon Pool (~89.5%):^000000";
+		mes "[Keeper of Norn's Wheel]";
+		mes "^0055FFThreads of plenty:^000000";
 		mes "  10x White Potion";
 		mes "  10x Red Potion";
 		mes "  20x Potato";
 		mes "  20x Meat";
 		mes "  20x Milk";
 		next;
-		mes "[Streamer Gacha]";
-		mes "^FF8800Rare Pool (10%):^000000";
+		mes "[Keeper of Norn's Wheel]";
+		mes "^FF8800Threads of feast:^000000";
 		mes "  1x Steamed Tongue";
 		mes "  1x Steamed Desert Scorpions";
 		mes "  1x Immortal Stew";
@@ -889,22 +937,20 @@ tavern,65,46,4	script	Streamer Gacha#7th	4_ep21_galaxia_b,{
 		mes "  1x Hwergelmir's Tonic";
 		mes "  1x Cooked Nine Tail";
 		next;
-		mes "[Streamer Gacha]";
-		mes "^FF0000Legendary Pool (0.5%):^000000";
+		mes "[Keeper of Norn's Wheel]";
+		mes "^FF0000Threads of legend:^000000";
 		mes "  1x Costume Fallen Angel Wings";
 		mes " ";
-		mes "Pretty, right? Now spend a coin~";
+		mes "The Norns alone know the odds.";
 		close;
 	}
 
 	// Pull once
 	if (countitem(50050) < 1) {
-		mes "[Streamer Gacha]";
-		mes "He raises an empty palm and shakes";
-		mes "his head with mock disappointment.";
-		mes " ";
-		mes "Light pockets, kid. Come back with a";
-		mes "^0055FFStreamer Coin^000000 and we'll talk.";
+		mes "[Keeper of Norn's Wheel]";
+		mes "The wheel does not turn for the";
+		mes "empty-handed. Return with a";
+		mes "^0055FFStreamer Coin^000000 to make your offering.";
 		close;
 	}
 
@@ -914,21 +960,21 @@ tavern,65,46,4	script	Streamer Gacha#7th	4_ep21_galaxia_b,{
 	.@roll = rand(1000); // 0..999
 
 	if (.@roll < 5) {
-		// Legendary 0.5%
+		// Legendary tier
 		getitem 480056, 1;
-		announce "[ Streamer Gacha ] " + strcharinfo(0) + " just pulled the Costume Fallen Angel Wings! Absolute legend!", bc_all|bc_yellow;
-		mes "[Streamer Gacha]";
-		mes "^777777* He drops his coin jar. The whole";
-		mes "tavern goes quiet. *^000000";
+		announce "[ Norn's Wheel ] The threads have chosen " + strcharinfo(0) + "! Costume Fallen Angel Wings claimed!", bc_all|bc_yellow;
+		mes "[Keeper of Norn's Wheel]";
+		mes "^777777* The wheel halts. The runes flare";
+		mes "white-hot, then dim. *^000000";
 		mes " ";
-		mes "WINGS! Actual ^FF0000Costume Fallen Angel Wings^000000!";
-		mes "Take 'em before I cry, kid.";
-		mes "Take 'em and stream this moment.";
+		mes "The Norns favor you, child.";
+		mes "^FF0000Costume Fallen Angel Wings^000000.";
+		mes "Wear them with reverence.";
 		close;
 	}
 
 	if (.@roll < 105) {
-		// Rare 10%
+		// Rare tier
 		setarray .@rare_ids[0], 12250, 12251, 12255, 12252, 12253, 12254;
 		setarray .@rare_names$[0],
 			"Steamed Tongue",
@@ -939,16 +985,16 @@ tavern,65,46,4	script	Streamer Gacha#7th	4_ep21_galaxia_b,{
 			"Cooked Nine Tail";
 		.@pick = rand(getarraysize(.@rare_ids));
 		getitem .@rare_ids[.@pick], 1;
-		mes "[Streamer Gacha]";
-		mes "^777777* He whistles low and slides a wrapped";
-		mes "plate across the counter. *^000000";
+		mes "[Keeper of Norn's Wheel]";
+		mes "^777777* The wheel slows, and a wrapped";
+		mes "plate appears on the rim. *^000000";
 		mes " ";
-		mes "Nice pull! ^FF8800" + .@rare_names$[.@pick] + "^000000.";
-		mes "That's chef's-table stuff right there.";
+		mes "A worthy thread - ^FF8800" + .@rare_names$[.@pick] + "^000000.";
+		mes "May it strengthen your path.";
 		close;
 	}
 
-	// Common 89.5%
+	// Common tier
 	setarray .@common_ids[0], 504,  501,  516, 517, 519;
 	setarray .@common_qty[0], 10,   10,   20,  20,  20;
 	setarray .@common_names$[0],
@@ -960,11 +1006,11 @@ tavern,65,46,4	script	Streamer Gacha#7th	4_ep21_galaxia_b,{
 	.@pick = rand(getarraysize(.@common_ids));
 	getitem .@common_ids[.@pick], .@common_qty[.@pick];
 
-	mes "[Streamer Gacha]";
-	mes "^777777* He slides a small bundle across";
-	mes "the counter. *^000000";
+	mes "[Keeper of Norn's Wheel]";
+	mes "^777777* The wheel turns once and stills.";
+	mes "A small bundle rests on the rim. *^000000";
 	mes " ";
-	mes "You got ^0055FF" + .@common_qty[.@pick] + "x " + .@common_names$[.@pick] + "^000000.";
-	mes "Stocking up never hurts. Try again~";
+	mes "^0055FF" + .@common_qty[.@pick] + "x " + .@common_names$[.@pick] + "^000000.";
+	mes "Even small threads have their use.";
 	close;
 }

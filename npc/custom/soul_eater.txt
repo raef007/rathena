@@ -22,6 +22,24 @@ OnInit:
 	setarray .schedule_hours[0], 0, 3, 6, 9, 12, 15, 18, 21;
 	.schedule_count = 8;
 
+	// Explicit town/safe-map blacklist — MF_TOWN alone misses pre-quest morocc,
+	// new_zone, training grounds, the tavern, and a few others that players
+	// stand around in. Soul Eater must never pick any of these.
+	setarray .town_blacklist$[0],
+		"prontera", "izlude", "geffen", "payon", "pay_arche", "alberta",
+		"aldebaran", "yuno", "lighthalzen", "einbroch", "einbech", "comodo",
+		"umbala", "amatsu", "gonryun", "ayothaya", "louyang", "hugel",
+		"rachel", "veins", "brasilis", "morocc", "moc_ruins", "moc_para01",
+		"moc_castle", "moc_fild16", "dewata", "dicastes01", "eclage",
+		"izlude_a", "izlude_b", "izlude_c", "izlude_d", "malangdo", "malaya",
+		"mora", "lasagna", "wolfvill", "tavern", "new_1-1", "new_1-2",
+		"new_1-3", "new_1-4", "new_2-1", "new_2-2", "new_2-3", "new_2-4",
+		"new_3-1", "new_3-2", "new_3-3", "new_3-4", "new_4-1", "new_4-2",
+		"new_4-3", "new_4-4", "new_5-1", "new_5-2", "new_5-3", "new_5-4",
+		"new_zone01", "new_zone02", "new_zone03", "new_zone04",
+		"sec_in01", "sec_in02", "sec_pri";
+	.town_blacklist_count = getarraysize(.town_blacklist$);
+
 	bindatcmd "souleater", "SoulEaterEvent::OnAtCommand", 60, 99;
 
 	// Safety clean-up on script load.
@@ -278,6 +296,21 @@ S_PickMap:
 		if (getmapflag(.@m$, MF_TOWN)) continue;
 		if (getmapflag(.@m$, MF_GVG)) continue;
 		if (getmapflag(.@m$, MF_BATTLEGROUND)) continue;
+		// MF_NOPVP is only set on maps with explicit `mapflag pvp off` — towns,
+		// indoor maps, arenas, airports, instances. Fields/dungeons are NOT in
+		// that list, so this is safe and adds defense-in-depth.
+		if (getmapflag(.@m$, MF_NOPVP)) continue;
+
+		// Explicit blacklist — covers maps that aren't flagged at all but are
+		// still safe-zones (e.g. training grounds new_*, tavern).
+		.@blocked = 0;
+		for (.@b = 0; .@b < .town_blacklist_count; .@b++) {
+			if (.@m$ == .town_blacklist$[.@b]) {
+				.@blocked = 1;
+				break;
+			}
+		}
+		if (.@blocked) continue;
 
 		.@users = getmapusers(.@m$);
 		if (.@users <= 0) continue;
