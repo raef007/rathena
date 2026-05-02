@@ -12325,13 +12325,6 @@ bool pc_equipitem(map_session_data *sd,int16 n,int32 req_pos,bool equipswitch)
 	}
 	sd->npc_item_flag = iflag;
 
-	// EquipScript may grant temporary skills via the `skill` script command
-	// (e.g. Wings of Choice → AL_TELEPORT). The earlier clif_skillinfoblock
-	// call ran *before* the script, so the client's skill window doesn't
-	// reflect the new skill. Refresh after the equip script so any item-
-	// granted skill shows up immediately.
-	clif_skillinfoblock(*sd);
-
 	return true;
 }
 

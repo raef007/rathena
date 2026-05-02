@@ -67,13 +67,13 @@ Body:
       Costume_Garment: true
     ArmorLevel: 1
     View: 92
-    EquipScript: |
+    Script: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
       if (Class != Job_Acolyte)
-        skill AL_TELEPORT, 1;
+        skill "AL_TELEPORT", 1;
 
   - Id: 20571
     AegisName: C_Valkyrie_Wing
@@ -84,16 +84,15 @@ Body:
     ArmorLevel: 1
     View: 48
     Script: |
-      hateffect HAT_EF_C_VALKYRIE_WING,true;
-    UnEquipScript: |
-      hateffect HAT_EF_C_VALKYRIE_WING,false;
-    EquipScript: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
       if (Class != Job_Acolyte)
-        skill AL_TELEPORT, 1;
+        skill "AL_TELEPORT", 1;
+      hateffect HAT_EF_C_VALKYRIE_WING,true;
+    UnEquipScript: |
+      hateffect HAT_EF_C_VALKYRIE_WING,false;
 
   - Id: 20602
     AegisName: C_Seraphim_Wing_TW
@@ -103,13 +102,13 @@ Body:
       Costume_Garment: true
     ArmorLevel: 1
     View: 84
-    EquipScript: |
+    Script: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
       if (Class != Job_Acolyte)
-        skill AL_TELEPORT, 1;
+        skill "AL_TELEPORT", 1;
 
   - Id: 480056
     AegisName: C_Wing_Of_Angel_Move_BK
@@ -119,13 +118,13 @@ Body:
       Costume_Garment: true
     ArmorLevel: 1
     View: 73
-    EquipScript: |
+    Script: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
       if (Class != Job_Acolyte)
-        skill AL_TELEPORT, 1;
+        skill "AL_TELEPORT", 1;
 
   - Id: 480408
     AegisName: C_GreatDevilWing2
@@ -135,13 +134,13 @@ Body:
       Costume_Garment: true
     ArmorLevel: 1
     View: 204
-    EquipScript: |
+    Script: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
       if (Class != Job_Acolyte)
-        skill AL_TELEPORT, 1;
+        skill "AL_TELEPORT", 1;
 
   - Id: 480069
     AegisName: C_Wing_Of_Angel_Move
@@ -151,13 +150,13 @@ Body:
       Costume_Garment: true
     ArmorLevel: 1
     View: 61
-    EquipScript: |
+    Script: |
       bonus bExpAddRate, 50;
       bonus bJobExpAddRate, 50;
       bonus bDropAddRate, 30;
       bonus bAddMaxWeight, 1500;
       if (Class != Job_Acolyte)
-        skill AL_TELEPORT, 1;
+        skill "AL_TELEPORT", 1;
 
   # -----------------------------------------------------------------------
   # 480110 - Adventurer's Bag (override C_Adventure_Cat_Bag)
