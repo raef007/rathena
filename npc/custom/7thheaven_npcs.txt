@@ -320,8 +320,8 @@ L_LeashEffects:
 
 	mes "[Beast Master]";
 	mes "^0055FFLv1-8 (only while mounted):^000000";
-	mes "  +HP regen %";
-	mes "  +SP regen %";
+	mes "  +Max HP / Max SP %";
+	mes "  +HP / SP regen %";
 	mes "  +Weight Limit (^00AA00200 per level^000000)";
 	mes " ";
 	mes "Dismount and the bonus fades.";
@@ -329,14 +329,14 @@ L_LeashEffects:
 
 	mes "[Beast Master]";
 	mes "^FF8800Per-level bonuses (mounted):^000000";
-	mes "  Lv1  -  +5% regen, +200 weight";
-	mes "  Lv2  - +10% regen, +400 weight";
-	mes "  Lv3  - +15% regen, +600 weight";
-	mes "  Lv4  - +20% regen, +800 weight";
-	mes "  Lv5  - +25% regen, +1000 weight";
-	mes "  Lv6  - +30% regen, +1200 weight";
-	mes "  Lv7  - +35% regen, +1400 weight";
-	mes "  Lv8  - +40% regen, +1600 weight";
+	mes "  Lv1 - +2% HP/SP, +5% regen, +200 wt";
+	mes "  Lv2 - +4% HP/SP, +10% regen, +400 wt";
+	mes "  Lv3 - +6% HP/SP, +15% regen, +600 wt";
+	mes "  Lv4 - +8% HP/SP, +20% regen, +800 wt";
+	mes "  Lv5 - +10% HP/SP, +25% regen, +1000 wt";
+	mes "  Lv6 - +12% HP/SP, +30% regen, +1200 wt";
+	mes "  Lv7 - +14% HP/SP, +35% regen, +1400 wt";
+	mes "  Lv8 - +16% HP/SP, +40% regen, +1600 wt";
 	next;
 
 	mes "[Beast Master]";

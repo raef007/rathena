@@ -1,48 +1,63 @@
 // ==========================================================================
 // 7th Heaven — Persistent Leash & Passive Event Handler
 // ==========================================================================
-// Lv1-8 bonuses apply ONLY while mounted (HP regen, SP regen, weight).
+// Lv1-8 bonuses apply ONLY while mounted (HP%/SP%, regen, weight).
 // Lv9-10 bonuses apply whenever the leash is in inventory (+1/+2 all stats).
 //
-// Bonuses use bonus_script (not status changes) to avoid SC icon residue and
-// MaxHP-not-recalculating bugs. F_ApplyLeash is called synchronously via
-// callfunc from both OnPCLoginEvent and the leash item's Script.
+// Both bonuses use bonus_script. F_ApplyLeash is called synchronously via
+// callfunc from OnPCLoginEvent and from the leash item's Script.
+//
+// EFST_FOOD_STR is reused as a visible status icon so the player can confirm
+// the bonus is active.
 // ==========================================================================
 
 // --------------------------------------------------------------------------
 // F_ApplyLeash — synchronous callfunc target.
-//
-// Steps:
-//   1. Clear all existing bonus_scripts on the player.
-//   2. If leash absent or LEASH_LV == 0, stop.
-//   3. If LEASH_LV >= 9, apply +AllStats (always-on).
-//   4. If mounted AND LEASH_LV in 1..8, apply HP/SP regen + weight.
-//
-// callfunc keeps the invoking player attached, unlike doevent which queues.
 // --------------------------------------------------------------------------
 function	script	F_ApplyLeash	{
+	// Wipe prior leash bonuses so dismounting cleans up. (No other system on
+	// this server uses bonus_script for players; if that changes, switch to
+	// flag-tagged clears.)
 	bonus_script_clear;
 
-	if (countitem(50011) <= 0) return;
-	if (LEASH_LV <= 0) return;
+	if (countitem(50011) <= 0) {
+		dispbottom "[Leash] No leash in inventory.";
+		return;
+	}
+	if (LEASH_LV <= 0) {
+		dispbottom "[Leash] LEASH_LV is 0 — get one crafted.";
+		return;
+	}
 
 	.@lv = LEASH_LV;
 	if (.@lv > 10) .@lv = 10;
 
 	// ---- Lv9-10 always-on: +AllStats ----
 	if (.@lv >= 9) {
-		.@allstat = .@lv - 8; // 9->1, 10->2
-		bonus_script "{ bonus bAllStats," + .@allstat + "; }", 82800, 1024, 1;
+		.@allstat = .@lv - 8;
+		bonus_script "{ bonus bAllStats," + .@allstat + "; }", 82800, 1024, 1, EFST_FOOD_STR;
+		dispbottom "[Leash] Lv" + .@lv + " passive applied: +" + .@allstat + " all stats.";
 	}
 
-	// ---- Lv1-8 mounted only: regen + weight ----
-	if (.@lv > 8) return;
-	if (!checkriding() && !ismounting()) return;
+	// ---- Lv1-8 mounted only ----
+	if (.@lv > 8) {
+		dispbottom "[Leash] Lv" + .@lv + " — passive only, no mount bonus.";
+		return;
+	}
 
-	.@regen  = .@lv * 5;   // Lv1=5%, Lv8=40%
-	.@weight = .@lv * 200; // Lv1=200, Lv8=1600
+	if (!checkriding() && !ismounting()) {
+		dispbottom "[Leash] Lv" + .@lv + " — dismount detected, mount bonus removed.";
+		return;
+	}
 
-	bonus_script "{ bonus bHPrecovRate," + .@regen + "; bonus bSPrecovRate," + .@regen + "; bonus bAddMaxWeight," + .@weight + "; }", 82800, 1024, 1;
+	.@hp_pct  = .@lv * 2;   // Lv1=2%, Lv8=16%
+	.@sp_pct  = .@lv * 2;
+	.@regen   = .@lv * 5;   // Lv1=5%, Lv8=40%
+	.@weight  = .@lv * 200; // Lv1=200, Lv8=1600
+
+	bonus_script "{ bonus bMaxHPrate," + .@hp_pct + "; bonus bMaxSPrate," + .@sp_pct + "; bonus bHPrecovRate," + .@regen + "; bonus bSPrecovRate," + .@regen + "; bonus bAddMaxWeight," + .@weight + "; }", 82800, 1024, 1, EFST_FOOD_STR;
+
+	dispbottom "[Leash] Lv" + .@lv + " mount bonus applied: +" + .@hp_pct + "% HP/SP, +" + .@regen + "% regen, +" + .@weight + " weight.";
 	return;
 }
 
