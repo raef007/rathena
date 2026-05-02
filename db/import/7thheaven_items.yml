@@ -104,8 +104,8 @@ Body:
     Sell: 0
     Weight: 10
     Trade:
-      NoDrop: true
-      NoTrade: true
+      NoDrop: false
+      NoTrade: false
       NoSell: true
       NoCart: true
       NoGuildStorage: true
