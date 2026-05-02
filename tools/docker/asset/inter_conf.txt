@@ -1,3 +1,10 @@
+// =================================================================
+// Docker local-dev override for conf/import/inter_conf.txt
+// All five DB hostnames point at the `db` docker-compose service
+// (mariadb container). Credentials come from conf/inter_athena.conf
+// which already matches the compose env vars: ragnarok/ragnarok/ragnarok.
+// =================================================================
+
 login_server_ip: db
 ipban_db_ip: db
 char_server_ip: db

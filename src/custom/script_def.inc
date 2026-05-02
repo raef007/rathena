@@ -11,3 +11,7 @@
 //BUILDIN_DEF(example,""),
 BUILDIN_DEF(getskillinfo,"ii"),
 BUILDIN_DEF(getskillname,"i"),
+BUILDIN_DEF(isautobattlebuffskill,"i"),
+BUILDIN_DEF(isautobattleattackskill,"i"),
+BUILDIN_DEF(autobattleitembuffstatus,"i"),
+BUILDIN_DEF(isautoattackon,""),

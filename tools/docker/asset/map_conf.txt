@@ -1,2 +1,11 @@
+// =================================================================
+// Docker local-dev override for conf/import/map_conf.txt
+// `char` is the docker-compose service name (map server uses it to
+// reach the char container).
+// 127.0.0.1 is what the CLIENT sees — port-forwarded by compose to
+// the map container on 5121.
+// =================================================================
+
 char_ip: char
+bind_ip: 0.0.0.0
 map_ip: 127.0.0.1

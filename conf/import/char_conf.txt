@@ -14,7 +14,7 @@ start_point: new_1-1,53,111
 start_point_pre: new_1-1,53,111
 
 // Starting items for new characters
-start_items: 1201,1,2:2301,1,16:23484,1,0
+start_items: 1201,1,2:2301,1,16:23484,1,0:12211,15,0:12977,15,0
 
 // Starting zeny for new characters
-start_zeny: 10000
+start_zeny: 0

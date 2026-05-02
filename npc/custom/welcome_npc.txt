@@ -61,7 +61,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 						close;
 					}
 
-					if (checkweight(5035,1) == 0 || checkweight(12263,5) == 0) {
+					if (checkweight(5035,1) == 0 || checkweight(12263,5) == 0 || checkweight(50010,1) == 0) {
 						mes "[Tiffy]";
 						mes "Your inventory is stuffed to the brim!";
 						mes "Make some space and come back, okay~?";
@@ -79,6 +79,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					mes "^00FF001x Auto-Battle Capsule^000000";
 					mes "^00FF001x Auto-Support Orb^000000";
 					mes "^00FF001x Bubble Gum^000000";
+					mes "^00FF001x Heaven's Recall Scroll^000000";
 					mes " ";
 					mes "Use them wisely~!";
 					next;
@@ -91,6 +92,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					getitem 30000, 1;   // Auto-Battle Capsule
 					getitem 30001, 1;   // Auto-Support Orb
 					getitem 12210, 1;   // Bubble Gum
+					getitem 50010, 1;   // Heaven's Recall Scroll
 
 					mes "[Tiffy]";
 					mes "^777777* She slides the items across";

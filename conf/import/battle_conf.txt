@@ -50,10 +50,10 @@ display_version: no
 //-----------
 
 // Rate at which exp. is given. (Note 2)
-base_exp_rate: 2000
+base_exp_rate: 1000
 
 // Rate at which job exp. is given. (Note 2)
-job_exp_rate: 2000
+job_exp_rate: 1000
 
 //-----------
 // feature.conf

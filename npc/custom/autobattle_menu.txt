@@ -19,75 +19,40 @@ OnUseItem:
 	next;
 
 L_MainMenu:
-	.@menu = select("Enable Auto-Attack", "Configure Auto-Attack", "Stop All", "Close");
+	.@on = isautoattackon();
+	.@toggle$ = (.@on) ? "Disable Auto-Attack" : "Enable Auto-Attack";
+	.@menu = select(.@toggle$, "Configure Auto-Attack", "Close");
 	if (.@menu == 1) {
-		atcommand "@autoattack on";
-		mes "[Auto-Battle]";
-		mes "Auto-Attack: ^00FF00ENABLED^000000";
+		if (.@on) {
+			atcommand "@autobattleoff";
+			mes "[Auto-Battle]";
+			mes "Auto-Attack: ^FF0000DISABLED^000000";
+		} else {
+			atcommand "@autoattack on";
+			mes "[Auto-Battle]";
+			mes "Auto-Attack: ^00FF00ENABLED^000000";
+		}
 		next;
 		goto L_MainMenu;
 	}
-	if (.@menu == 3) {
-		atcommand "@autobattleoff";
-		mes "[Auto-Battle]";
-		mes "All auto-battle modes ^FF0000STOPPED^000000.";
-		close;
-	}
-	if (.@menu == 4) close;
+	if (.@menu == 3) close;
 
 L_ConfigAttack:
 	mes "[Configure Auto-Attack]";
 	mes "Select a setting to adjust:";
 	next;
-	.@cfg = select("Detection Range", "Roam Mode", "Offensive Skill", "Target Filter", "Loot", "Potions", "Rest / Auto-Sit", "Time Info", "Back");
-	if (.@cfg == 1) goto L_Cfg_Range;
-	if (.@cfg == 2) goto L_Cfg_Roam;
-	if (.@cfg == 3) goto L_Cfg_Skill;
-	if (.@cfg == 4) goto L_Cfg_Target;
-	if (.@cfg == 5) goto L_Cfg_Loot;
-	if (.@cfg == 6) goto L_Cfg_Potion;
-	if (.@cfg == 7) goto L_Cfg_Rest;
-	if (.@cfg == 8) goto L_Cfg_Time;
+	.@cfg = select("Offensive Skill", "Target Filter", "Loot", "Regeneration", "Support Buffs", "Teleport", "Time Info", "Back");
+	if (.@cfg == 1) goto L_Cfg_Skill;
+	if (.@cfg == 2) goto L_Cfg_Target;
+	if (.@cfg == 3) goto L_Cfg_Loot;
+	if (.@cfg == 4) goto L_Cfg_Regen;
+	if (.@cfg == 5) goto L_Cfg_SelfBuff;
+	if (.@cfg == 6) goto L_Cfg_Teleport;
+	if (.@cfg == 7) goto L_Cfg_Time;
 	mes "[Auto-Battle Capsule]";
 	mes "Configure your Auto-Battle settings.";
 	next;
 	goto L_MainMenu;
-L_Cfg_Range:
-	mes "[Detection Range]";
-	mes "Enter detection range (1-15 cells):";
-	next;
-	input(.@range, 1, 15);
-	atcommand "@autoattack range " + .@range;
-	mes "[Auto-Battle]";
-	mes "Range set to ^0000FF" + .@range + "^000000 cells.";
-	next;
-	goto L_ConfigAttack;
-
-L_Cfg_Roam:
-	mes "[Roam Mode]";
-	mes "Choose roam behaviour:";
-	next;
-	.@rsub = select("Walk Roam ON", "Fly Wing Roam ON", "Roaming OFF", "Back");
-	if (.@rsub == 4) goto L_ConfigAttack;
-	if (.@rsub == 1) {
-		atcommand "@autoattack roam";
-		mes "[Auto-Battle]";
-		mes "Walk Roam: ^00FF00ENABLED^000000";
-	}
-	if (.@rsub == 2) {
-		atcommand "@autoattack flywing";
-		mes "[Auto-Battle]";
-		mes "Fly Wing Roam: ^00FF00ENABLED^000000";
-	}
-	if (.@rsub == 3) {
-		atcommand "@autoattack roam off";
-		atcommand "@autoattack flywing off";
-		mes "[Auto-Battle]";
-		mes "Roaming: ^FF0000DISABLED^000000";
-	}
-	next;
-	goto L_ConfigAttack;
-
 L_Cfg_Loot:
 	mes "[Loot Settings]";
 	mes "Toggle auto-loot pickup.";
@@ -107,43 +72,18 @@ L_Cfg_Loot:
 	next;
 	goto L_ConfigAttack;
 
-L_Cfg_Potion:
-	mes "[Potion Settings]";
-	mes "Configure automatic potion usage.";
+L_Cfg_Regen:
+	mes "[Regeneration]";
+	mes "Configure potions and sitting.";
 	next;
-	.@psub = select("Set HP Potion", "Set SP Potion", "Toggle Go-Home", "Disable All Potions", "Back");
-	if (.@psub == 5) goto L_ConfigAttack;
-	if (.@psub == 1) {
-		mes "[HP Potion]";
-		mes "Enter HP potion Item ID:";
-		mes "(501=Red, 502=Orange, 503=Yellow, 504=White)";
-		next;
-		input(.@itemid, 1, 65535);
-		mes "[HP Threshold]";
-		mes "Use pot when HP below (%):";
-		next;
-		input(.@threshold, 1, 99);
-		atcommand "@autoattack pot " + .@itemid + " " + .@threshold;
-		mes "[Auto-Battle]";
-		mes "HP Pot: Item " + .@itemid + " @ " + .@threshold + "%";
-	}
-	if (.@psub == 2) {
-		mes "[SP Potion]";
-		mes "Enter SP potion Item ID:";
-		mes "(505=Blue, 506=Green)";
-		next;
-		input(.@itemid, 1, 65535);
-		mes "[SP Threshold]";
-		mes "Use pot when SP below (%):";
-		next;
-		input(.@threshold, 1, 99);
-		atcommand "@autoattack sppot " + .@itemid + " " + .@threshold;
-		mes "[Auto-Battle]";
-		mes "SP Pot: Item " + .@itemid + " @ " + .@threshold + "%";
-	}
-	if (.@psub == 3) {
+	.@rsub = select("HP Recovery Item", "SP Recovery Item", "Sitting", "Go-Home", "Disable Potions", "Back");
+	if (.@rsub == 6) goto L_ConfigAttack;
+	if (.@rsub == 1) goto L_Regen_HPItem;
+	if (.@rsub == 2) goto L_Regen_SPItem;
+	if (.@rsub == 3) goto L_Cfg_Rest;
+	if (.@rsub == 4) {
 		mes "[Go-Home]";
-		mes "Warp to save point when out of pots?";
+		mes "Warp to save point when out of potions?";
 		next;
 		.@gh = select("Enable Go-Home", "Disable Go-Home");
 		if (.@gh == 1)
@@ -152,14 +92,225 @@ L_Cfg_Potion:
 			atcommand "@autoattack gohome off";
 		mes "[Auto-Battle]";
 		mes "Go-Home: " + ((.@gh == 1) ? "^00FF00ENABLED^000000" : "^FF0000DISABLED^000000");
+		next;
+		goto L_Cfg_Regen;
 	}
-	if (.@psub == 4) {
+	if (.@rsub == 5) {
 		atcommand "@autoattack pot off";
 		mes "[Auto-Battle]";
-		mes "All potions: ^FF0000DISABLED^000000";
+		mes "Potions: ^FF0000DISABLED^000000";
+		next;
+		goto L_Cfg_Regen;
 	}
+
+L_Regen_HPItem:
+	getinventorylist;
+	.@hp_count = 0;
+	for (.@i = 0; .@i < @inventorylist_count && .@hp_count < 80; .@i++) {
+		.@id = @inventorylist_id[.@i];
+		if (getiteminfo(.@id, ITEMINFO_TYPE) != IT_HEALING) continue;
+		.@n$ = getitemname(.@id);
+		// Exclude SP-only potions/herbs and the green status-cure family.
+		if (compare(.@n$, "Green")) continue;
+		if (compare(.@n$, "Blue Potion") || compare(.@n$, "Blue Herb")) continue;
+		.@hp_ids[.@hp_count] = .@id;
+		.@hp_names$[.@hp_count] = .@n$ + " x" + @inventorylist_amount[.@i];
+		.@hp_count++;
+	}
+	if (.@hp_count == 0) {
+		mes "[HP Recovery Item]";
+		mes "No HP recovery items found in inventory.";
+		next;
+		goto L_Cfg_Regen;
+	}
+	.@m$ = "";
+	for (.@i = 0; .@i < .@hp_count; .@i++) {
+		if (.@i) .@m$ = .@m$ + ":";
+		.@m$ = .@m$ + .@hp_names$[.@i];
+	}
+	.@m$ = .@m$ + ":Back";
+	mes "[HP Recovery Item]";
+	mes "Select one item.";
+	next;
+	.@pick = select(.@m$);
+	if (.@pick == .@hp_count + 1) goto L_Cfg_Regen;
+	.@chosen = .@hp_ids[.@pick - 1];
+	atcommand "@autoattack pot " + .@chosen + " 90";
+	mes "[Auto-Battle]";
+	mes "HP recovery: ^0000FF" + getitemname(.@chosen) + "^000000 @ 90%";
+	next;
+	goto L_Cfg_Regen;
+
+L_Regen_SPItem:
+	getinventorylist;
+	.@sp_count = 0;
+	for (.@i = 0; .@i < @inventorylist_count && .@sp_count < 80; .@i++) {
+		.@id = @inventorylist_id[.@i];
+		if (getiteminfo(.@id, ITEMINFO_TYPE) != IT_HEALING) continue;
+		.@n$ = getitemname(.@id);
+		// compare() is a case-insensitive substring check (stristr) — NOT glob.
+		// Don't wrap patterns in asterisks; literal "*" never appears in item
+		// names so the match always fails.
+		if (!(compare(.@n$, "Blue") || compare(.@n$, "Grape") || compare(.@n$, "Honey") ||
+			compare(.@n$, "Yggdrasil") || compare(.@n$, "Strawberry") || compare(.@n$, "Lemon") ||
+			compare(.@n$, "Seed") || compare(.@n$, "Berry") || compare(.@n$, "SP"))) continue;
+		if (compare(.@n$, "Green")) continue;
+		.@sp_ids[.@sp_count] = .@id;
+		.@sp_names$[.@sp_count] = .@n$ + " x" + @inventorylist_amount[.@i];
+		.@sp_count++;
+	}
+	if (.@sp_count == 0) {
+		mes "[SP Recovery Item]";
+		mes "No SP recovery items found in inventory.";
+		next;
+		goto L_Cfg_Regen;
+	}
+	.@m$ = "";
+	for (.@i = 0; .@i < .@sp_count; .@i++) {
+		if (.@i) .@m$ = .@m$ + ":";
+		.@m$ = .@m$ + .@sp_names$[.@i];
+	}
+	.@m$ = .@m$ + ":Back";
+	mes "[SP Recovery Item]";
+	mes "Select one item.";
+	next;
+	.@pick = select(.@m$);
+	if (.@pick == .@sp_count + 1) goto L_Cfg_Regen;
+	.@chosen = .@sp_ids[.@pick - 1];
+	atcommand "@autoattack sppot " + .@chosen + " 90";
+	mes "[Auto-Battle]";
+	mes "SP recovery: ^0000FF" + getitemname(.@chosen) + "^000000 @ 90%";
+	next;
+	goto L_Cfg_Regen;
+
+L_Cfg_Teleport:
+	mes "[Teleport]";
+	mes "Fly Wing triggers after 3 seconds without combat.";
+	next;
+	.@tsub = select("Enable Fly Wing", "Disable Fly Wing", "Back");
+	if (.@tsub == 3) goto L_ConfigAttack;
+	if (.@tsub == 1)
+		atcommand "@autoattack flywing";
+	else
+		atcommand "@autoattack flywing off";
+	mes "[Auto-Battle]";
+	mes "Teleport setting updated.";
 	next;
 	goto L_ConfigAttack;
+
+L_Cfg_SelfBuff:
+	mes "[Support Buffs]";
+	mes "Configure self buffs from skills and items.";
+	next;
+	.@bmain = select("Skill Buffs", "Item Buffs", "View Status", "Back");
+	if (.@bmain == 4) goto L_ConfigAttack;
+	if (.@bmain == 3) {
+		atcommand "@autosupport list";
+		mes "[Support Buffs]";
+		mes "Current buffs shown in chat.";
+		next;
+		goto L_Cfg_SelfBuff;
+	}
+	if (.@bmain == 1) goto L_Self_SkillBuffs;
+	goto L_Self_ItemBuffs;
+
+L_Self_SkillBuffs:
+	getskilllist;
+	.@buf_count = 0;
+	for (.@i = 0; .@i < @skilllist_count && .@buf_count < 30; .@i++) {
+		.@sid = @skilllist_id[.@i];
+		if (!isautobattlebuffskill(.@sid)) continue;
+		.@buf_ids[.@buf_count] = .@sid;
+		.@buf_lvs[.@buf_count] = @skilllist_lv[.@i];
+		.@buf_count++;
+	}
+	if (.@buf_count == 0) {
+		mes "[Skill Buffs]";
+		mes "No self buff skills found.";
+		next;
+		goto L_Cfg_SelfBuff;
+	}
+	for (.@i = 0; .@i < .@buf_count; .@i++) .@bsel[.@i] = 0;
+L_SelfSkillToggle:
+	.@m$ = "";
+	for (.@i = 0; .@i < .@buf_count; .@i++) {
+		if (.@i) .@m$ = .@m$ + ":";
+		.@m$ = .@m$ + ((.@bsel[.@i]) ? "[X] " : "[ ] ") + getskillname(.@buf_ids[.@i]) + " Lv" + .@buf_lvs[.@i];
+	}
+	.@m$ = .@m$ + ":--- Apply Skill Buffs ---:--- Cancel ---";
+	mes "[Skill Buffs]";
+	mes "Toggle self buffs.";
+	next;
+	.@pick = select(.@m$);
+	if (.@pick == .@buf_count + 2) goto L_Cfg_SelfBuff;
+	if (.@pick == .@buf_count + 1) {
+		atcommand "@autosupport clearbuffs";
+		.@added = 0;
+		for (.@i = 0; .@i < .@buf_count; .@i++) {
+			if (.@bsel[.@i]) {
+				atcommand "@autosupport add " + .@buf_ids[.@i] + " 100 0 1";
+				.@added++;
+			}
+		}
+		atcommand "@autosupport on";
+		mes "[Support Buffs]";
+		mes "^0000FF" + .@added + "^000000 skill buff(s) configured.";
+		next;
+		goto L_Cfg_SelfBuff;
+	}
+	.@idx = .@pick - 1;
+	if (.@idx >= 0 && .@idx < .@buf_count) .@bsel[.@idx] = !.@bsel[.@idx];
+	goto L_SelfSkillToggle;
+
+L_Self_ItemBuffs:
+	getinventorylist;
+	.@item_count = 0;
+	for (.@i = 0; .@i < @inventorylist_count && .@item_count < 40; .@i++) {
+		.@id = @inventorylist_id[.@i];
+		.@sc = autobattleitembuffstatus(.@id);
+		if (.@sc <= 0) continue;
+		.@item_ids[.@item_count] = .@id;
+		.@item_sc[.@item_count] = .@sc;
+		.@item_names$[.@item_count] = getitemname(.@id) + " x" + @inventorylist_amount[.@i];
+		.@item_count++;
+	}
+	if (.@item_count == 0) {
+		mes "[Item Buffs]";
+		mes "No supported buff consumables found.";
+		next;
+		goto L_Cfg_SelfBuff;
+	}
+	for (.@i = 0; .@i < .@item_count; .@i++) .@isel[.@i] = 0;
+L_SelfItemToggle:
+	.@m$ = "";
+	for (.@i = 0; .@i < .@item_count; .@i++) {
+		if (.@i) .@m$ = .@m$ + ":";
+		.@m$ = .@m$ + ((.@isel[.@i]) ? "[X] " : "[ ] ") + .@item_names$[.@i];
+	}
+	.@m$ = .@m$ + ":--- Apply Item Buffs ---:--- Cancel ---";
+	mes "[Item Buffs]";
+	mes "Toggle consumable buffs.";
+	next;
+	.@pick = select(.@m$);
+	if (.@pick == .@item_count + 2) goto L_Cfg_SelfBuff;
+	if (.@pick == .@item_count + 1) {
+		atcommand "@autosupport clearitems";
+		.@added = 0;
+		for (.@i = 0; .@i < .@item_count; .@i++) {
+			if (.@isel[.@i]) {
+				atcommand "@autosupport additem " + .@item_ids[.@i] + " " + .@item_sc[.@i];
+				.@added++;
+			}
+		}
+		atcommand "@autosupport on";
+		mes "[Support Buffs]";
+		mes "^0000FF" + .@added + "^000000 item buff(s) configured.";
+		next;
+		goto L_Cfg_SelfBuff;
+	}
+	.@idx = .@pick - 1;
+	if (.@idx >= 0 && .@idx < .@item_count) .@isel[.@idx] = !.@isel[.@idx];
+	goto L_SelfItemToggle;
 
 L_Cfg_Rest:
 	mes "[Rest Settings]";
@@ -335,19 +486,11 @@ L_Cfg_Skill:
 	for (.@i = 0; .@i < @skilllist_count; .@i++) {
 		.@sid = @skilllist_id[.@i];
 		.@slv = @skilllist_lv[.@i];
-		.@inf = getskillinfo(.@sid, 0);
-		.@nodmg = getskillinfo(.@sid, 1);
-		.@ispassive = getskillinfo(.@sid, 5);
-		.@isquest = getskillinfo(.@sid, 4);
-		if (.@ispassive) continue;
-		if (.@isquest) continue;
-		if (.@nodmg) continue;
-		if ((.@inf & 1) || (.@inf & 2) || (.@inf & 4)) {
-			.@off_ids[.@off_count] = .@sid;
-			.@off_lvs[.@off_count] = .@slv;
-			.@off_count++;
-			if (.@off_count >= 30) break;
-		}
+		if (!isautobattleattackskill(.@sid)) continue;
+		.@off_ids[.@off_count] = .@sid;
+		.@off_lvs[.@off_count] = .@slv;
+		.@off_count++;
+		if (.@off_count >= 30) break;
 	}
 	if (.@off_count == 0) {
 		mes "[Skill Settings]";
@@ -473,13 +616,7 @@ L_Sup_Buff:
 	for (.@i = 0; .@i < @skilllist_count; .@i++) {
 		.@sid = @skilllist_id[.@i];
 		.@slv = @skilllist_lv[.@i];
-		.@ispassive = getskillinfo(.@sid, 5);
-		.@isquest = getskillinfo(.@sid, 4);
-		if (.@ispassive) continue;
-		if (.@isquest) continue;
-		.@nodmg = getskillinfo(.@sid, 1);
-		.@inf = getskillinfo(.@sid, 0);
-		if (.@nodmg || (.@inf & 16)) {
+		if (isautobattlebuffskill(.@sid)) {
 			.@buf_ids[.@buf_count] = .@sid;
 			.@buf_lvs[.@buf_count] = .@slv;
 			.@buf_count++;

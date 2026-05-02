@@ -27,6 +27,7 @@
  * type 3: skill_get_range() — base range
  * type 4: returns 1 if skill is a quest skill (INF2_ISQUEST), 0 otherwise
  * type 5: returns 1 if skill is passive (inf == 0 / INF_PASSIVE_SKILL), 0 otherwise
+ * type 6: skill_get_sc() — status applied by the skill, or SC_NONE
  */
 BUILDIN_FUNC(getskillinfo)
 {
@@ -52,10 +53,88 @@ BUILDIN_FUNC(getskillinfo)
 		case 5:
 			script_pushint(st, (skill_get_inf(skill_id) == INF_PASSIVE_SKILL) ? 1 : 0);
 			break;
+		case 6:
+			script_pushint(st, skill_get_sc(skill_id));
+			break;
 		default:
 			script_pushint(st, 0);
 			break;
 	}
+	return SCRIPT_CMD_SUCCESS;
+}
+
+/**
+ * isautobattlebuffskill(<skill_id>) -> 0|1
+ * Self/ally buff candidate filter for the auto-support menu.
+ * Excludes a couple of debuffs that share the buff-skill shape (Decrease AGI,
+ * Provoke, etc.) on top of the baseline filter in autobattle_is_buff_skill().
+ */
+BUILDIN_FUNC(isautobattlebuffskill)
+{
+	uint16 skill_id = (uint16)script_getnum(st, 2);
+
+	if (!autobattle_is_buff_skill(skill_id)) {
+		script_pushint(st, 0);
+		return SCRIPT_CMD_SUCCESS;
+	}
+
+	// Filter known debuffs that pass the buff-skill shape test (no damage,
+	// support inf, has SC). These hit enemies in practice — never offer them
+	// as self/ally buffs.
+	switch (skill_get_sc(skill_id)) {
+		case SC_DECREASEAGI:
+		case SC_SIGNUMCRUCIS:
+		case SC_AETERNA:
+		case SC_PROVOKE:
+		case SC_QUAGMIRE:
+			script_pushint(st, 0);
+			return SCRIPT_CMD_SUCCESS;
+		default:
+			break;
+	}
+
+	script_pushint(st, 1);
+	return SCRIPT_CMD_SUCCESS;
+}
+
+/**
+ * isautobattleattackskill(<skill_id>) -> 0|1
+ * Offensive skill picker filter for the auto-attack menu. Returns 1 for damage
+ * skills the player can target an enemy with (attack/ground/trap inf, has
+ * damage). Excludes passives, quest skills, wedding/spirit/guild/NPC skills.
+ */
+BUILDIN_FUNC(isautobattleattackskill)
+{
+	uint16 skill_id = (uint16)script_getnum(st, 2);
+	script_pushint(st, autobattle_is_attack_skill(skill_id) ? 1 : 0);
+	return SCRIPT_CMD_SUCCESS;
+}
+
+/**
+ * autobattleitembuffstatus(<item_id>) -> <sc_type or 0>
+ * Returns the status effect granted by a recognised buff consumable, or 0
+ * (SC_NONE) if the item is not a known buff. Used by the menu to filter the
+ * inventory down to selectable item buffs.
+ */
+BUILDIN_FUNC(autobattleitembuffstatus)
+{
+	t_itemid item_id = (t_itemid)script_getnum(st, 2);
+	script_pushint(st, autobattle_get_item_buff_status(item_id));
+	return SCRIPT_CMD_SUCCESS;
+}
+
+/**
+ * isautoattackon() -> 0|1
+ * Returns 1 if the attached player currently has auto-attack enabled, 0
+ * otherwise. Lets the menu render a single Enable/Disable toggle that
+ * reflects current state instead of requiring two separate options.
+ */
+BUILDIN_FUNC(isautoattackon)
+{
+	TBL_PC* sd;
+	if (!script_rid2sd(sd))
+		return SCRIPT_CMD_SUCCESS;
+	script_pushint(st, (sd->autobattle_data.mode & AUTOBATTLE_ATTACK) ? 1 : 0);
 	return SCRIPT_CMD_SUCCESS;
 }
 

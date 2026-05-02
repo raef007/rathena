@@ -48,6 +48,12 @@ Body:
       changedress: true
       resurrect: true
       autotrade: true
+      rates: true
+      mobinfo: true
+      iteminfo: true
+      whereis: true
+      whodrops: true
+      refresh: true
     Permissions:
       can_trade: true
       can_party: true

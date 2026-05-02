@@ -1,8 +1,10 @@
 // ============================================================
 // GCash Ticket Drop System
 // ============================================================
-// Drops GCash Tickets (items 50001-50007) when players kill mobs
-// Fibonacci denominations: 1, 2, 3, 5, 8, 13, 21 PHP
+// Drops GCash Tickets when players kill mobs
+// Active denominations: 1, 3, 5 PHP (50001, 50003, 50004)
+// Legacy items 50002/50005/50006/50007 still exist in DB so existing
+// player inventories don't go stale, but they no longer drop.
 // Daily value cap resets at midnight Philippines time
 // GM Commands: @gcash [on|off|debug|test]  (GM level 60+)
 // ============================================================
@@ -23,16 +25,17 @@ OnMinute00:
 	end;
 
 OnNPCKillEvent:
-	callsub S_SyncDailyCap;
-
-	if (callsub(S_CanShowDebug))
-		.@mob_name$ = getmonsterinfo(killedrid, MOB_NAME);
-
 	if ($GCASH_DISABLED) {
 		if (callsub(S_CanShowDebug))
 			dispbottom "[GCash Debug] Blocked: drops are disabled.";
 		end;
 	}
+
+	callsub S_SyncDailyCap;
+
+	if (callsub(S_CanShowDebug))
+		.@mob_name$ = getmonsterinfo(killedrid, MOB_NAME);
+
 	if ($GCASH_DAILY_VALUE >= .daily_cap) {
 		if (callsub(S_CanShowDebug))
 			dispbottom "[GCash Debug] Blocked: daily value cap reached.";
@@ -44,9 +47,9 @@ OnNPCKillEvent:
 		dispbottom "[GCash Debug] Kill seen: " + .@mob_name$ + " | Roll: " + .@roll + " | Rate: " + .drop_rate_per_1000 + "/1000";
 	if (.@roll >= .drop_rate_per_1000) end;
 
-	setarray .@gcash_items[0], 50001, 50002, 50003, 50004, 50005, 50006, 50007;
-	setarray .@gcash_values[0], 1, 2, 3, 5, 8, 13, 21;
-	.@pick = rand(7);
+	setarray .@gcash_items[0], 50001, 50003, 50004;
+	setarray .@gcash_values[0], 1, 3, 5;
+	.@pick = rand(getarraysize(.@gcash_items));
 
 	if ($GCASH_DAILY_VALUE + .@gcash_values[.@pick] > .daily_cap) {
 		if (callsub(S_CanShowDebug))
@@ -76,6 +79,10 @@ OnAtCommand:
 		$GCASH_DEBUG = !$GCASH_DEBUG;
 		dispbottom "[GCash] Debug is now " + ($GCASH_DEBUG ? "ENABLED" : "DISABLED") + ".";
 	} else if (.@arg$ == "test") {
+		if ($GCASH_DISABLED) {
+			dispbottom "[GCash] Cannot test: drops are currently DISABLED. Use @gcash on first.";
+			end;
+		}
 		getitem 50001, 1;
 		dispbottom "[GCash] Test ticket granted: " + getitemname(50001);
 	} else if (.@arg$ == "reset") {

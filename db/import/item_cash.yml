@@ -15,9 +15,13 @@ Body:
   - Tab: New
     Items:
       - Item: VIP_Pass_1d
-        Price: 20
+        Price: 75
+      - Item: VIP_Pass_3d
+        Price: 150
       - Item: VIP_Pass_7d
-        Price: 120
+        Price: 300
+      - Item: VIP_Pass_15d
+        Price: 600
       - Item: C_Hair_Of_The_Strong
         Price: 6000
 
@@ -27,6 +31,12 @@ Body:
   - Tab: Hot
     Items:
       - Item: VIP_Pass_30d
+        Price: 1000
+      - Item: Zeny_Bag_Small
+        Price: 5
+      - Item: Zeny_Bag_Medium
+        Price: 50
+      - Item: Zeny_Bag_Large
         Price: 500
       - Item: Helm_Of_Dragoon
         Price: 1000
@@ -41,17 +51,29 @@ Body:
   - Tab: Rental
     Items:
       - Item: VIP_Pass_1d
-        Price: 20
+        Price: 75
+      - Item: VIP_Pass_3d
+        Price: 150
       - Item: VIP_Pass_7d
-        Price: 120
+        Price: 300
+      - Item: VIP_Pass_15d
+        Price: 600
       - Item: VIP_Pass_30d
-        Price: 500
+        Price: 1000
 
   # ============================================================
   # CONSUMABLES tab
   # ============================================================
   - Tab: Consumables
     Items:
+      # --- Zeny bags ---
+      - Item: Zeny_Bag_Small
+        Price: 5
+      - Item: Zeny_Bag_Medium
+        Price: 50
+      - Item: Zeny_Bag_Large
+        Price: 500
+
       # --- Single scrolls ---
       - Item: Inc_Agi_10_Scroll
         Price: 3

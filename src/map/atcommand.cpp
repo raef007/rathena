@@ -11484,17 +11484,9 @@ ACMD_FUNC(autoattack) {
 			clif_displaymessage(fd, "Attack: ON");
 		else
 			clif_displaymessage(fd, "Attack: OFF");
-		sprintf(atcmd_output, "Range: %d cells", sd->autobattle_data.range);
-		clif_displaymessage(fd, atcmd_output);
-		// Roam status
-		if (sd->autobattle_data.mode & AUTOBATTLE_ROAM) {
-			if (sd->autobattle_data.mode & AUTOBATTLE_FLYWING)
-				clif_displaymessage(fd, "Roam: ON (Fly Wing)");
-			else
-				clif_displaymessage(fd, "Roam: ON (Walk)");
-		} else {
-			clif_displaymessage(fd, "Roam: OFF");
-		}
+		clif_displaymessage(fd, "Range: Maximum");
+		clif_displaymessage(fd, (sd->autobattle_data.mode & AUTOBATTLE_FLYWING) ?
+			"Movement: Auto-roam + Fly Wing after 3s idle" : "Movement: Auto-roam");
 		// Loot status
 		if (sd->autobattle_data.mode & AUTOBATTLE_LOOT)
 			clif_displaymessage(fd, "Loot: ON (animated floor pickup)");
@@ -11562,6 +11554,7 @@ ACMD_FUNC(autoattack) {
 	if (argc >= 1) {
 		if (strcmp(arg1, "on") == 0) {
 			autobattle_toggle_mode(sd, AUTOBATTLE_ATTACK, true);
+			autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
 			autobattle_start(sd);
 			clif_displaymessage(fd, "Auto-attack enabled!");
 			return 0;
@@ -11571,35 +11564,21 @@ ACMD_FUNC(autoattack) {
 				autobattle_stop(sd);
 			clif_displaymessage(fd, "Auto-attack disabled!");
 			return 0;
-		} else if (strcmp(arg1, "range") == 0 && argc >= 2) {
-			int32 new_range = atoi(arg2);
-			if (new_range < 1 || new_range > 15) {
-				clif_displaymessage(fd, "Range must be between 1 and 15 cells.");
-				return -1;
-			}
-			autobattle_set_range(sd, (uint8)new_range);
-			sprintf(atcmd_output, "Auto-attack range set to %d cells.", new_range);
-			clif_displaymessage(fd, atcmd_output);
+		} else if (strcmp(arg1, "range") == 0) {
+			autobattle_set_range(sd, 15);
+			clif_displaymessage(fd, "Auto-attack detection range is automatic: maximum.");
 			return 0;
 		} else if (strcmp(arg1, "roam") == 0) {
-			if (argc >= 2 && strcmp(arg2, "off") == 0) {
-				autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, false);
-				autobattle_toggle_mode(sd, AUTOBATTLE_FLYWING, false);
-				sd->autobattle_data.roam_has_dest = false;
-				clif_displaymessage(fd, "Auto-roam disabled.");
-			} else {
-				autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
-				clif_displaymessage(fd, "Auto-roam enabled. Character will explore the map hunting enemies.");
-			}
+			autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
+			clif_displaymessage(fd, "Auto-roam is automatic while auto-attack is enabled.");
 			return 0;
 		} else if (strcmp(arg1, "flywing") == 0) {
 			if (argc >= 2 && strcmp(arg2, "off") == 0) {
 				autobattle_toggle_mode(sd, AUTOBATTLE_FLYWING, false);
 				clif_displaymessage(fd, "Fly Wing roaming disabled. Using walk mode.");
 			} else {
-				autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
 				autobattle_toggle_mode(sd, AUTOBATTLE_FLYWING, true);
-				clif_displaymessage(fd, "Fly Wing roaming enabled. Uses Fly Wings from inventory to teleport.");
+				clif_displaymessage(fd, "Fly Wing enabled. Uses Fly Wings after 3 seconds without combat.");
 			}
 			return 0;
 		} else if (strcmp(arg1, "loot") == 0) {
@@ -11809,7 +11788,8 @@ ACMD_FUNC(autoattack) {
 		}
 	}
 
-	clif_displaymessage(fd, "Usage: @autoattack [on|off|range|roam|flywing|loot|pot|sppot|gohome|time|addtime|sit|target|skill]");
+	clif_displaymessage(fd, "Usage: @autoattack [on|off|flywing|loot|pot|sppot|gohome|time|addtime|sit|target|skill]");
+	clif_displaymessage(fd, "  Detection range and walk-roam are automatic while auto-attack is on.");
 	return -1;
 }
 
@@ -11824,6 +11804,8 @@ ACMD_FUNC(autosupport) {
 		if (sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) {
 			clif_displaymessage(fd, "Status: ON");
 			sprintf(atcmd_output, "Configured skills: %d", sd->autobattle_data.support_skill_count);
+			clif_displaymessage(fd, atcmd_output);
+			sprintf(atcmd_output, "Configured item buffs: %d", sd->autobattle_data.support_item_count);
 			clif_displaymessage(fd, atcmd_output);
 		} else {
 			clif_displaymessage(fd, "Status: OFF");
@@ -11862,6 +11844,16 @@ ACMD_FUNC(autosupport) {
 					clif_displaymessage(fd, atcmd_output);
 				}
 			}
+			if (sd->autobattle_data.support_item_count > 0) {
+				clif_displaymessage(fd, "=== Auto-Support Item Buffs ===");
+				for (int i = 0; i < sd->autobattle_data.support_item_count; i++) {
+					struct s_autosupport_item &item = sd->autobattle_data.support_items[i];
+					std::shared_ptr<item_data> item_data = item_db.find(item.item_id);
+					sprintf(atcmd_output, "[%d] %s (%u) | Status: %d",
+						i + 1, item_data ? item_data->ename.c_str() : "Unknown item", item.item_id, item.status_id);
+					clif_displaymessage(fd, atcmd_output);
+				}
+			}
 			return 0;
 		} else if (strcmp(arg1, "clear") == 0) {
 			autobattle_clear_support_skills(sd);
@@ -11877,6 +11869,24 @@ ACMD_FUNC(autosupport) {
 				}
 			}
 			sprintf(atcmd_output, "Cleared %d buff skill(s). Heal skills unchanged.", removed);
+			clif_displaymessage(fd, atcmd_output);
+			return 0;
+		} else if (strcmp(arg1, "clearitems") == 0) {
+			autobattle_clear_support_items(sd);
+			clif_displaymessage(fd, "Cleared all item buffs.");
+			return 0;
+		} else if (strcmp(arg1, "additem") == 0 && argc >= 2) {
+			t_itemid item_id = (t_itemid)strtoul(arg2, nullptr, 10);
+			int16 status_id = (argc >= 3) ? (int16)atoi(arg3) : autobattle_get_item_buff_status(item_id);
+			if (item_id == 0 || status_id <= SC_NONE) {
+				clif_displaymessage(fd, "That item is not a recognized self buff item.");
+				return -1;
+			}
+			autobattle_add_support_item(sd, item_id, status_id);
+			autobattle_toggle_mode(sd, AUTOBATTLE_SUPPORT, true);
+			std::shared_ptr<item_data> item_data = item_db.find(item_id);
+			sprintf(atcmd_output, "Auto-support item buff added: %s (%u).",
+				item_data ? item_data->ename.c_str() : "Unknown item", item_id);
 			clif_displaymessage(fd, atcmd_output);
 			return 0;
 		} else if (strcmp(arg1, "clearheals") == 0) {
@@ -11924,7 +11934,12 @@ ACMD_FUNC(autosupport) {
 				return -1;
 			}
 
-			autobattle_add_support_skill(sd, skill_id, 5, hp_threshold, scope, trigger_type);
+			uint8 skill_lv = (uint8)pc_checkskill(sd, skill_id);
+			if (skill_lv < 1) {
+				clif_displaymessage(fd, "You do not know that skill.");
+				return -1;
+			}
+			autobattle_add_support_skill(sd, skill_id, skill_lv, hp_threshold, scope, trigger_type);
 			if (trigger_type == 1)
 				sprintf(atcmd_output, "Auto-support buff: %s added (recast when expired).", skill_get_desc(skill_id));
 			else
@@ -11968,8 +11983,8 @@ ACMD_FUNC(autosupport) {
 		}
 	}
 
-	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|clearbuffs|clearheals|remove <id>]");
-	clif_displaymessage(fd, "       @autosupport [add <id> <hp%> <scope> [trigger]|target [all|leader|<name>]]");
+	clif_displaymessage(fd, "Usage: @autosupport [on|off|list|clear|clearbuffs|clearheals|clearitems|remove <id>]");
+	clif_displaymessage(fd, "       @autosupport [add <id> <hp%> <scope> [trigger]|additem <item_id> [status]|target [all|leader|<name>]]");
 	clif_displaymessage(fd, "  trigger: 0=HP below (default), 1=buff expired");
 	return -1;
 }

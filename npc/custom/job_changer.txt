@@ -755,7 +755,7 @@ L_StatReset:
 	mes "have walked — but fate charges for it.";
 	mes " ";
 	mes "^FF0000Stat Reset costs:^000000";
-	mes "^00AA0050,000 zeny^000000";
+	mes "^00AA00100,000 zeny^000000";
 	next;
 
 	if (select(" ~ Reset my stats: ~ ^777777Cancel^000000") == 2) {
@@ -764,13 +764,13 @@ L_StatReset:
 		close;
 	}
 
-	if (Zeny < 50000) {
+	if (Zeny < 100000) {
 		mes .NPCName$;
-		mes "You need 50,000 zeny.";
+		mes "You need 100,000 zeny.";
 		close;
 	}
 
-	Zeny -= 50000;
+	Zeny -= 100000;
 	resetstatus;
 
 	mes .NPCName$;
@@ -789,7 +789,7 @@ L_SkillReset:
 	mes "mastered — but not without cost.";
 	mes " ";
 	mes "^FF0000Skill Reset costs:^000000";
-	mes "^00AA0050,000 zeny^000000";
+	mes "^00AA00100,000 zeny^000000";
 	next;
 
 	if (select(" ~ Reset my skills: ~ ^777777Cancel^000000") == 2) {
@@ -798,13 +798,13 @@ L_SkillReset:
 		close;
 	}
 
-	if (Zeny < 50000) {
+	if (Zeny < 100000) {
 		mes .NPCName$;
-		mes "You need 50,000 zeny.";
+		mes "You need 100,000 zeny.";
 		close;
 	}
 
-	Zeny -= 50000;
+	Zeny -= 100000;
 	resetskill;
 
 	mes .NPCName$;

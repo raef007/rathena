@@ -32,6 +32,7 @@
 #include <common/utils.hpp>
 
 #include "achievement.hpp"
+#include "autobattle.hpp"
 #include "atcommand.hpp"
 #include "battle.hpp"
 #include "battleground.hpp"
@@ -61,6 +62,8 @@
 #include "pc_groups.hpp"
 #include "pet.hpp"
 #include "quest.hpp"
+#include "skill.hpp"
+#include "status.hpp"
 #include "storage.hpp"
 
 using namespace rathena;

@@ -823,3 +823,148 @@ L_Quests:
 OnInit:
 	end;
 }
+
+// ==========================================================================
+// Streamer Gacha — Spends Streamer Coins (item 50050) for randomized rewards
+// ==========================================================================
+// Tiers:
+//   Common      89.5%  : potions / staples
+//   Rare        10%    : a la carte buff foods (Chef Goran tier)
+//   Legendary    0.5%  : Costume Fallen Angel Wings (480056)
+// Roll: rand(1000) — 0..994 = Common, 995..999 = adjusted below.
+// ==========================================================================
+tavern,65,46,4	script	Streamer Gacha#7th	4_ep21_galaxia_b,{
+
+	mes "[Streamer Gacha]";
+	mes "He's covered in cheap medals and clutching";
+	mes "a glass jar overflowing with shiny coins.";
+	mes "When he sees you he grins like he just won";
+	mes "the lottery — except he's the one running it.";
+	next;
+
+	mes "[Streamer Gacha]";
+	mes "Step right up, step right up~!";
+	mes " ";
+	mes "One ^0055FFStreamer Coin^000000, one pull.";
+	mes "Could be staples, could be a feast,";
+	mes "could be a pair of fallen wings.";
+	mes "Lady Luck calls the shots.";
+	next;
+
+	.@coins = countitem(50050);
+	mes "[Streamer Gacha]";
+	mes "You've got ^00AA00" + .@coins + "^000000 coin" + (.@coins == 1 ? "" : "s") + " on you.";
+	mes " ";
+	mes "What'll it be?";
+	next;
+
+	.@sel = select(
+		"Pull once (1 coin)",
+		"Show me the prize pool",
+		"^777777Walk away^000000"
+	);
+
+	if (.@sel == 3) {
+		mes "[Streamer Gacha]";
+		mes "Suit yourself. Coins don't spend";
+		mes "themselves~";
+		close;
+	}
+
+	if (.@sel == 2) {
+		mes "[Streamer Gacha]";
+		mes "^0055FFCommon Pool (~89.5%):^000000";
+		mes "  10x White Potion";
+		mes "  10x Red Potion";
+		mes "  20x Potato";
+		mes "  20x Meat";
+		mes "  20x Milk";
+		next;
+		mes "[Streamer Gacha]";
+		mes "^FF8800Rare Pool (10%):^000000";
+		mes "  1x Steamed Tongue";
+		mes "  1x Steamed Desert Scorpions";
+		mes "  1x Immortal Stew";
+		mes "  1x Dragon Breath Cocktail";
+		mes "  1x Hwergelmir's Tonic";
+		mes "  1x Cooked Nine Tail";
+		next;
+		mes "[Streamer Gacha]";
+		mes "^FF0000Legendary Pool (0.5%):^000000";
+		mes "  1x Costume Fallen Angel Wings";
+		mes " ";
+		mes "Pretty, right? Now spend a coin~";
+		close;
+	}
+
+	// Pull once
+	if (countitem(50050) < 1) {
+		mes "[Streamer Gacha]";
+		mes "He raises an empty palm and shakes";
+		mes "his head with mock disappointment.";
+		mes " ";
+		mes "Light pockets, kid. Come back with a";
+		mes "^0055FFStreamer Coin^000000 and we'll talk.";
+		close;
+	}
+
+	delitem 50050, 1;
+	specialeffect2 EF_LOTUS;
+
+	.@roll = rand(1000); // 0..999
+
+	if (.@roll < 5) {
+		// Legendary 0.5%
+		getitem 480056, 1;
+		announce "[ Streamer Gacha ] " + strcharinfo(0) + " just pulled the Costume Fallen Angel Wings! Absolute legend!", bc_all|bc_yellow;
+		mes "[Streamer Gacha]";
+		mes "^777777* He drops his coin jar. The whole";
+		mes "tavern goes quiet. *^000000";
+		mes " ";
+		mes "WINGS! Actual ^FF0000Costume Fallen Angel Wings^000000!";
+		mes "Take 'em before I cry, kid.";
+		mes "Take 'em and stream this moment.";
+		close;
+	}
+
+	if (.@roll < 105) {
+		// Rare 10%
+		setarray .@rare_ids[0], 12250, 12251, 12255, 12252, 12253, 12254;
+		setarray .@rare_names$[0],
+			"Steamed Tongue",
+			"Steamed Desert Scorpions",
+			"Immortal Stew",
+			"Dragon Breath Cocktail",
+			"Hwergelmir's Tonic",
+			"Cooked Nine Tail";
+		.@pick = rand(getarraysize(.@rare_ids));
+		getitem .@rare_ids[.@pick], 1;
+		mes "[Streamer Gacha]";
+		mes "^777777* He whistles low and slides a wrapped";
+		mes "plate across the counter. *^000000";
+		mes " ";
+		mes "Nice pull! ^FF8800" + .@rare_names$[.@pick] + "^000000.";
+		mes "That's chef's-table stuff right there.";
+		close;
+	}
+
+	// Common 89.5%
+	setarray .@common_ids[0], 504,  501,  516, 517, 519;
+	setarray .@common_qty[0], 10,   10,   20,  20,  20;
+	setarray .@common_names$[0],
+		"White Potion",
+		"Red Potion",
+		"Potato",
+		"Meat",
+		"Milk";
+	.@pick = rand(getarraysize(.@common_ids));
+	getitem .@common_ids[.@pick], .@common_qty[.@pick];
+
+	mes "[Streamer Gacha]";
+	mes "^777777* He slides a small bundle across";
+	mes "the counter. *^000000";
+	mes " ";
+	mes "You got ^0055FF" + .@common_qty[.@pick] + "x " + .@common_names$[.@pick] + "^000000.";
+	mes "Stocking up never hurts. Try again~";
+	close;
+}

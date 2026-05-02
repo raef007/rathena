@@ -1,2 +1,29 @@
+// =================================================================
+// Docker local-dev override for conf/import/char_conf.txt
+// Mirrors production game settings; only the IPs/hostnames differ.
+// Hostnames `login` and `char` are docker-compose service names —
+// resolvable container-to-container.
+// 127.0.0.1 is what the CLIENT connects to (port-forwarded by compose
+// to the char container on 6121).
+// =================================================================
+
+server_name: AsgardCity (Local)
 login_ip: login
+bind_ip: 0.0.0.0
 char_ip: 127.0.0.1
+char_del_option: 2
+// Novice only (no Summoner/Doram); Renewal default would be 3
+allowed_job_flag: 1
+
+// Pincode system
+pincode_enabled: no
+
+// Use pre-renewal Training Grounds as starting point instead of Izlude boat
+start_point: new_1-1,53,111
+start_point_pre: new_1-1,53,111
+
+// Starting items for new characters
+start_items: 1201,1,2:2301,1,16:23484,1,0
+
+// Starting zeny for new characters
+start_zeny: 10000

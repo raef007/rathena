@@ -13,6 +13,7 @@ struct block_list;
 
 /// Auto-Battle Pass item ID (must match db/import/item_db.yml entry)
 #define AUTOBATTLE_ITEM_ID 30000
+#define AUTOBATTLE_MAX_ITEM_BUFFS 10
 
 /**
  * Auto-Battle Mode Flags
@@ -61,6 +62,12 @@ struct s_autosupport_skill {
 	int32 last_cast_time;          ///< Cooldown tracker
 };
 
+struct s_autosupport_item {
+	t_itemid item_id;
+	int16 status_id;
+	t_tick last_use_tick;
+};
+
 /**
  * Skill rotation slot (player can save up to 3 different rotations)
  */
@@ -83,6 +90,8 @@ struct s_autobattle_data {
 	// Auto-support configuration
 	uint8 support_skill_count;     ///< Number of configured support skills
 	struct s_autosupport_skill support_skills[10]; ///< Up to 10 support skill configs
+	uint8 support_item_count;      ///< Number of configured self buff items
+	struct s_autosupport_item support_items[AUTOBATTLE_MAX_ITEM_BUFFS];
 
 	// Skill rotation
 	uint8 current_rotation_slot;   ///< Which of 3 rotation slots is active
@@ -108,20 +117,49 @@ struct s_autobattle_data {
 	int16 roam_last_y;             ///< Position at previous roam tick (stuck detection)
 	int32 roam_best_dist;          ///< Best (smallest) distance to dest achieved so far (maze escape)
 	t_tick roam_best_tick;         ///< Tick when roam_best_dist was last improved
-	// Recent-visit ring buffer: rejects waypoints too close to cells we just came from.
-	// Breaks inverted-C / hairpin oscillations where the forward-progress filter can be
-	// satisfied going BOTH into and out of a dead-end pocket.
-	int16 roam_visit_x[6];
-	int16 roam_visit_y[6];
+	// Recent-visit ring buffer: gives the bot temporal memory of where it has
+	// been, so it doesn't keep re-entering dead-ends in maze-like corridors.
+	// 64 entries × ~3-cell snapshot stride covers ~190 cells of recent path —
+	// enough that a small enclosed sub-room of the map can't be fully filled
+	// before the bot is pushed out of it.
+	int16 roam_visit_x[64];
+	int16 roam_visit_y[64];
 	uint8 roam_visit_head;         ///< Next write position in ring buffer
-	uint8 roam_visit_count;        ///< Number of valid entries (saturates at 6)
+	uint8 roam_visit_count;        ///< Number of valid entries (saturates at 64)
 	int16 roam_snapshot_x;         ///< Last position snapshotted into visit buffer
 	int16 roam_snapshot_y;         ///< (only snapshot when we've moved far enough)
 
+	// Quadrant explore tracker: divides the map into 4 quadrants (NW/NE/SW/SE)
+	// and remembers the last tick we set an ultimate destination in each one.
+	// When picking a new destination, prefer the staler quadrant. Coarse map
+	// memory at near-zero cost — covers the "stop circling the same area" case.
+	t_tick roam_quadrant_tick[4];
+
+	// Short-term unreachable-target blacklist: when unit_walktobl fails for
+	// a target (wall between us and the mob), we ignore that target ID for a
+	// few seconds so the next search picks a different mob — or no mob, which
+	// lets the Fly Wing / walk-roam else-branch run.
+	int32 unreachable_target_id;
+	t_tick unreachable_target_until;
+
+	// "3 strikes" wall counter. Increments every time the hop search has to
+	// fall back to pass 2 or 3 (sidestep / escape hatch) — i.e. forward-
+	// progress hops were all blocked. Resets on a successful forward hop or
+	// when a new destination is picked. After 3 strikes we abandon the
+	// current ultimate destination, much faster than the 15s stall timer.
+	uint8 roam_struggle_count;
+
+	// Cooldown timer for Fly Wing teleport. Independent of roam ticks so the
+	// bot can keep walk-roaming continuously while Fly Wing fires every 3s
+	// of no-combat as a side-behavior.
+	t_tick last_flywing_tick;
+
 	// State tracking
 	t_tick last_support_tick;      ///< Throttle support casting
+	t_tick last_item_buff_tick;    ///< Throttle self buff item checks
 	t_tick last_loot_tick;         ///< Throttle loot checking
 	t_tick last_roam_tick;         ///< Throttle roaming movement
+	t_tick last_combat_tick;       ///< Last tick where a target was fought/found
 
 	// Time cap (DB-persisted daily limit)
 	t_tick start_tick;             ///< When auto-battle was last activated
@@ -232,6 +270,40 @@ void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
 void autobattle_clear_support_skills(map_session_data *sd);
 
 /**
+ * Add auto-support self item buff configuration.
+ * @param sd Player session data
+ * @param item_id Item ID to use
+ * @param status_id Status effect to wait on before reusing
+ */
+void autobattle_add_support_item(map_session_data *sd, t_itemid item_id, int16 status_id);
+
+/**
+ * Clear all support item buffs
+ * @param sd Player session data
+ */
+void autobattle_clear_support_items(map_session_data *sd);
+
+/**
+ * Detect the primary status effect applied by an item buff.
+ * @param item_id Item ID to inspect
+ * @return sc_type value or SC_NONE
+ */
+int16 autobattle_get_item_buff_status(t_itemid item_id);
+
+/**
+ * Classify a skill as a self/ally buff candidate for the auto-support menu.
+ * Filters out trap, NPC, song/ensemble, quest, wedding, spirit, guild skills,
+ * passive skills, and damage-dealing skills. Requires a status effect (skill->sc).
+ */
+bool autobattle_is_buff_skill(uint16 skill_id);
+
+/**
+ * Classify a skill as an offensive skill candidate for the auto-attack skill menu.
+ * Returns true for damage skills the player can target an enemy with.
+ */
+bool autobattle_is_attack_skill(uint16 skill_id);
+
+/**
  * Remove a specific support skill by skill_id
  * @param sd Player session data
  * @param skill_id Skill ID to remove
@@ -287,6 +359,23 @@ void autobattle_load_time_db(map_session_data *sd);
  * @param sd Player session data
  */
 void autobattle_save_time_db(map_session_data *sd);
+
+/**
+ * Save full auto-battle config to char_autobattle_config (called on stop/logout).
+ * Persists the user's HP/SP recovery items, thresholds, sit thresholds, attack
+ * skill, support skills/items, gohome flag, and the configured mode bitmask.
+ * The Auto-Attack and Auto-Support bits are stripped on load — those are toggled
+ * explicitly each session.
+ */
+void autobattle_save_config_db(map_session_data *sd);
+
+/**
+ * Load full auto-battle config from char_autobattle_config (called from init).
+ * Populates `sd->autobattle_data` with the saved fields. Mode bitmask is
+ * masked on load to clear AUTOBATTLE_ATTACK and AUTOBATTLE_SUPPORT, so the
+ * player has to explicitly enable those each session.
+ */
+void autobattle_load_config_db(map_session_data *sd);
 
 /**
  * Add bonus time to a character's auto-battle allowance (persisted to DB)
