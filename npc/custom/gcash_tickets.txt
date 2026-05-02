@@ -86,7 +86,7 @@ OnAtCommand:
 		dispbottom "[GCash] Philippines time: " + gettimestr("%Y-%m-%d %H:%M:%S", 20, gettimetick(2) + 28800);
 		dispbottom "[GCash] Today key: " + .@today + " | Stored reset date: " + $GCASH_RESET_DATE;
 	} else {
-		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Rate: 0.5% | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
+		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Rate: 0.1% | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
 		dispbottom "[GCash] Usage: @gcash on | @gcash off | @gcash debug | @gcash test | @gcash time | @gcash reset";
 	}
 	end;
