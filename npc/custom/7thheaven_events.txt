@@ -1,10 +1,9 @@
 // ==========================================================================
 // 7th Heaven — Persistent Leash & Passive Event Handler
 // ==========================================================================
-// Re-applies Beast Master's Leash buffs on every login AND on mount-up.
-// Lv1:    starter +5% HP while mounted
-// Lv2-8:  scaling HP%, regen, def/mdef/flee while mounted
-// Lv9-10: passive all-stat bonus (no mount required, leash in inventory)
+// Applies Beast Master's Leash bonuses via bonus_script — works regardless of
+// other SCs the player may have, no skill-level math, no mount requirement.
+// Re-applied on login and on every leash use.
 // ==========================================================================
 
 -	script	7thHeaven_Events	-1,{
@@ -31,40 +30,47 @@ OnPCLoginEvent:
 	doevent "7thHeaven_Events::OnApplyLeash";
 	end;
 
-// Apply leash buffs based on current LEASH_LV and mount state.
-// Called from OnPCLoginEvent and from the leash item's Script (after setmounting).
+// Apply leash bonuses based on current LEASH_LV.
+// Called from OnPCLoginEvent and from the leash item's Script.
+//
+// Per level, applies (always — leash in inventory is sufficient):
+//   +N% MaxHP / MaxSP, +N% HP/SP regen, +200*Lv weight limit
+// Lv9 adds +1 to all stats, Lv10 adds +2.
+//
+// Uses bonus_script flag 1024 (replace duplicates by extending duration) so
+// re-applying refreshes cleanly without stacking. 23h duration means the
+// bonus survives a normal play session; login + item-use keep it topped up.
 OnApplyLeash:
 	if (countitem(50011) <= 0) end;
 	if (LEASH_LV <= 0) end;
 
-	// ---- Passive (Lv9-10) — leash in inventory, no mount required ----
-	if (LEASH_LV >= 9) {
-		.@val = LEASH_LV - 8; // Lv9 = +1, Lv10 = +2
-		sc_start SC_INCALLSTATUS, 82800000, .@val;
-	}
+	.@lv = LEASH_LV;
+	if (.@lv > 10) .@lv = 10;
 
-	// ---- While-mounted buffs (Lv1-8) ----
-	if (checkriding() || ismounting()) {
-		.@lv = LEASH_LV;
+	// Per-level scaling tables — index 1..10 (index 0 unused).
+	setarray .@hp[0],     0, 3, 5, 8, 11, 14, 17, 20, 23, 26, 30;
+	setarray .@sp[0],     0, 3, 5, 8, 11, 14, 17, 20, 23, 26, 30;
+	setarray .@hpregen[0],0, 5,10,15, 20, 25, 30, 35, 40, 45, 50;
+	setarray .@spregen[0],0, 5,10,15, 20, 25, 30, 35, 40, 45, 50;
 
-		// HP bonus: Lv1 = +5%, Lv2-4 = +6/8/10%, Lv5+ capped at +12%
-		setarray .@hp_table[0], 0, 5, 6, 8, 10, 12, 12, 12, 12;
-		.@hp_pct = .@hp_table[(.@lv > 8) ? 8 : .@lv];
-		if (.@hp_pct > 0)
-			sc_start SC_APPLEIDUN, 82800000, .@hp_pct;
+	.@maxhp_pct  = .@hp[.@lv];
+	.@maxsp_pct  = .@sp[.@lv];
+	.@hpreg_pct  = .@hpregen[.@lv];
+	.@spreg_pct  = .@spregen[.@lv];
+	.@weight     = 200 * .@lv;
+	.@allstat    = (.@lv >= 9) ? (.@lv - 8) : 0;
 
-		// Regen boost (Magnificat proxy): scales with leash level, cap at 5
-		.@regen_lv = (.@lv >= 5) ? 5 : .@lv;
-		if (.@regen_lv > 0)
-			sc_start SC_MAGNIFICAT, 82800000, .@regen_lv;
+	.@script$ = "{ "
+		+ "bonus bMaxHPrate," + .@maxhp_pct + "; "
+		+ "bonus bMaxSPrate," + .@maxsp_pct + "; "
+		+ "bonus bHPrecovRate," + .@hpreg_pct + "; "
+		+ "bonus bSPrecovRate," + .@spreg_pct + "; "
+		+ "bonus bAddMaxWeight," + .@weight + "; ";
+	if (.@allstat > 0)
+		.@script$ = .@script$ + "bonus bAllStats," + .@allstat + "; ";
+	.@script$ = .@script$ + "}";
 
-		// Def/MDef/Flee bonus (Lv6-8): +10/20/30
-		if (.@lv >= 6) {
-			.@stat_bonus = (.@lv - 5) * 10;
-			sc_start SC_DEF_RATE, 82800000, .@stat_bonus;
-			sc_start SC_MDEF_RATE, 82800000, .@stat_bonus;
-			sc_start SC_INCFLEE, 82800000, .@stat_bonus;
-		}
-	}
+	// 23h duration, flag 1024 = replace/extend duplicates, type 1 = buff.
+	bonus_script .@script$, 82800, 1024, 1;
 	end;
 }

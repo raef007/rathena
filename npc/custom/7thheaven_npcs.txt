@@ -312,35 +312,45 @@ L_LeashEffects:
 	mes "He sets down his bowl and";
 	mes "wipes his hands on a rag.";
 	mes " ";
-	mes "Right. Listen carefully -";
-	mes "a leash isn't just a strap.";
-	mes "Each upgrade binds another spirit";
-	mes "to the beast you ride.";
+	mes "Listen close. The leash isn't";
+	mes "just a strap - each binding pulls";
+	mes "more vitality out of the beasts";
+	mes "tethered to it. You feel it,";
+	mes "even off the mount.";
 	next;
 
 	mes "[Beast Master]";
-	mes "^0055FFWhile mounted:^000000";
-	mes "  Lv1 - +5% Max HP";
-	mes "  Lv2 - +6% HP, mild SP regen";
-	mes "  Lv3 - +8% HP, stronger regen";
-	mes "  Lv4 - +10% HP, stronger regen";
-	mes "  Lv5 - +12% HP, full regen aura";
-	next;
-
-	mes "[Beast Master]";
-	mes "^FF8800Mounted, advanced bindings:^000000";
-	mes "  Lv6 - all of Lv5 + Def/MDef/Flee +10";
-	mes "  Lv7 - same, +20";
-	mes "  Lv8 - same, +30";
-	next;
-
-	mes "[Beast Master]";
-	mes "^FF0000Beyond mortal craft:^000000";
-	mes "  Lv9  - +1 to ALL stats (passive)";
-	mes "  Lv10 - +2 to ALL stats (passive)";
+	mes "^0055FFEach leash level grants:^000000";
+	mes "  +Max HP %";
+	mes "  +Max SP %";
+	mes "  +HP Regen %";
+	mes "  +SP Regen %";
+	mes "  +Weight Limit (^00AA00200 per level^000000)";
 	mes " ";
-	mes "Lv9 and 10 don't need a mount -";
-	mes "just keep the leash in your bag.";
+	mes "All passive - just keep it in";
+	mes "your bag. No mount required.";
+	next;
+
+	mes "[Beast Master]";
+	mes "^FF8800Per-level bonuses:^000000";
+	mes "  Lv1  -  +3% HP/SP, +5% regen, +200 wt";
+	mes "  Lv2  -  +5% HP/SP, +10% regen, +400 wt";
+	mes "  Lv3  -  +8% HP/SP, +15% regen, +600 wt";
+	mes "  Lv4  - +11% HP/SP, +20% regen, +800 wt";
+	mes "  Lv5  - +14% HP/SP, +25% regen, +1000 wt";
+	next;
+
+	mes "[Beast Master]";
+	mes "^FF8800Per-level bonuses (cont.):^000000";
+	mes "  Lv6  - +17% HP/SP, +30% regen, +1200 wt";
+	mes "  Lv7  - +20% HP/SP, +35% regen, +1400 wt";
+	mes "  Lv8  - +23% HP/SP, +40% regen, +1600 wt";
+	next;
+
+	mes "[Beast Master]";
+	mes "^FF0000Master tier (passive, all stats):^000000";
+	mes "  Lv9  - +26% HP/SP, +45% regen, +1800 wt, ^FF0000+1 ALL STATS^000000";
+	mes "  Lv10 - +30% HP/SP, +50% regen, +2000 wt, ^FF0000+2 ALL STATS^000000";
 	next;
 
 	mes "[Beast Master]";
