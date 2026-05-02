@@ -1,17 +1,17 @@
 // ==========================================================================
 // 7th Heaven — Persistent Leash & Passive Event Handler
 // ==========================================================================
-// Applies Beast Master's Leash bonuses via bonus_script — works regardless of
-// other SCs the player may have, no skill-level math, no mount requirement.
-// Re-applied on login and on every leash use.
+// Lv1-8 bonuses apply ONLY while mounted (HP%, SP%, HP/SP regen, weight).
+// Lv9-10 bonuses apply whenever the leash is in inventory (+1/+2 all stats).
+//
+// We use bonus_script for both, but clear/re-apply on every leash use so the
+// mounted bonus disappears as soon as the player dismounts.
 // ==========================================================================
 
 -	script	7thHeaven_Events	-1,{
 
 OnPCLoginEvent:
 	// ---- Innkeeper Mara's tavern blessings (1 hour, persistent) ----
-	// INN_BUFF_END is absolute server tick — the clock ticks down even while
-	// the player is offline. On login, re-apply with whatever time remains.
 	if (INN_BUFF_END > 0) {
 		.@remain = INN_BUFF_END - gettimetick(2);
 		if (.@remain > 0) {
@@ -30,47 +30,54 @@ OnPCLoginEvent:
 	doevent "7thHeaven_Events::OnApplyLeash";
 	end;
 
-// Apply leash bonuses based on current LEASH_LV.
-// Called from OnPCLoginEvent and from the leash item's Script.
+// Apply leash bonuses based on current LEASH_LV and mount state.
+// Called on login and on every leash use (which toggles mount state).
 //
-// Per level, applies (always — leash in inventory is sufficient):
-//   +N% MaxHP / MaxSP, +N% HP/SP regen, +200*Lv weight limit
-// Lv9 adds +1 to all stats, Lv10 adds +2.
+// Approach:
+//   1. Clear ALL existing bonus_scripts on the player (bonus_script_clear).
+//      This wipes any prior leash bonus so we can rebuild from the current state.
+//   2. If Lv >= 9, apply the always-on +all-stats bonus.
+//   3. If mounted AND Lv >= 1, apply the mounted-only bonus (HP/SP/regen/weight).
 //
-// Uses bonus_script flag 1024 (replace duplicates by extending duration) so
-// re-applying refreshes cleanly without stacking. 23h duration means the
-// bonus survives a normal play session; login + item-use keep it topped up.
+// Caveat: bonus_script_clear with no flag wipes EVERY non-permanent bonus_script
+// the player has. Currently no other system uses bonus_script for this player,
+// so it's safe. If another system adds bonus_scripts later, switch to a tagged
+// approach (filter by status icon) — for now, clear-all is simplest.
 OnApplyLeash:
+	bonus_script_clear;
+
 	if (countitem(50011) <= 0) end;
 	if (LEASH_LV <= 0) end;
 
 	.@lv = LEASH_LV;
 	if (.@lv > 10) .@lv = 10;
 
-	// Per-level scaling tables — index 1..10 (index 0 unused).
-	setarray .@hp[0],     0, 3, 5, 8, 11, 14, 17, 20, 23, 26, 30;
-	setarray .@sp[0],     0, 3, 5, 8, 11, 14, 17, 20, 23, 26, 30;
-	setarray .@hpregen[0],0, 5,10,15, 20, 25, 30, 35, 40, 45, 50;
-	setarray .@spregen[0],0, 5,10,15, 20, 25, 30, 35, 40, 45, 50;
+	// ---- Always-on (Lv9-10): +1 / +2 all stats, leash in inventory ----
+	if (.@lv >= 9) {
+		.@allstat = .@lv - 8; // Lv9 = +1, Lv10 = +2
+		// flag 1024 = replace duplicates (safe even right after clear),
+		// type 1 = buff, 23h duration so it survives a session.
+		bonus_script "{ bonus bAllStats," + .@allstat + "; }", 82800, 1024, 1;
+	}
 
-	.@maxhp_pct  = .@hp[.@lv];
-	.@maxsp_pct  = .@sp[.@lv];
-	.@hpreg_pct  = .@hpregen[.@lv];
-	.@spreg_pct  = .@spregen[.@lv];
-	.@weight     = 200 * .@lv;
-	.@allstat    = (.@lv >= 9) ? (.@lv - 8) : 0;
+	// ---- Mounted-only (Lv1-8 only; Lv9-10 mounted gives no extra mounted bonus) ----
+	if (.@lv > 8) end;
+	if (!checkriding() && !ismounting()) end;
+
+	// HP regen %, SP regen %, weight scale per level (Lv1-8).
+	setarray .@hpregen[0], 0, 5,10,15, 20, 25, 30, 35, 40;
+	setarray .@spregen[0], 0, 5,10,15, 20, 25, 30, 35, 40;
+
+	.@hpreg_pct = .@hpregen[.@lv];
+	.@spreg_pct = .@spregen[.@lv];
+	.@weight    = 200 * .@lv; // Lv1=200 ... Lv8=1600
 
 	.@script$ = "{ "
-		+ "bonus bMaxHPrate," + .@maxhp_pct + "; "
-		+ "bonus bMaxSPrate," + .@maxsp_pct + "; "
 		+ "bonus bHPrecovRate," + .@hpreg_pct + "; "
 		+ "bonus bSPrecovRate," + .@spreg_pct + "; "
-		+ "bonus bAddMaxWeight," + .@weight + "; ";
-	if (.@allstat > 0)
-		.@script$ = .@script$ + "bonus bAllStats," + .@allstat + "; ";
-	.@script$ = .@script$ + "}";
+		+ "bonus bAddMaxWeight," + .@weight + "; "
+		+ "}";
 
-	// 23h duration, flag 1024 = replace/extend duplicates, type 1 = buff.
 	bonus_script .@script$, 82800, 1024, 1;
 	end;
 }
