@@ -1,13 +1,54 @@
 // ==========================================================================
 // 7th Heaven — Persistent Leash & Passive Event Handler
 // ==========================================================================
-// Lv1-8 bonuses apply ONLY while mounted (HP%, SP%, HP/SP regen, weight).
+// Lv1-8 bonuses apply ONLY while mounted (HP regen, SP regen, weight).
 // Lv9-10 bonuses apply whenever the leash is in inventory (+1/+2 all stats).
 //
-// We use bonus_script for both, but clear/re-apply on every leash use so the
-// mounted bonus disappears as soon as the player dismounts.
+// Bonuses use bonus_script (not status changes) to avoid SC icon residue and
+// MaxHP-not-recalculating bugs. F_ApplyLeash is called synchronously via
+// callfunc from both OnPCLoginEvent and the leash item's Script.
 // ==========================================================================
 
+// --------------------------------------------------------------------------
+// F_ApplyLeash — synchronous callfunc target.
+//
+// Steps:
+//   1. Clear all existing bonus_scripts on the player.
+//   2. If leash absent or LEASH_LV == 0, stop.
+//   3. If LEASH_LV >= 9, apply +AllStats (always-on).
+//   4. If mounted AND LEASH_LV in 1..8, apply HP/SP regen + weight.
+//
+// callfunc keeps the invoking player attached, unlike doevent which queues.
+// --------------------------------------------------------------------------
+function	script	F_ApplyLeash	{
+	bonus_script_clear;
+
+	if (countitem(50011) <= 0) return;
+	if (LEASH_LV <= 0) return;
+
+	.@lv = LEASH_LV;
+	if (.@lv > 10) .@lv = 10;
+
+	// ---- Lv9-10 always-on: +AllStats ----
+	if (.@lv >= 9) {
+		.@allstat = .@lv - 8; // 9->1, 10->2
+		bonus_script "{ bonus bAllStats," + .@allstat + "; }", 82800, 1024, 1;
+	}
+
+	// ---- Lv1-8 mounted only: regen + weight ----
+	if (.@lv > 8) return;
+	if (!checkriding() && !ismounting()) return;
+
+	.@regen  = .@lv * 5;   // Lv1=5%, Lv8=40%
+	.@weight = .@lv * 200; // Lv1=200, Lv8=1600
+
+	bonus_script "{ bonus bHPrecovRate," + .@regen + "; bonus bSPrecovRate," + .@regen + "; bonus bAddMaxWeight," + .@weight + "; }", 82800, 1024, 1;
+	return;
+}
+
+// --------------------------------------------------------------------------
+// 7thHeaven_Events — login hooks for Innkeeper buffs and leash refresh.
+// --------------------------------------------------------------------------
 -	script	7thHeaven_Events	-1,{
 
 OnPCLoginEvent:
@@ -27,57 +68,6 @@ OnPCLoginEvent:
 		}
 	}
 
-	doevent "7thHeaven_Events::OnApplyLeash";
-	end;
-
-// Apply leash bonuses based on current LEASH_LV and mount state.
-// Called on login and on every leash use (which toggles mount state).
-//
-// Approach:
-//   1. Clear ALL existing bonus_scripts on the player (bonus_script_clear).
-//      This wipes any prior leash bonus so we can rebuild from the current state.
-//   2. If Lv >= 9, apply the always-on +all-stats bonus.
-//   3. If mounted AND Lv >= 1, apply the mounted-only bonus (HP/SP/regen/weight).
-//
-// Caveat: bonus_script_clear with no flag wipes EVERY non-permanent bonus_script
-// the player has. Currently no other system uses bonus_script for this player,
-// so it's safe. If another system adds bonus_scripts later, switch to a tagged
-// approach (filter by status icon) — for now, clear-all is simplest.
-OnApplyLeash:
-	bonus_script_clear;
-
-	if (countitem(50011) <= 0) end;
-	if (LEASH_LV <= 0) end;
-
-	.@lv = LEASH_LV;
-	if (.@lv > 10) .@lv = 10;
-
-	// ---- Always-on (Lv9-10): +1 / +2 all stats, leash in inventory ----
-	if (.@lv >= 9) {
-		.@allstat = .@lv - 8; // Lv9 = +1, Lv10 = +2
-		// flag 1024 = replace duplicates (safe even right after clear),
-		// type 1 = buff, 23h duration so it survives a session.
-		bonus_script "{ bonus bAllStats," + .@allstat + "; }", 82800, 1024, 1;
-	}
-
-	// ---- Mounted-only (Lv1-8 only; Lv9-10 mounted gives no extra mounted bonus) ----
-	if (.@lv > 8) end;
-	if (!checkriding() && !ismounting()) end;
-
-	// HP regen %, SP regen %, weight scale per level (Lv1-8).
-	setarray .@hpregen[0], 0, 5,10,15, 20, 25, 30, 35, 40;
-	setarray .@spregen[0], 0, 5,10,15, 20, 25, 30, 35, 40;
-
-	.@hpreg_pct = .@hpregen[.@lv];
-	.@spreg_pct = .@spregen[.@lv];
-	.@weight    = 200 * .@lv; // Lv1=200 ... Lv8=1600
-
-	.@script$ = "{ "
-		+ "bonus bHPrecovRate," + .@hpreg_pct + "; "
-		+ "bonus bSPrecovRate," + .@spreg_pct + "; "
-		+ "bonus bAddMaxWeight," + .@weight + "; "
-		+ "}";
-
-	bonus_script .@script$, 82800, 1024, 1;
+	callfunc "F_ApplyLeash";
 	end;
 }
