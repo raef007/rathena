@@ -20,14 +20,10 @@ function	script	F_ApplyLeash	{
 	// flag-tagged clears.)
 	bonus_script_clear;
 
-	if (countitem(50011) <= 0) {
-		dispbottom "[Leash] No leash in inventory.";
+	if (countitem(50011) <= 0)
 		return;
-	}
-	if (LEASH_LV <= 0) {
-		dispbottom "[Leash] LEASH_LV is 0 — get one crafted.";
+	if (LEASH_LV <= 0)
 		return;
-	}
 
 	.@lv = LEASH_LV;
 	if (.@lv > 10) .@lv = 10;
@@ -36,19 +32,14 @@ function	script	F_ApplyLeash	{
 	if (.@lv >= 9) {
 		.@allstat = .@lv - 8;
 		bonus_script "{ bonus bAllStats," + .@allstat + "; }", 82800, 1024, 1, EFST_FOOD_STR;
-		dispbottom "[Leash] Lv" + .@lv + " passive applied: +" + .@allstat + " all stats.";
 	}
 
 	// ---- Lv1-8 mounted only ----
-	if (.@lv > 8) {
-		dispbottom "[Leash] Lv" + .@lv + " — passive only, no mount bonus.";
+	if (.@lv > 8)
 		return;
-	}
 
-	if (!checkriding() && !ismounting()) {
-		dispbottom "[Leash] Lv" + .@lv + " — dismount detected, mount bonus removed.";
+	if (!checkriding() && !ismounting())
 		return;
-	}
 
 	.@hp_pct  = .@lv * 2;   // Lv1=2%, Lv8=16%
 	.@sp_pct  = .@lv * 2;
@@ -56,8 +47,6 @@ function	script	F_ApplyLeash	{
 	.@weight  = .@lv * 200; // Lv1=200, Lv8=1600
 
 	bonus_script "{ bonus bMaxHPrate," + .@hp_pct + "; bonus bMaxSPrate," + .@sp_pct + "; bonus bHPrecovRate," + .@regen + "; bonus bSPrecovRate," + .@regen + "; bonus bAddMaxWeight," + .@weight + "; }", 82800, 1024, 1, EFST_FOOD_STR;
-
-	dispbottom "[Leash] Lv" + .@lv + " mount bonus applied: +" + .@hp_pct + "% HP/SP, +" + .@regen + "% regen, +" + .@weight + " weight.";
 	return;
 }
 

@@ -351,16 +351,6 @@ static bool autobattle_pick_ultimate_dest(map_session_data *sd, t_tick tick)
 		sd->autobattle_data.roam_snapshot_x = sd->x;
 		sd->autobattle_data.roam_snapshot_y = sd->y;
 		sd->autobattle_data.roam_struggle_count = 0;
-		{
-			char dbg[160];
-			int32 dq = autobattle_direction_quadrant(sd, nearest->x, nearest->y);
-			static const char *qname[] = {"NW", "NE", "SW", "SE"};
-			snprintf(dbg, sizeof(dbg),
-				"[Roam] mob-seek picked mob %d at (%d,%d) — dir %s, dist %d",
-				nearest->id, nearest->x, nearest->y, qname[dq],
-				abs(nearest->x - sd->x) + abs(nearest->y - sd->y));
-			clif_displaymessage(sd->fd, dbg);
-		}
 		return true;
 	}
 
@@ -439,16 +429,6 @@ static bool autobattle_pick_ultimate_dest(map_session_data *sd, t_tick tick)
 		sd->autobattle_data.roam_best_dist = abs(rx - sd->x) + abs(ry - sd->y);
 		sd->autobattle_data.roam_best_tick = tick;
 		sd->autobattle_data.roam_dest_mob_id = 0; // Random pick — no mob attached.
-
-		{
-			char dbg[160];
-			int32 dq = autobattle_direction_quadrant(sd, rx, ry);
-			static const char *qname[] = {"NW", "NE", "SW", "SE"};
-			snprintf(dbg, sizeof(dbg),
-				"[Roam] random+quadrant picked (%d,%d) — dir %s (mob-seek found nothing)",
-				rx, ry, qname[dq]);
-			clif_displaymessage(sd->fd, dbg);
-		}
 
 		// Mark the destination's quadrant as visited NOW (we'll be there
 		// shortly). This stops the same quadrant from being re-picked
@@ -624,14 +604,6 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 		// different next iteration.
 		int32 fq = autobattle_direction_quadrant(sd, dest_x, dest_y);
 		sd->autobattle_data.failed_direction_until[fq] = tick + 30000;
-		{
-			static const char *qname[] = {"NW", "NE", "SW", "SE"};
-			char dbg[160];
-			snprintf(dbg, sizeof(dbg),
-				"[Roam] 15s stall to (%d,%d) — blacklist dir %s + mob %d for 30s",
-				dest_x, dest_y, qname[fq], sd->autobattle_data.roam_dest_mob_id);
-			clif_displaymessage(sd->fd, dbg);
-		}
 		if (sd->autobattle_data.roam_dest_mob_id > 0) {
 			autobattle_blacklist_unreachable(sd,
 				sd->autobattle_data.roam_dest_mob_id, tick + 30000);
@@ -750,14 +722,6 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 							// — bot has to commit to a different direction.
 							int32 fq = autobattle_direction_quadrant(sd, dest_x, dest_y);
 							sd->autobattle_data.failed_direction_until[fq] = tick + 30000;
-							{
-								static const char *qname[] = {"NW", "NE", "SW", "SE"};
-								char dbg[160];
-								snprintf(dbg, sizeof(dbg),
-									"[Roam] 3-strikes on (%d,%d) — blacklist dir %s + mob %d for 30s",
-									dest_x, dest_y, qname[fq], sd->autobattle_data.roam_dest_mob_id);
-								clif_displaymessage(sd->fd, dbg);
-							}
 							sd->autobattle_data.roam_has_dest = false;
 							sd->autobattle_data.roam_struggle_count = 0;
 							if (sd->autobattle_data.roam_dest_mob_id > 0) {
@@ -1861,44 +1825,6 @@ void autobattle_start(map_session_data *sd)
 	if (sd->autobattle_data.mode & AUTOBATTLE_ATTACK)
 		autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
 
-	// Debug: tell the player which features are active this session so they
-	// can verify their persistent config actually took effect after login.
-	{
-		char dbg[256];
-		snprintf(dbg, sizeof(dbg),
-			"[Auto-Battle] Active features: %s%s%s%s%s%s%s",
-			(sd->autobattle_data.mode & AUTOBATTLE_ATTACK)   ? "Attack " : "",
-			(sd->autobattle_data.mode & AUTOBATTLE_SUPPORT)  ? "Support " : "",
-			(sd->autobattle_data.mode & AUTOBATTLE_LOOT)     ? "Loot " : "",
-			(sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT)  ? "Pot " : "",
-			(sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT)  ? "Sit " : "",
-			(sd->autobattle_data.mode & AUTOBATTLE_FLYWING)  ? "FlyWing " : "",
-			(sd->autobattle_data.mode & AUTOBATTLE_TELESKILL)? "Teleskill " : "");
-		clif_displaymessage(sd->fd, dbg);
-		if (sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT) {
-			snprintf(dbg, sizeof(dbg),
-				"[Auto-Battle] Pot config: HP item %u @%d%%, SP item %u @%d%%, GoHome %s",
-				sd->autobattle_data.autopot_hp_id, sd->autobattle_data.autopot_hp_threshold,
-				sd->autobattle_data.autopot_sp_id, sd->autobattle_data.autopot_sp_threshold,
-				sd->autobattle_data.gohome_no_pots ? "ON" : "OFF");
-			clif_displaymessage(sd->fd, dbg);
-		}
-		if (sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) {
-			snprintf(dbg, sizeof(dbg),
-				"[Auto-Battle] Sit thresholds: HP<%d%% SP<%d%%",
-				sd->autobattle_data.autosit_hp_threshold,
-				sd->autobattle_data.autosit_sp_threshold);
-			clif_displaymessage(sd->fd, dbg);
-		}
-		if (sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) {
-			snprintf(dbg, sizeof(dbg),
-				"[Auto-Battle] Support: %d skills, %d items configured",
-				sd->autobattle_data.support_skill_count,
-				sd->autobattle_data.support_item_count);
-			clif_displaymessage(sd->fd, dbg);
-		}
-	}
-
 	// Start new timer
 	sd->autobattle_data.attack_timer = add_timer(
 		gettick() + AUTOBATTLE_TIMER_INTERVAL,
@@ -2392,28 +2318,6 @@ void autobattle_save_config_db(map_session_data *sd)
 	autobattle_build_csv(mob_csv, sizeof(mob_csv), sd->autobattle_data.target_mob_ids,
 		sd->autobattle_data.target_mob_count);
 
-	// Debug: chat-output what we're saving so we can spot mismatches between
-	// what the user thinks is saved vs what actually hits the DB. Remove once
-	// the persistence is verified working.
-	{
-		char dbg[256];
-		snprintf(dbg, sizeof(dbg),
-			"[Save] mode=0x%X loot=%d pot=%d sit=%d fly=%d tele=%d sup=%d skills=%d items=%d hp_pot=%u sp_pot=%u sit_hp=%u",
-			sd->autobattle_data.mode,
-			(sd->autobattle_data.mode & AUTOBATTLE_LOOT) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_FLYWING) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_TELESKILL) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) ? 1 : 0,
-			sd->autobattle_data.support_skill_count,
-			sd->autobattle_data.support_item_count,
-			sd->autobattle_data.autopot_hp_id,
-			sd->autobattle_data.autopot_sp_id,
-			sd->autobattle_data.autosit_hp_threshold);
-		clif_displaymessage(sd->fd, dbg);
-	}
-
 	// UPSERT the full row. The daily-time fields (daily_seconds_used, etc.)
 	// are managed by autobattle_save_time_db — leave them alone here.
 	if (SQL_ERROR == Sql_Query(mmysql_handle,
@@ -2464,9 +2368,6 @@ void autobattle_save_config_db(map_session_data *sd)
 		sd->autobattle_data.gohome_no_pots ? 1u : 0u))
 	{
 		Sql_ShowDebug(mmysql_handle);
-		clif_displaymessage(sd->fd, "[Save] !!! SQL ERROR — config did NOT persist. Check map server log.");
-	} else {
-		clif_displaymessage(sd->fd, "[Save] OK");
 	}
 }
 
@@ -2496,14 +2397,12 @@ void autobattle_load_config_db(map_session_data *sd)
 		"FROM `char_autobattle_config` WHERE `char_id` = %d", char_id))
 	{
 		Sql_ShowDebug(mmysql_handle);
-		clif_displaymessage(sd->fd, "[Load] !!! SQL ERROR on SELECT — likely missing v4 migration columns. Check log.");
 		return;
 	}
 
 	if (SQL_SUCCESS != Sql_NextRow(mmysql_handle)) {
 		Sql_FreeResult(mmysql_handle);
-		clif_displaymessage(sd->fd, "[Load] No saved row for this character — first session, defaults applied.");
-		return;
+		return; // No saved config — defaults already set by caller.
 	}
 
 	auto get_str = [](int32 col) -> const char* {
@@ -2526,19 +2425,6 @@ void autobattle_load_config_db(map_session_data *sd)
 	// the moment the player turns ATTACK back on.
 	uint32 saved_mode = get_u32(0);
 	sd->autobattle_data.mode = (uint16)(saved_mode & ~AUTOBATTLE_ATTACK);
-	{
-		char dbg[256];
-		snprintf(dbg, sizeof(dbg),
-			"[Load] saved_mode=0x%X loaded_mode=0x%X (loot=%d pot=%d sit=%d fly=%d tele=%d sup=%d)",
-			saved_mode, sd->autobattle_data.mode,
-			(sd->autobattle_data.mode & AUTOBATTLE_LOOT) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_FLYWING) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_TELESKILL) ? 1 : 0,
-			(sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) ? 1 : 0);
-		clif_displaymessage(sd->fd, dbg);
-	}
 	// Force PRIORITY_DISTANCE on load — priority isn't user-configurable from
 	// any menu, so any saved value other than DISTANCE was set by an old init
 	// default before we switched to nearest-first. Don't restore a stale
