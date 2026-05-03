@@ -29,6 +29,7 @@ enum e_autobattle_mode {
 	AUTOBATTLE_AUTOPOT = 0x20,     ///< Auto-use potions when HP/SP low
 	AUTOBATTLE_FLYWING = 0x40,     ///< Use fly wing to teleport when roaming
 	AUTOBATTLE_AUTOSIT = 0x80,     ///< Auto-sit when HP/SP low, stand when recovered
+	AUTOBATTLE_TELESKILL = 0x100,  ///< Cast AL_TELEPORT skill (no item consumed). Mutually exclusive with FLYWING.
 };
 
 /**
@@ -135,12 +136,18 @@ struct s_autobattle_data {
 	// memory at near-zero cost — covers the "stop circling the same area" case.
 	t_tick roam_quadrant_tick[4];
 
-	// Short-term unreachable-target blacklist: when unit_walktobl fails for
-	// a target (wall between us and the mob), we ignore that target ID for a
-	// few seconds so the next search picks a different mob — or no mob, which
-	// lets the Fly Wing / walk-roam else-branch run.
-	int32 unreachable_target_id;
-	t_tick unreachable_target_until;
+	// Multi-slot unreachable-target blacklist. When unit_walktobl fails or
+	// the bot 3-strikes a mob-seek destination, the failed mob's bl_id and
+	// expiry tick are recorded here. Search and mob-seek skip blacklisted
+	// IDs. 8 slots so a maze with several wall-blocked mobs doesn't cause
+	// a single-slot blacklist to keep getting overwritten and looping.
+	// Replacement policy is round-robin via unreachable_head; oldest entry
+	// gets evicted first. Inactive slots have id == 0.
+	int32 unreachable_target_id;       // legacy field (kept for save/load compat); use the array
+	t_tick unreachable_target_until;   // legacy field
+	int32 unreachable_ids[8];
+	t_tick unreachable_until[8];
+	uint8 unreachable_head;
 
 	// "3 strikes" wall counter. Increments every time the hop search has to
 	// fall back to pass 2 or 3 (sidestep / escape hatch) — i.e. forward-
@@ -148,6 +155,22 @@ struct s_autobattle_data {
 	// when a new destination is picked. After 3 strikes we abandon the
 	// current ultimate destination, much faster than the 15s stall timer.
 	uint8 roam_struggle_count;
+
+	// When mob-seek picks an ultimate destination, store the mob's bl_id here
+	// so 3-strikes / stall abandonment can blacklist that mob — the next
+	// mob-seek pick then chooses a different mob (likely in a different
+	// direction) instead of looping on the same wall-blocked one. 0 = the
+	// current dest came from the random+quadrant fallback (no specific mob).
+	int32 roam_dest_mob_id;
+
+	// Directional quadrant blacklist: when wall hits abandon a destination,
+	// the *direction* that destination was in (relative to player) is
+	// blacklisted for 30 seconds. Mob-seek skips mobs in that direction;
+	// random+quadrant skips that quadrant. Forces the bot to commit to
+	// another direction (north / south / opposite) when a wall keeps blocking
+	// pursuit. 4 entries indexed by NW/NE/SW/SE (low x = 0 bit, low y = 0 bit
+	// — see autobattle_direction_quadrant).
+	t_tick failed_direction_until[4];
 
 	// Cooldown timer for Fly Wing teleport. Independent of roam ticks so the
 	// bot can keep walk-roaming continuously while Fly Wing fires every 3s

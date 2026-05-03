@@ -38,8 +38,57 @@ struct s_autobattle_search_context {
 static struct s_autobattle_search_context g_search_context;
 
 // Forward declarations — definitions below; needed because the picker calls
-// the quadrant helper while picking destinations.
+// the quadrant helper while picking destinations, and the mob-seek callback
+// calls the direction-blacklist helper which is defined later.
 static int32 autobattle_quadrant_of(map_session_data *sd, int16 x, int16 y);
+static int32 autobattle_direction_quadrant(map_session_data *sd, int16 x, int16 y);
+static bool autobattle_direction_blacklisted(map_session_data *sd, int16 x, int16 y, t_tick tick);
+
+/**
+ * Multi-slot unreachable-mob blacklist helpers. Single-slot blacklist gets
+ * overwritten in mazes with multiple wall-blocked mobs and the bot loops
+ * between them. 8-slot ring buffer with round-robin replacement.
+ */
+static bool autobattle_is_unreachable(map_session_data *sd, int32 id, t_tick tick)
+{
+	if (id <= 0)
+		return false;
+	for (int i = 0; i < 8; i++) {
+		if (sd->autobattle_data.unreachable_ids[i] == id &&
+			DIFF_TICK(tick, sd->autobattle_data.unreachable_until[i]) < 0)
+			return true;
+	}
+	return false;
+}
+
+static void autobattle_blacklist_unreachable(map_session_data *sd, int32 id, t_tick until)
+{
+	if (id <= 0)
+		return;
+	// If this id already has a slot, just refresh its expiry (longer wins).
+	for (int i = 0; i < 8; i++) {
+		if (sd->autobattle_data.unreachable_ids[i] == id) {
+			if (DIFF_TICK(until, sd->autobattle_data.unreachable_until[i]) > 0)
+				sd->autobattle_data.unreachable_until[i] = until;
+			return;
+		}
+	}
+	// Otherwise prefer an empty/expired slot before evicting an active one.
+	t_tick now = gettick();
+	for (int i = 0; i < 8; i++) {
+		if (sd->autobattle_data.unreachable_ids[i] == 0 ||
+			DIFF_TICK(now, sd->autobattle_data.unreachable_until[i]) >= 0) {
+			sd->autobattle_data.unreachable_ids[i] = id;
+			sd->autobattle_data.unreachable_until[i] = until;
+			return;
+		}
+	}
+	// All slots active — round-robin evict the head.
+	uint8 h = sd->autobattle_data.unreachable_head;
+	sd->autobattle_data.unreachable_ids[h] = id;
+	sd->autobattle_data.unreachable_until[h] = until;
+	sd->autobattle_data.unreachable_head = (h + 1) % 8;
+}
 
 static bool autobattle_has_status(map_session_data *sd, int16 status_id)
 {
@@ -181,11 +230,93 @@ bool autobattle_is_attack_skill(uint16 skill_id)
 	return true;
 }
 
+// ===== Mob-seek roam =====
+// Scan the entire map for the nearest live mob and use its position as the
+// ultimate destination. Makes the bot look like it's hunting (because it is)
+// instead of wandering randomly. Falls back to random walkable picks when the
+// map has no mobs at all.
+
+struct s_autobattle_nearmob_ctx {
+	map_session_data *searcher;
+	struct block_list *best;
+	int32 best_dist; // Manhattan
+};
+static struct s_autobattle_nearmob_ctx g_nearmob_ctx;
+
+static int32 autobattle_nearmob_callback(struct block_list* bl, va_list ap)
+{
+	if (!bl || bl->type != BL_MOB)
+		return 0;
+	struct map_session_data *sd = g_nearmob_ctx.searcher;
+	if (!sd)
+		return 0;
+
+	struct mob_data *md = (struct mob_data*)bl;
+
+	// Skip dead, summoned (slaves/pets/clones), or in-PvP-mode mobs.
+	if (status_isdead(*bl))
+		return 0;
+	if (md->special_state.ai > 0)
+		return 0;
+
+	// Whitelist filter — when the player has a target whitelist, only count
+	// mobs in it. Without this, the bot would walk toward any mob even though
+	// it'll just ignore them on arrival.
+	if (sd->autobattle_data.target_mob_count > 0) {
+		bool in_list = false;
+		for (int i = 0; i < sd->autobattle_data.target_mob_count; i++) {
+			if (sd->autobattle_data.target_mob_ids[i] == md->mob_id) {
+				in_list = true;
+				break;
+			}
+		}
+		if (!in_list)
+			return 0;
+	}
+
+	// Skip mobs we already know are unreachable from our current position.
+	if (autobattle_is_unreachable(sd, bl->id, gettick()))
+		return 0;
+
+	// Skip mobs in a direction-quadrant we recently failed to reach (wall
+	// hits in that direction). Forces the bot to commit to another direction
+	// for the blacklist duration. After ~2 mins the blacklist lapses and
+	// we'll try that direction again — by then position/world have changed.
+	if (autobattle_direction_blacklisted(sd, bl->x, bl->y, gettick()))
+		return 0;
+
+	int32 dist = abs(bl->x - sd->x) + abs(bl->y - sd->y);
+	if (dist < g_nearmob_ctx.best_dist) {
+		g_nearmob_ctx.best_dist = dist;
+		g_nearmob_ctx.best = bl;
+	}
+	return 0;
+}
+
 /**
- * Pick a random walkable cell as a far "ultimate" target, BIASED toward the
- * staler map quadrants. We track when each of the four NW/NE/SW/SE quadrants
- * was last visited; this picks a quadrant whose last-visit tick is the oldest
- * (or 0 = never), then samples random cells within it.
+ * Find the nearest live mob anywhere on the same map. Returns nullptr if no
+ * eligible mob exists (empty map, all dead, all unreachable, or all filtered
+ * out by the whitelist).
+ */
+static struct block_list* autobattle_find_nearest_mob(map_session_data *sd)
+{
+	if (!sd)
+		return nullptr;
+
+	g_nearmob_ctx.searcher = sd;
+	g_nearmob_ctx.best = nullptr;
+	g_nearmob_ctx.best_dist = INT32_MAX;
+
+	map_foreachinmap(autobattle_nearmob_callback, sd->m, BL_MOB);
+
+	return g_nearmob_ctx.best;
+}
+
+/**
+ * Pick the ultimate destination. Mob-seek mode: the nearest live mob anywhere
+ * on the map becomes the ultimate destination. If no mob exists (or all are
+ * filtered/unreachable), fall back to random walkable cell biased toward the
+ * stalest map quadrant (preserves coverage on empty maps).
  *
  * No A* validation on the destination itself — we navigate via short A* hops,
  * so the cell just needs to not be a wall. Visit memory is reset on a fresh
@@ -196,6 +327,46 @@ static bool autobattle_pick_ultimate_dest(map_session_data *sd, t_tick tick)
 	struct map_data *mapdata = map_getmapdata(sd->m);
 	if (!mapdata)
 		return false;
+
+	// Mob-seek: nearest live mob's position becomes the ultimate destination.
+	// The hop loop walks toward it; once the mob enters detection range
+	// (15 cells), the normal target search picks it up and combat starts.
+	// This is the "feels like the bot is hunting" mode.
+	struct block_list *nearest = autobattle_find_nearest_mob(sd);
+	if (nearest != nullptr) {
+		sd->autobattle_data.roam_dest_x = nearest->x;
+		sd->autobattle_data.roam_dest_y = nearest->y;
+		sd->autobattle_data.roam_has_dest = true;
+		sd->autobattle_data.last_roam_tick = tick;
+		sd->autobattle_data.roam_best_dist = abs(nearest->x - sd->x) + abs(nearest->y - sd->y);
+		sd->autobattle_data.roam_best_tick = tick;
+		sd->autobattle_data.roam_dest_mob_id = nearest->id;
+
+		int32 dest_q = autobattle_quadrant_of(sd, nearest->x, nearest->y);
+		sd->autobattle_data.roam_quadrant_tick[dest_q] = tick;
+
+		// Fresh destination = fresh memory.
+		sd->autobattle_data.roam_visit_head = 0;
+		sd->autobattle_data.roam_visit_count = 0;
+		sd->autobattle_data.roam_snapshot_x = sd->x;
+		sd->autobattle_data.roam_snapshot_y = sd->y;
+		sd->autobattle_data.roam_struggle_count = 0;
+		{
+			char dbg[160];
+			int32 dq = autobattle_direction_quadrant(sd, nearest->x, nearest->y);
+			static const char *qname[] = {"NW", "NE", "SW", "SE"};
+			snprintf(dbg, sizeof(dbg),
+				"[Roam] mob-seek picked mob %d at (%d,%d) — dir %s, dist %d",
+				nearest->id, nearest->x, nearest->y, qname[dq],
+				abs(nearest->x - sd->x) + abs(nearest->y - sd->y));
+			clif_displaymessage(sd->fd, dbg);
+		}
+		return true;
+	}
+
+	// No mob anywhere on the map (or all unreachable/filtered). Fall back to
+	// the random walkable picker biased by stalest quadrant — preserves
+	// continuous map exploration on empty maps.
 
 	const int32 edge = battle_config.map_edge_size;
 	const int16 map_w = (int16)(mapdata->xs - edge * 2);
@@ -237,8 +408,11 @@ static bool autobattle_pick_ultimate_dest(map_session_data *sd, t_tick tick)
 	const int16 qy_lo = (target_q & 2) ? mid_y : (int16)edge;
 	const int16 qy_hi = (target_q & 2) ? (int16)(mapdata->ys - edge - 1) : mid_y;
 
-	// First 150 attempts: stay inside the chosen quadrant. Last 50: fall back
-	// to whole-map sampling in case the quadrant is mostly walls.
+	// First 150 attempts: stay inside the chosen quadrant AND respect the
+	// direction blacklist (skip cells in directions where wall hits recently
+	// blacklisted us). Next 30 attempts: drop the quadrant constraint but
+	// keep the direction blacklist. Last 20 attempts: drop both — pure
+	// whole-map sampling so we never return false for lack of options.
 	for (int32 attempts = 0; attempts < 200; attempts++) {
 		int16 rx, ry;
 		if (attempts < 150) {
@@ -252,6 +426,11 @@ static bool autobattle_pick_ultimate_dest(map_session_data *sd, t_tick tick)
 			continue;
 		if ((abs(rx - sd->x) + abs(ry - sd->y)) < min_dist)
 			continue;
+		// Honour direction blacklist for the first 180 attempts. After that,
+		// drop the constraint as a last-resort escape so we always have SOME
+		// destination to head toward.
+		if (attempts < 180 && autobattle_direction_blacklisted(sd, rx, ry, tick))
+			continue;
 
 		sd->autobattle_data.roam_dest_x = rx;
 		sd->autobattle_data.roam_dest_y = ry;
@@ -259,6 +438,17 @@ static bool autobattle_pick_ultimate_dest(map_session_data *sd, t_tick tick)
 		sd->autobattle_data.last_roam_tick = tick;
 		sd->autobattle_data.roam_best_dist = abs(rx - sd->x) + abs(ry - sd->y);
 		sd->autobattle_data.roam_best_tick = tick;
+		sd->autobattle_data.roam_dest_mob_id = 0; // Random pick — no mob attached.
+
+		{
+			char dbg[160];
+			int32 dq = autobattle_direction_quadrant(sd, rx, ry);
+			static const char *qname[] = {"NW", "NE", "SW", "SE"};
+			snprintf(dbg, sizeof(dbg),
+				"[Roam] random+quadrant picked (%d,%d) — dir %s (mob-seek found nothing)",
+				rx, ry, qname[dq]);
+			clif_displaymessage(sd->fd, dbg);
+		}
 
 		// Mark the destination's quadrant as visited NOW (we'll be there
 		// shortly). This stops the same quadrant from being re-picked
@@ -335,6 +525,30 @@ static int32 autobattle_quadrant_of(map_session_data *sd, int16 x, int16 y)
 }
 
 /**
+ * Direction-from-player quadrant — 0 NW / 1 NE / 2 SW / 3 SE relative to the
+ * player's CURRENT position. Used to mark "this direction keeps hitting walls,
+ * stop trying to go that way for a while" via failed_direction_until[].
+ */
+static int32 autobattle_direction_quadrant(map_session_data *sd, int16 x, int16 y)
+{
+	int32 q = 0;
+	if (x >= sd->x) q |= 1;
+	if (y >= sd->y) q |= 2;
+	return q;
+}
+
+/**
+ * Returns true if (x, y) lies in a direction-from-player quadrant that's
+ * currently blacklisted (wall-blocked recently). Mob-seek and the
+ * random+quadrant fallback both skip blacklisted quadrants.
+ */
+static bool autobattle_direction_blacklisted(map_session_data *sd, int16 x, int16 y, t_tick tick)
+{
+	int32 q = autobattle_direction_quadrant(sd, x, y);
+	return DIFF_TICK(tick, sd->autobattle_data.failed_direction_until[q]) < 0;
+}
+
+/**
  * Roam: persistent far destination + A*-validated short hops biased toward it,
  * with a 32-entry visited-cell memory to escape mazes and dead-ends.
  *
@@ -393,20 +607,50 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 	}
 
 	// Track best distance to dest. Improvements reset the stall timer; 15s
-	// without progress means the dest is in a pocket we can't reach — abandon
-	// and pick a new one next tick. Forward progress also makes old visit
-	// entries less relevant (we're somewhere new), so we DON'T clear the buffer
-	// here — those footprints are still useful for corridor-walking decisions.
+	// without progress means the dest is in a pocket we can't reach — abandon,
+	// blacklist the mob, blacklist the direction. The 3-strikes path covered
+	// the "lots of sidesteps" case but missed THIS one: when the bot keeps
+	// making *tiny* forward hops along a corridor that ends in a wall, it
+	// occasionally improves roam_best_dist by a cell or two before stalling.
+	// 3-strikes never fires (pass 0 keeps succeeding), but progress IS stalled.
+	// Without the blacklist update here, mob-seek immediately re-picks the
+	// same wall-blocked mob and the bot loops forever (the screenshot bug).
 	if (cur_to_dest < sd->autobattle_data.roam_best_dist) {
 		sd->autobattle_data.roam_best_dist = cur_to_dest;
 		sd->autobattle_data.roam_best_tick = tick;
 	} else if (DIFF_TICK(tick, sd->autobattle_data.roam_best_tick) > 15000) {
+		// Blacklist the failed direction (relative to current player position)
+		// for 30s, and the source mob for 30s, so mob-seek picks something
+		// different next iteration.
+		int32 fq = autobattle_direction_quadrant(sd, dest_x, dest_y);
+		sd->autobattle_data.failed_direction_until[fq] = tick + 30000;
+		{
+			static const char *qname[] = {"NW", "NE", "SW", "SE"};
+			char dbg[160];
+			snprintf(dbg, sizeof(dbg),
+				"[Roam] 15s stall to (%d,%d) — blacklist dir %s + mob %d for 30s",
+				dest_x, dest_y, qname[fq], sd->autobattle_data.roam_dest_mob_id);
+			clif_displaymessage(sd->fd, dbg);
+		}
+		if (sd->autobattle_data.roam_dest_mob_id > 0) {
+			autobattle_blacklist_unreachable(sd,
+				sd->autobattle_data.roam_dest_mob_id, tick + 30000);
+			sd->autobattle_data.roam_dest_mob_id = 0;
+		}
 		sd->autobattle_data.roam_has_dest = false;
 		return;
 	}
 
-	// Absolute 90s timeout. Genuinely unreachable destinations get rotated.
+	// Absolute 90s timeout. Genuinely unreachable destinations get rotated —
+	// same blacklist update as the 15s stall path.
 	if (DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) > 90000) {
+		int32 fq = autobattle_direction_quadrant(sd, dest_x, dest_y);
+		sd->autobattle_data.failed_direction_until[fq] = tick + 30000;
+		if (sd->autobattle_data.roam_dest_mob_id > 0) {
+			autobattle_blacklist_unreachable(sd,
+				sd->autobattle_data.roam_dest_mob_id, tick + 30000);
+			sd->autobattle_data.roam_dest_mob_id = 0;
+		}
 		sd->autobattle_data.roam_has_dest = false;
 		return;
 	}
@@ -500,8 +744,27 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 					} else {
 						sd->autobattle_data.roam_struggle_count++;
 						if (sd->autobattle_data.roam_struggle_count >= 3) {
+							// Blacklist the failed direction (relative to
+							// current player position) for 30s. Mob-seek will
+							// skip mobs that lie in this direction next pick
+							// — bot has to commit to a different direction.
+							int32 fq = autobattle_direction_quadrant(sd, dest_x, dest_y);
+							sd->autobattle_data.failed_direction_until[fq] = tick + 30000;
+							{
+								static const char *qname[] = {"NW", "NE", "SW", "SE"};
+								char dbg[160];
+								snprintf(dbg, sizeof(dbg),
+									"[Roam] 3-strikes on (%d,%d) — blacklist dir %s + mob %d for 30s",
+									dest_x, dest_y, qname[fq], sd->autobattle_data.roam_dest_mob_id);
+								clif_displaymessage(sd->fd, dbg);
+							}
 							sd->autobattle_data.roam_has_dest = false;
 							sd->autobattle_data.roam_struggle_count = 0;
+							if (sd->autobattle_data.roam_dest_mob_id > 0) {
+								autobattle_blacklist_unreachable(sd,
+									sd->autobattle_data.roam_dest_mob_id, tick + 30000);
+								sd->autobattle_data.roam_dest_mob_id = 0;
+							}
 						}
 					}
 					return;
@@ -510,11 +773,21 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 		}
 	}
 
-	// All four passes failed — fully cornered. Abandon destination and clear
-	// the visit buffer so next tick we get a fresh attempt at a new dest.
+	// All four passes failed — fully cornered. Abandon destination, clear
+	// the visit buffer, blacklist the failed direction for 2 mins, and (if
+	// this dest came from mob-seek) blacklist the mob bl_id for 30s.
+	{
+		int32 fq = autobattle_direction_quadrant(sd, dest_x, dest_y);
+		sd->autobattle_data.failed_direction_until[fq] = tick + 30000;
+	}
 	sd->autobattle_data.roam_has_dest = false;
 	sd->autobattle_data.roam_visit_head = 0;
 	sd->autobattle_data.roam_visit_count = 0;
+	if (sd->autobattle_data.roam_dest_mob_id > 0) {
+		autobattle_blacklist_unreachable(sd,
+			sd->autobattle_data.roam_dest_mob_id, tick + 30000);
+		sd->autobattle_data.roam_dest_mob_id = 0;
+	}
 }
 
 /**
@@ -536,9 +809,8 @@ static int32 autobattle_search_target_callback(struct block_list* bl, va_list ap
 
 	// Skip the recently-unreachable target so the search doesn't immediately
 	// re-pick the same wall-mob and trap us in a loop. Cooldown set when
-	// unit_walktobl fails (5s).
-	if (sd->autobattle_data.unreachable_target_id == bl->id &&
-		DIFF_TICK(gettick(), sd->autobattle_data.unreachable_target_until) < 0)
+	// unit_walktobl fails (5s) or 3-strikes fires (30s).
+	if (autobattle_is_unreachable(sd, bl->id, gettick()))
 		return 0;
 
 	// Phase 22: Auto-Target whitelist filter
@@ -615,15 +887,31 @@ struct block_list* autobattle_search_target(map_session_data *sd)
 	if (!sd || !(sd->autobattle_data.mode & AUTOBATTLE_ATTACK))
 		return nullptr;
 
-	// Stick with current target if still valid AND not currently blacklisted
-	// as unreachable.
+	// Stickiness — keep the current target if we're already engaging it in
+	// attack range (so we don't yank off a low-HP mob mid-swing for a fresh
+	// one). If the current target is still WALKING-distance away (in detection
+	// range but not attack range), fall through to a fresh search — that lets
+	// PRIORITY_DISTANCE pick a closer mob we walked past en route to the far
+	// one. "Finish your dinner" only applies once dinner is on the plate.
+	int32 attack_range = 1;
+	struct status_data *sstatus_for_range = status_get_status_data(*sd);
+	if (sstatus_for_range)
+		attack_range = sstatus_for_range->rhw.range;
+	if (sd->autobattle_data.attack_skill_id > 0) {
+		int32 skill_range = skill_get_range2((block_list*)sd,
+			sd->autobattle_data.attack_skill_id,
+			sd->autobattle_data.attack_skill_lv, true);
+		if (skill_range > attack_range)
+			attack_range = skill_range;
+	}
+	if (attack_range < 1) attack_range = 1;
+
 	if (sd->autobattle_data.target_id > 0 &&
-		!(sd->autobattle_data.unreachable_target_id == sd->autobattle_data.target_id &&
-		  DIFF_TICK(gettick(), sd->autobattle_data.unreachable_target_until) < 0)) {
+		!autobattle_is_unreachable(sd, sd->autobattle_data.target_id, gettick())) {
 		struct block_list *cur = map_id2bl(sd->autobattle_data.target_id);
 		if (cur && cur->prev != nullptr && autobattle_can_attack(sd, cur)) {
 			int16 dist = distance_bl((block_list*)sd, cur);
-			if (dist <= sd->autobattle_data.range) {
+			if (dist <= attack_range) {
 				// Whitelist re-check: a player toggling target filter mid-fight
 				// should NOT keep attacking a mob that's now disallowed.
 				bool whitelist_ok = true;
@@ -843,6 +1131,21 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 
 	// ===== AUTO-ATTACK =====
 	if (sd->autobattle_data.mode & AUTOBATTLE_ATTACK) {
+
+		// If a skill is currently casting, do NOT issue any new walk or
+		// skill — we'd interrupt the cast. This was the Storm Gust bug:
+		// cast bar visually filled but skill_castend_pos never ran because
+		// our tick called unit_walktobl mid-cast (target wiggled out of
+		// range) and cancelled the timer. Long-cast ground skills are
+		// most affected. Just bail and let the engine finish the cast.
+		// ALSO refresh last_combat_tick — actively casting IS engagement,
+		// otherwise the 7s Fly Wing/Teleskill timer would fire mid-cast
+		// (Storm Gust takes ~5s, plenty of time to elapse the threshold).
+		if (sd->ud.skilltimer != INVALID_TIMER) {
+			sd->autobattle_data.last_combat_tick = tick;
+			goto autobattle_timer_reschedule;
+		}
+
 		struct block_list *target = autobattle_search_target(sd);
 
 		if (target) {
@@ -876,30 +1179,47 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 				// last_combat_tick never elapses → Fly Wing never fires.
 				if (!unit_walktobl((block_list*)sd, target, effective_range, 1)) {
 					sd->autobattle_data.target_id = -1;
-					sd->autobattle_data.unreachable_target_id = target->id;
-					sd->autobattle_data.unreachable_target_until = tick + 5000;
+					autobattle_blacklist_unreachable(sd, target->id, tick + 5000);
 				} else {
 					// Walking toward target counts as engagement — refresh combat timer.
 					sd->autobattle_data.last_combat_tick = tick;
 				}
-			} else if (DIFF_TICK(sd->ud.canact_tick, tick) <= 0) {
-				// Phase 23: Try skill first, fallback to normal attack
-				bool skill_used = false;
-				if (use_skill) {
-					uint16 sk_id = sd->autobattle_data.attack_skill_id;
-					uint8 sk_lv = sd->autobattle_data.attack_skill_lv;
-					int32 sp_cost = skill_get_sp(sk_id, sk_lv);
-					if ((int32)sd->battle_status.sp >= sp_cost &&
-						skill_check_condition_castbegin(*sd, sk_id, sk_lv)) {
-						unit_skilluse_id((block_list*)sd, target->id, sk_id, sk_lv);
-						skill_used = true;
+			} else {
+				// Target in attack range. Refresh the combat clock unconditionally
+				// — being in range is engagement, even on ticks where canact is
+				// still cooling between swings (slow aspd, after a long cast,
+				// etc.). Without this, the bot could be auto-attacking a tough
+				// mob with high aspd cooldown and Fly Wing/Teleskill could fire
+				// on a tick that fell between swings.
+				sd->autobattle_data.last_combat_tick = tick;
+
+				if (DIFF_TICK(sd->ud.canact_tick, tick) <= 0) {
+					// Phase 23: Try skill first, fallback to normal attack.
+					// Ground-targeted skills (Storm Gust, Lord of Vermilion,
+					// Magnum Break, Heaven's Drive…) use unit_skilluse_pos
+					// with the target's cell. Single-target skills (Bash,
+					// Bowling Bash, Pierce…) use unit_skilluse_id with the
+					// target's bl_id. Calling the wrong one fails silently
+					// and the bot just stares.
+					bool skill_used = false;
+					if (use_skill) {
+						uint16 sk_id = sd->autobattle_data.attack_skill_id;
+						uint8 sk_lv = sd->autobattle_data.attack_skill_lv;
+						int32 sp_cost = skill_get_sp(sk_id, sk_lv);
+						if ((int32)sd->battle_status.sp >= sp_cost &&
+							skill_check_condition_castbegin(*sd, sk_id, sk_lv)) {
+							bool is_ground = (skill_get_inf(sk_id) & INF_GROUND_SKILL) != 0;
+							if (is_ground)
+								unit_skilluse_pos((block_list*)sd, target->x, target->y, sk_id, sk_lv);
+							else
+								unit_skilluse_id((block_list*)sd, target->id, sk_id, sk_lv);
+							skill_used = true;
+						}
+					}
+					if (!skill_used) {
+						unit_attack((block_list*)sd, target->id, 1); // Normal attack fallback
 					}
 				}
-				if (!skill_used) {
-					unit_attack((block_list*)sd, target->id, 1); // Normal attack fallback
-				}
-				// Active engagement — refresh the no-combat timer.
-				sd->autobattle_data.last_combat_tick = tick;
 			}
 		} else {
 			// No valid target found
@@ -910,28 +1230,64 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 			// standing still while waiting for a Fly Wing tick.
 			autobattle_roam_walk(sd, tick);
 
-			// Fly Wing layered on top: when 7s have passed without combat AND
-			// 7s since the last teleport, throw a Fly Wing. The combat clock
-			// is refreshed on actual engagement (in-range hit OR successful
-			// walktobl), so the bot won't teleport mid-fight. After teleport
-			// the roam destination + visit memory are stale (we're somewhere
-			// else on the map), so clear them — next tick picks a fresh dest
-			// from the new location.
-			if (sd->autobattle_data.mode & AUTOBATTLE_FLYWING) {
-				if (DIFF_TICK(tick, sd->autobattle_data.last_combat_tick) >= 7000 &&
-					DIFF_TICK(tick, sd->autobattle_data.last_flywing_tick) >= 7000) {
+			// Teleport layered on top: when 7s have passed without combat AND
+			// 7s since the last teleport. The combat clock is refreshed on
+			// actual engagement (in-range hit OR successful walktobl), so the
+			// bot won't teleport mid-fight. Two providers:
+			//   TELESKILL — cast AL_TELEPORT (no item consumed; needs 10 SP).
+			//               Works with costume-granted Teleport since pc_checkskill
+			//               returns the skill level regardless of flag.
+			//   FLYWING   — consume a Fly Wing from inventory.
+			// Both can be toggled independently. If both are on, TELESKILL is
+			// tried first (no item cost) and FLYWING is the fallback.
+			// After teleport the roam destination + visit memory are stale,
+			// so clear them — next tick picks a fresh dest from the new spot.
+			bool can_teleskill = (sd->autobattle_data.mode & AUTOBATTLE_TELESKILL) != 0;
+			bool can_flywing = (sd->autobattle_data.mode & AUTOBATTLE_FLYWING) != 0;
+
+			if ((can_teleskill || can_flywing) &&
+				DIFF_TICK(tick, sd->autobattle_data.last_combat_tick) >= 7000 &&
+				DIFF_TICK(tick, sd->autobattle_data.last_flywing_tick) >= 7000) {
+
+				bool teleported = false;
+
+				// Try TELESKILL first.
+				if (can_teleskill) {
+					uint8 lv = pc_checkskill(sd, AL_TELEPORT);
+					if (lv >= 1) {
+						int32 sp_cost = skill_get_sp(AL_TELEPORT, 1);
+						if ((int32)sd->battle_status.sp >= sp_cost) {
+							// Setting state.autocast = 1 suppresses the
+							// "Random / Save Point" picker UI — the engine
+							// treats this as a programmatic cast and just
+							// teleports randomly at Lv1.
+							sd->state.autocast = 1;
+							unit_skilluse_id((block_list*)sd, sd->id, AL_TELEPORT, 1);
+							sd->state.autocast = 0;
+							teleported = true;
+						}
+					}
+				}
+
+				// Fallback to FLYWING if teleskill didn't fire (no skill, low
+				// SP, or just not enabled).
+				if (!teleported && can_flywing) {
 					int16 idx = pc_search_inventory(sd, 601); // 601 = Fly Wing
 					if (idx >= 0) {
-						sd->autobattle_data.last_flywing_tick = tick;
 						pc_useitem(sd, idx);
-						sd->autobattle_data.roam_has_dest = false;
-						sd->autobattle_data.roam_visit_head = 0;
-						sd->autobattle_data.roam_visit_count = 0;
-						sd->autobattle_data.roam_struggle_count = 0;
-					} else {
+						teleported = true;
+					} else if (!can_teleskill) {
 						clif_displaymessage(sd->fd, "[Auto-Battle] Out of Fly Wings! Switching to walk mode.");
 						sd->autobattle_data.mode &= ~AUTOBATTLE_FLYWING;
 					}
+				}
+
+				if (teleported) {
+					sd->autobattle_data.last_flywing_tick = tick;
+					sd->autobattle_data.roam_has_dest = false;
+					sd->autobattle_data.roam_visit_head = 0;
+					sd->autobattle_data.roam_visit_count = 0;
+					sd->autobattle_data.roam_struggle_count = 0;
 				}
 			}
 		}
@@ -1230,20 +1586,15 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 	}
 
 	// ===== AUTO-LOOT =====
+	// Floor-pickup with animation: items drop normally, the bot walks over
+	// to them and pc_takeitem fires the visible pickup packet. We chose this
+	// over engine state.autoloot deliberately — the visual matters more than
+	// the slightly higher miss rate, and in practice missed items are rare
+	// (the bot stays close to where mobs die).
 	if (sd->autobattle_data.mode & AUTOBATTLE_LOOT) {
-		// Throttle loot checking (only check every 200ms)
-		if (DIFF_TICK(tick, sd->autobattle_data.last_loot_tick) >= 200) {
-			sd->autobattle_data.last_loot_tick = tick;
-
-			// Set global context for callback
-			g_loot_searcher = sd;
-
-			// Search for items in loot range
-			map_foreachinrange(autobattle_loot_callback, (block_list*)sd, sd->autobattle_data.loot_range, BL_ITEM);
-
-			// Clear context
-			g_loot_searcher = nullptr;
-		}
+		g_loot_searcher = sd;
+		map_foreachinrange(autobattle_loot_callback, (block_list*)sd, sd->autobattle_data.loot_range, BL_ITEM);
+		g_loot_searcher = nullptr;
 	}
 
 	// ===== SKILL ROTATION =====
@@ -1328,6 +1679,13 @@ void autobattle_toggle_mode(map_session_data *sd, uint16 mode, bool on)
 	} else {
 		sd->autobattle_data.mode &= ~mode;
 	}
+
+	// Save to DB whenever a *persistent* mode bit changes so the user's
+	// config survives crashes between login and logout. ATTACK and ROAM are
+	// session toggles — saving on those would cause spurious writes every
+	// time autobattle_start fires.
+	if (mode & ~(AUTOBATTLE_ATTACK | AUTOBATTLE_ROAM))
+		autobattle_save_config_db(sd);
 }
 
 /**
@@ -1362,6 +1720,7 @@ void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
 			sd->autobattle_data.support_skills[i].trigger_type = trigger_type;
 			if (trigger_type == 1)
 				sd->autobattle_data.support_skills[i].buff_id = (uint16)skill_get_sc(skill_id);
+			autobattle_save_config_db(sd);
 			return;
 		}
 	}
@@ -1377,6 +1736,7 @@ void autobattle_add_support_skill(map_session_data *sd, uint16 skill_id,
 	if (trigger_type == 1)
 		skill.buff_id = (uint16)skill_get_sc(skill_id);
 	sd->autobattle_data.support_skill_count++;
+	autobattle_save_config_db(sd);
 }
 
 /**
@@ -1396,6 +1756,7 @@ bool autobattle_remove_support_skill(map_session_data *sd, uint16 skill_id)
 			sd->autobattle_data.support_skill_count--;
 			// Zero out the now-unused last slot
 			memset(&sd->autobattle_data.support_skills[sd->autobattle_data.support_skill_count], 0, sizeof(struct s_autosupport_skill));
+			autobattle_save_config_db(sd);
 			return true;
 		}
 	}
@@ -1412,6 +1773,7 @@ void autobattle_clear_support_skills(map_session_data *sd)
 
 	memset(sd->autobattle_data.support_skills, 0, sizeof(sd->autobattle_data.support_skills));
 	sd->autobattle_data.support_skill_count = 0;
+	autobattle_save_config_db(sd);
 }
 
 void autobattle_add_support_item(map_session_data *sd, t_itemid item_id, int16 status_id)
@@ -1442,6 +1804,7 @@ void autobattle_clear_support_items(map_session_data *sd)
 
 	memset(sd->autobattle_data.support_items, 0, sizeof(sd->autobattle_data.support_items));
 	sd->autobattle_data.support_item_count = 0;
+	autobattle_save_config_db(sd);
 }
 
 /**
@@ -1498,6 +1861,44 @@ void autobattle_start(map_session_data *sd)
 	if (sd->autobattle_data.mode & AUTOBATTLE_ATTACK)
 		autobattle_toggle_mode(sd, AUTOBATTLE_ROAM, true);
 
+	// Debug: tell the player which features are active this session so they
+	// can verify their persistent config actually took effect after login.
+	{
+		char dbg[256];
+		snprintf(dbg, sizeof(dbg),
+			"[Auto-Battle] Active features: %s%s%s%s%s%s%s",
+			(sd->autobattle_data.mode & AUTOBATTLE_ATTACK)   ? "Attack " : "",
+			(sd->autobattle_data.mode & AUTOBATTLE_SUPPORT)  ? "Support " : "",
+			(sd->autobattle_data.mode & AUTOBATTLE_LOOT)     ? "Loot " : "",
+			(sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT)  ? "Pot " : "",
+			(sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT)  ? "Sit " : "",
+			(sd->autobattle_data.mode & AUTOBATTLE_FLYWING)  ? "FlyWing " : "",
+			(sd->autobattle_data.mode & AUTOBATTLE_TELESKILL)? "Teleskill " : "");
+		clif_displaymessage(sd->fd, dbg);
+		if (sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT) {
+			snprintf(dbg, sizeof(dbg),
+				"[Auto-Battle] Pot config: HP item %u @%d%%, SP item %u @%d%%, GoHome %s",
+				sd->autobattle_data.autopot_hp_id, sd->autobattle_data.autopot_hp_threshold,
+				sd->autobattle_data.autopot_sp_id, sd->autobattle_data.autopot_sp_threshold,
+				sd->autobattle_data.gohome_no_pots ? "ON" : "OFF");
+			clif_displaymessage(sd->fd, dbg);
+		}
+		if (sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) {
+			snprintf(dbg, sizeof(dbg),
+				"[Auto-Battle] Sit thresholds: HP<%d%% SP<%d%%",
+				sd->autobattle_data.autosit_hp_threshold,
+				sd->autobattle_data.autosit_sp_threshold);
+			clif_displaymessage(sd->fd, dbg);
+		}
+		if (sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) {
+			snprintf(dbg, sizeof(dbg),
+				"[Auto-Battle] Support: %d skills, %d items configured",
+				sd->autobattle_data.support_skill_count,
+				sd->autobattle_data.support_item_count);
+			clif_displaymessage(sd->fd, dbg);
+		}
+	}
+
 	// Start new timer
 	sd->autobattle_data.attack_timer = add_timer(
 		gettick() + AUTOBATTLE_TIMER_INTERVAL,
@@ -1523,11 +1924,18 @@ void autobattle_stop(map_session_data *sd)
 	// Persist daily usage AND full config to DB before stopping. Save the
 	// config BEFORE clearing mode so the saved bitmask reflects what the
 	// player had configured (FLYWING, LOOT, etc.) — those flags get restored
-	// on next login. ATTACK and SUPPORT bits are stripped on load anyway.
+	// on next login. The ATTACK bit is stripped on load (re-enabled per
+	// session); SUPPORT persists so configured buffs keep firing.
 	autobattle_save_time_db(sd);
 	autobattle_save_config_db(sd);
 
-	sd->autobattle_data.mode = AUTOBATTLE_OFF;
+	// Clear only the session-toggle bits in memory. Persistent feature bits
+	// (LOOT, AUTOPOT, AUTOSIT, FLYWING, TELESKILL, SUPPORT, SKILLROTATION)
+	// stay set so re-enabling Auto-Attack within the same session picks
+	// everything back up — without this, autobattle_stop would zero the
+	// whole mode bitmask and the next @autoattack on would only set ATTACK,
+	// silently losing every other feature the user configured this session.
+	sd->autobattle_data.mode &= ~(AUTOBATTLE_ATTACK | AUTOBATTLE_ROAM);
 	sd->autobattle_data.target_id = -1;
 }
 
@@ -1542,7 +1950,12 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config)
 	// Initialize default state
 	sd->autobattle_data.mode = AUTOBATTLE_OFF;
 	sd->autobattle_data.range = 15;
-	sd->autobattle_data.target_priority = PRIORITY_DAMAGE_DISTANCE;
+	// Default: nearest first. The "skipped a closer mob" reports came from the
+	// old PRIORITY_DAMAGE_DISTANCE default which sent the bot toward whichever
+	// mob had the highest base ATK in detection range, ignoring distance unless
+	// damage values tied. Distance-first matches what players expect: the bot
+	// fights what's right next to it.
+	sd->autobattle_data.target_priority = PRIORITY_DISTANCE;
 	sd->autobattle_data.target_id = -1;
 	sd->autobattle_data.attack_timer = INVALID_TIMER;
 	sd->autobattle_data.support_skill_count = 0;
@@ -1569,7 +1982,12 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config)
 	memset(sd->autobattle_data.roam_quadrant_tick, 0, sizeof(sd->autobattle_data.roam_quadrant_tick));
 	sd->autobattle_data.unreachable_target_id = 0;
 	sd->autobattle_data.unreachable_target_until = 0;
+	memset(sd->autobattle_data.unreachable_ids, 0, sizeof(sd->autobattle_data.unreachable_ids));
+	memset(sd->autobattle_data.unreachable_until, 0, sizeof(sd->autobattle_data.unreachable_until));
+	sd->autobattle_data.unreachable_head = 0;
 	sd->autobattle_data.roam_struggle_count = 0;
+	sd->autobattle_data.roam_dest_mob_id = 0;
+	memset(sd->autobattle_data.failed_direction_until, 0, sizeof(sd->autobattle_data.failed_direction_until));
 	sd->autobattle_data.last_flywing_tick = 0;
 	sd->autobattle_data.last_support_tick = 0;
 	sd->autobattle_data.last_item_buff_tick = 0;
@@ -1974,6 +2392,28 @@ void autobattle_save_config_db(map_session_data *sd)
 	autobattle_build_csv(mob_csv, sizeof(mob_csv), sd->autobattle_data.target_mob_ids,
 		sd->autobattle_data.target_mob_count);
 
+	// Debug: chat-output what we're saving so we can spot mismatches between
+	// what the user thinks is saved vs what actually hits the DB. Remove once
+	// the persistence is verified working.
+	{
+		char dbg[256];
+		snprintf(dbg, sizeof(dbg),
+			"[Save] mode=0x%X loot=%d pot=%d sit=%d fly=%d tele=%d sup=%d skills=%d items=%d hp_pot=%u sp_pot=%u sit_hp=%u",
+			sd->autobattle_data.mode,
+			(sd->autobattle_data.mode & AUTOBATTLE_LOOT) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_FLYWING) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_TELESKILL) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) ? 1 : 0,
+			sd->autobattle_data.support_skill_count,
+			sd->autobattle_data.support_item_count,
+			sd->autobattle_data.autopot_hp_id,
+			sd->autobattle_data.autopot_sp_id,
+			sd->autobattle_data.autosit_hp_threshold);
+		clif_displaymessage(sd->fd, dbg);
+	}
+
 	// UPSERT the full row. The daily-time fields (daily_seconds_used, etc.)
 	// are managed by autobattle_save_time_db — leave them alone here.
 	if (SQL_ERROR == Sql_Query(mmysql_handle,
@@ -2024,6 +2464,9 @@ void autobattle_save_config_db(map_session_data *sd)
 		sd->autobattle_data.gohome_no_pots ? 1u : 0u))
 	{
 		Sql_ShowDebug(mmysql_handle);
+		clif_displaymessage(sd->fd, "[Save] !!! SQL ERROR — config did NOT persist. Check map server log.");
+	} else {
+		clif_displaymessage(sd->fd, "[Save] OK");
 	}
 }
 
@@ -2053,12 +2496,14 @@ void autobattle_load_config_db(map_session_data *sd)
 		"FROM `char_autobattle_config` WHERE `char_id` = %d", char_id))
 	{
 		Sql_ShowDebug(mmysql_handle);
+		clif_displaymessage(sd->fd, "[Load] !!! SQL ERROR on SELECT — likely missing v4 migration columns. Check log.");
 		return;
 	}
 
 	if (SQL_SUCCESS != Sql_NextRow(mmysql_handle)) {
 		Sql_FreeResult(mmysql_handle);
-		return; // No saved config — defaults already set by caller.
+		clif_displaymessage(sd->fd, "[Load] No saved row for this character — first session, defaults applied.");
+		return;
 	}
 
 	auto get_str = [](int32 col) -> const char* {
@@ -2071,11 +2516,35 @@ void autobattle_load_config_db(map_session_data *sd)
 		return *v ? (uint32)strtoul(v, nullptr, 10) : 0;
 	};
 
-	// Mode: clear ATTACK and SUPPORT bits — the user re-enables those each
-	// session. Other bits (FLYWING, LOOT, AUTOSIT, AUTOPOT, etc.) are restored.
+	// Mode: clear ATTACK only — that's the explicit "I want to start
+	// auto-fighting now" toggle, so it should be off until the user clicks
+	// Enable. SUPPORT IS persisted: once a user added buffs/heals via the
+	// menu (which auto-enables SUPPORT), they expect those to keep firing
+	// next session. The autobattle timer doesn't actually start ticking
+	// until autobattle_start runs (when ATTACK is enabled or @autosupport on
+	// is called), so a SUPPORT-only mode at login is dormant — it activates
+	// the moment the player turns ATTACK back on.
 	uint32 saved_mode = get_u32(0);
-	sd->autobattle_data.mode = (uint16)(saved_mode & ~(AUTOBATTLE_ATTACK | AUTOBATTLE_SUPPORT));
-	sd->autobattle_data.target_priority = (uint8)get_u32(1);
+	sd->autobattle_data.mode = (uint16)(saved_mode & ~AUTOBATTLE_ATTACK);
+	{
+		char dbg[256];
+		snprintf(dbg, sizeof(dbg),
+			"[Load] saved_mode=0x%X loaded_mode=0x%X (loot=%d pot=%d sit=%d fly=%d tele=%d sup=%d)",
+			saved_mode, sd->autobattle_data.mode,
+			(sd->autobattle_data.mode & AUTOBATTLE_LOOT) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_AUTOPOT) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_FLYWING) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_TELESKILL) ? 1 : 0,
+			(sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) ? 1 : 0);
+		clif_displaymessage(sd->fd, dbg);
+	}
+	// Force PRIORITY_DISTANCE on load — priority isn't user-configurable from
+	// any menu, so any saved value other than DISTANCE was set by an old init
+	// default before we switched to nearest-first. Don't restore a stale
+	// preference no one chose.
+	(void)get_u32(1); // Consume the column to keep ordinal indices aligned.
+	sd->autobattle_data.target_priority = PRIORITY_DISTANCE;
 
 	// Support skills.
 	uint8 skill_count = (uint8)get_u32(2);
@@ -2159,6 +2628,7 @@ void autobattle_set_target_mobs(map_session_data *sd, uint16 *mob_ids, uint8 cou
 	sd->autobattle_data.target_mob_count = count;
 	for (int i = 0; i < count; i++)
 		sd->autobattle_data.target_mob_ids[i] = mob_ids[i];
+	autobattle_save_config_db(sd);
 }
 
 /**
@@ -2171,6 +2641,7 @@ void autobattle_clear_target_mobs(map_session_data *sd)
 
 	memset(sd->autobattle_data.target_mob_ids, 0, sizeof(sd->autobattle_data.target_mob_ids));
 	sd->autobattle_data.target_mob_count = 0;
+	autobattle_save_config_db(sd);
 }
 
 /**
@@ -2189,6 +2660,7 @@ void autobattle_toggle_target_mob(map_session_data *sd, uint16 mob_id)
 				sd->autobattle_data.target_mob_ids[j] = sd->autobattle_data.target_mob_ids[j + 1];
 			sd->autobattle_data.target_mob_count--;
 			sd->autobattle_data.target_mob_ids[sd->autobattle_data.target_mob_count] = 0;
+			autobattle_save_config_db(sd);
 			return;
 		}
 	}
@@ -2197,6 +2669,7 @@ void autobattle_toggle_target_mob(map_session_data *sd, uint16 mob_id)
 	if (sd->autobattle_data.target_mob_count < 20) {
 		sd->autobattle_data.target_mob_ids[sd->autobattle_data.target_mob_count] = mob_id;
 		sd->autobattle_data.target_mob_count++;
+		autobattle_save_config_db(sd);
 	}
 }
 
@@ -2212,5 +2685,6 @@ void autobattle_set_attack_skill(map_session_data *sd, uint16 skill_id, uint8 sk
 
 	sd->autobattle_data.attack_skill_id = skill_id;
 	sd->autobattle_data.attack_skill_lv = skill_lv;
+	autobattle_save_config_db(sd);
 }
 

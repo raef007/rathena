@@ -41,18 +41,34 @@ L_ConfigAttack:
 	mes "[Configure Auto-Attack]";
 	mes "Select a setting to adjust:";
 	next;
-	.@cfg = select("Offensive Skill", "Target Filter", "Loot", "Regeneration", "Support Buffs", "Teleport", "Time Info", "Back");
-	if (.@cfg == 1) goto L_Cfg_Skill;
-	if (.@cfg == 2) goto L_Cfg_Target;
-	if (.@cfg == 3) goto L_Cfg_Loot;
-	if (.@cfg == 4) goto L_Cfg_Regen;
-	if (.@cfg == 5) goto L_Cfg_SelfBuff;
-	if (.@cfg == 6) goto L_Cfg_Teleport;
-	if (.@cfg == 7) goto L_Cfg_Time;
+	.@cfg = select("View Current Configuration", "Offensive Skill", "Target Filter", "Loot", "Regeneration", "Support Buffs", "Teleport", "Time Info", "Back");
+	if (.@cfg == 1) goto L_Cfg_View;
+	if (.@cfg == 2) goto L_Cfg_Skill;
+	if (.@cfg == 3) goto L_Cfg_Target;
+	if (.@cfg == 4) goto L_Cfg_Loot;
+	if (.@cfg == 5) goto L_Cfg_Regen;
+	if (.@cfg == 6) goto L_Cfg_SelfBuff;
+	if (.@cfg == 7) goto L_Cfg_Teleport;
+	if (.@cfg == 8) goto L_Cfg_Time;
 	mes "[Auto-Battle Capsule]";
 	mes "Configure your Auto-Battle settings.";
 	next;
 	goto L_MainMenu;
+
+L_Cfg_View:
+	mes "[Current Configuration]";
+	mes "Full settings dumped to chat below.";
+	mes "Scroll up to review.";
+	next;
+	atcommand "@autoattack";       // mode flags + range + pot + sit + target + skill + time
+	atcommand "@autoattack target"; // detailed target whitelist
+	atcommand "@autoattack skill";  // current offensive skill
+	atcommand "@autosupport";      // support mode + skill/item counts
+	atcommand "@autosupport list"; // detailed support skills + item buffs
+	mes " ";
+	mes "Anything missing? Re-configure from the menu.";
+	next;
+	goto L_ConfigAttack;
 L_Cfg_Loot:
 	mes "[Loot Settings]";
 	mes "Toggle auto-loot pickup.";
@@ -185,18 +201,26 @@ L_Regen_SPItem:
 
 L_Cfg_Teleport:
 	mes "[Teleport]";
-	mes "Fly Wing triggers after 3 seconds without combat.";
+	mes "After ^00AA007 seconds without combat^000000 the bot can teleport to find new mobs.";
+	mes " ";
+	mes " ^0099FFFly Wing^000000: consumes one Fly Wing per teleport.";
+	mes " ^0099FFTeleport Skill^000000: casts AL_TELEPORT (10 SP per cast).";
+	mes "   - Works if you learned it OR a costume grants it.";
+	mes " ";
+	mes "Both can be on at once — Skill is tried first, Fly Wing is the fallback.";
 	next;
-	.@tsub = select("Enable Fly Wing", "Disable Fly Wing", "Back");
+	.@fw_on = (isautobattlemode(0x40) ? 1 : 0); // AUTOBATTLE_FLYWING
+	.@tk_on = (isautobattlemode(0x100) ? 1 : 0); // AUTOBATTLE_TELESKILL
+	.@fw$ = (.@fw_on) ? "Disable Fly Wing (currently ^00AA00ON^000000)" : "Enable Fly Wing (currently ^FF0000OFF^000000)";
+	.@tk$ = (.@tk_on) ? "Disable Teleport Skill (currently ^00AA00ON^000000)" : "Enable Teleport Skill (currently ^FF0000OFF^000000)";
+	.@tsub = select(.@fw$, .@tk$, "Back");
 	if (.@tsub == 3) goto L_ConfigAttack;
-	if (.@tsub == 1)
-		atcommand "@autoattack flywing";
-	else
-		atcommand "@autoattack flywing off";
+	if (.@tsub == 1) atcommand (.@fw_on) ? "@autoattack flywing off" : "@autoattack flywing";
+	if (.@tsub == 2) atcommand (.@tk_on) ? "@autoattack teleskill off" : "@autoattack teleskill";
 	mes "[Auto-Battle]";
 	mes "Teleport setting updated.";
 	next;
-	goto L_ConfigAttack;
+	goto L_Cfg_Teleport;
 
 L_Cfg_SelfBuff:
 	mes "[Support Buffs]";

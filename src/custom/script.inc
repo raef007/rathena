@@ -139,6 +139,22 @@ BUILDIN_FUNC(isautoattackon)
 }
 
 /**
+ * isautobattlemode(<bitmask>) -> 0|1
+ * Returns 1 if any of the given mode bits are set in the attached player's
+ * auto-battle mode bitmask. Used by the menu to render single Enable/Disable
+ * toggles for sub-features (Fly Wing 0x40, Teleskill 0x100, Loot 0x04, etc.).
+ */
+BUILDIN_FUNC(isautobattlemode)
+{
+	TBL_PC* sd;
+	if (!script_rid2sd(sd))
+		return SCRIPT_CMD_SUCCESS;
+	uint16 mask = (uint16)script_getnum(st, 2);
+	script_pushint(st, (sd->autobattle_data.mode & mask) ? 1 : 0);
+	return SCRIPT_CMD_SUCCESS;
+}
+
+/**
  * getskillname(<skill_id>)
  * Returns the friendly display name (Description) of a skill by its ID.
  * Falls back to AEGIS name if description is empty.

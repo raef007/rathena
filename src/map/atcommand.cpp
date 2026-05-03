@@ -11575,10 +11575,23 @@ ACMD_FUNC(autoattack) {
 		} else if (strcmp(arg1, "flywing") == 0) {
 			if (argc >= 2 && strcmp(arg2, "off") == 0) {
 				autobattle_toggle_mode(sd, AUTOBATTLE_FLYWING, false);
-				clif_displaymessage(fd, "Fly Wing roaming disabled. Using walk mode.");
+				clif_displaymessage(fd, "Fly Wing roaming disabled.");
 			} else {
 				autobattle_toggle_mode(sd, AUTOBATTLE_FLYWING, true);
-				clif_displaymessage(fd, "Fly Wing enabled. Uses Fly Wings after 3 seconds without combat.");
+				clif_displaymessage(fd, "Fly Wing enabled. Uses Fly Wings after 7 seconds without combat.");
+			}
+			return 0;
+		} else if (strcmp(arg1, "teleskill") == 0) {
+			if (argc >= 2 && strcmp(arg2, "off") == 0) {
+				autobattle_toggle_mode(sd, AUTOBATTLE_TELESKILL, false);
+				clif_displaymessage(fd, "Teleport skill disabled.");
+			} else {
+				if (pc_checkskill(sd, AL_TELEPORT) < 1) {
+					clif_displaymessage(fd, "You don't know Teleport. Learn it first or equip a costume that grants it.");
+					return -1;
+				}
+				autobattle_toggle_mode(sd, AUTOBATTLE_TELESKILL, true);
+				clif_displaymessage(fd, "Teleport skill enabled. Casts after 7 seconds without combat (10 SP per cast).");
 			}
 			return 0;
 		} else if (strcmp(arg1, "loot") == 0) {
@@ -11637,6 +11650,7 @@ ACMD_FUNC(autoattack) {
 				sd->autobattle_data.gohome_no_pots = true;
 				clif_displaymessage(fd, "Go-home enabled. Will warp to save point when out of pots.");
 			}
+			autobattle_save_config_db(sd);
 			return 0;
 		} else if (strcmp(arg1, "time") == 0) {
 			if (sd->autobattle_data.daily_limit == 0) {
@@ -11953,12 +11967,14 @@ ACMD_FUNC(autosupport) {
 				sd->autobattle_data.support_target_mode = 0;
 				sd->autobattle_data.follow_target_id = -1;
 				clif_displaymessage(fd, "Support target: Auto-lock one party member.");
+				autobattle_save_config_db(sd);
 				return 0;
 			}
 			if (argc >= 2 && strcmp(arg2, "leader") == 0) {
 				sd->autobattle_data.support_target_mode = 1;
 				sd->autobattle_data.follow_target_id = -1;
 				clif_displaymessage(fd, "Support target: Party leader only.");
+				autobattle_save_config_db(sd);
 				return 0;
 			}
 			if (argc >= 2) {
@@ -11968,6 +11984,7 @@ ACMD_FUNC(autosupport) {
 				safestrncpy(sd->autobattle_data.support_target_name, arg2, sizeof(sd->autobattle_data.support_target_name));
 				sprintf(atcmd_output, "Support target: Specific member '%s'.", arg2);
 				clif_displaymessage(fd, atcmd_output);
+				autobattle_save_config_db(sd);
 				return 0;
 			}
 			// No args — show current target mode

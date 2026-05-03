@@ -44,6 +44,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 
 			.@reward = select(
 				"I am kinda new here",
+				"I need a town portal!",
 				"Heard about the Soul Eater?",
 				"Can I get a bag?",
 				"Any supplies for today's stream?",
@@ -61,7 +62,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 						close;
 					}
 
-					if (checkweight(5035,1) == 0 || checkweight(12263,5) == 0 || checkweight(50010,1) == 0) {
+					if (checkweight(5035,1) == 0 || checkweight(12263,5) == 0) {
 						mes "[Tiffy]";
 						mes "Your inventory is stuffed to the brim!";
 						mes "Make some space and come back, okay~?";
@@ -79,7 +80,6 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					mes "^00FF001x Auto-Battle Capsule^000000";
 					mes "^00FF001x Auto-Support Orb^000000";
 					mes "^00FF001x Bubble Gum^000000";
-					mes "^00FF001x Heaven's Recall Scroll^000000";
 					mes " ";
 					mes "Use them wisely~!";
 					next;
@@ -92,7 +92,6 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					getitem 30000, 1;   // Auto-Battle Capsule
 					getitem 30001, 1;   // Auto-Support Orb
 					getitem 12210, 1;   // Bubble Gum
-					getitem 50010, 1;   // Heaven's Recall Scroll
 
 					mes "[Tiffy]";
 					mes "^777777* She slides the items across";
@@ -103,10 +102,64 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					close;
 
 				case 2:
+					// ===== HEAVEN'S RECALL SCROLL =====
+					if (RECALL_SCROLL_CLAIMED || countitem(50010) > 0) {
+						set RECALL_SCROLL_CLAIMED, 1;
+						mes "[Tiffy]";
+						mes "^777777* She peeks into your bag";
+						mes "and shrugs apologetically. *^000000";
+						mes " ";
+						mes "Looks like you've already";
+						mes "got one tucked in there~!";
+						mes " ";
+						mes "These scrolls are tavern-funded,";
+						mes "so it's just the one per soul.";
+						close;
+					}
+
+					if (checkweight(50010, 1) == 0) {
+						mes "[Tiffy]";
+						mes "Your bag's about to burst!";
+						mes "Tidy up a bit and come back~";
+						close;
+					}
+
+					mes "[Tiffy]";
+					mes "Lost again, huh~?";
+					mes " ";
+					mes "^777777* She giggles and reaches under";
+					mes "the counter, pulling out a";
+					mes "neatly rolled parchment tied";
+					mes "with a sky-blue ribbon. *^000000";
+					next;
+
+					mes "[Tiffy]";
+					mes "Here, take this~";
+					mes " ";
+					mes "It's a ^0055FFHeaven's Recall Scroll^000000.";
+					mes "Tear it open anywhere in the";
+					mes "world and *poof* - you'll be";
+					mes "right back here at the tavern.";
+					next;
+
+					mes "[Tiffy]";
+					mes "Consider it a little";
+					mes "^FF5500welcome-home^000000 charm from";
+					mes "all of us at 7th Heaven~";
+					mes " ";
+					mes "Just don't lose it, okay?";
+					mes "I can only spare one per";
+					mes "adventurer!";
+
+					set RECALL_SCROLL_CLAIMED, 1;
+					getitem 50010, 1;   // Heaven's Recall Scroll
+					close;
+
+				case 3:
 					doevent "SoulEaterEvent::OnClaimFromTiffy";
 					end;
 
-				case 3:
+				case 4:
 					// ===== BAG REWARD =====
 					if (#TIFFY_BAG_CLAIMED) {
 						mes "[Tiffy]";
@@ -264,7 +317,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					getitem 30003, 1;      // VIP Black Card (1 Day)
 					close;
 
-				case 4:
+				case 5:
 					// ===== STREAMER DAILY SUPPLY =====
 					.@account_id = getcharid(3);
 					.@is_streamer = 0;
@@ -348,7 +401,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					mes "Asgard City for me, okay?";
 					close;
 
-				case 5:
+				case 6:
 					// --- Never mind ---
 					mes "[Tiffy]";
 					mes "No worries! Come back anytime~";
