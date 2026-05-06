@@ -8484,7 +8484,12 @@ void pc_gainexp(map_session_data *sd, block_list *src, t_exp base_exp, t_exp job
 			base_exp -= guild_payexp(sd,base_exp);
 
 		// Auto-battle EXP penalty (applied after guild tax, before bonuses)
-		if (sd->autobattle_data.mode != AUTOBATTLE_OFF) {
+		// VIPs are exempted — no auto-battle exp penalty.
+		if (sd->autobattle_data.mode != AUTOBATTLE_OFF
+#ifdef VIP_ENABLE
+			&& !pc_isvip(sd)
+#endif
+		) {
 			if (sd->autobattle_data.exp_penalty_base > 0)
 				base_exp = base_exp * (100 - sd->autobattle_data.exp_penalty_base) / 100;
 			if (sd->autobattle_data.exp_penalty_job > 0)
