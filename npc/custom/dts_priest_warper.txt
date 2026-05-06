@@ -13,7 +13,7 @@
 // Sprite  : 4_M_DARKPRIEST
 // ==========================================================================
 
-tavern,49,41,4	script	Father Cassian#7th	4_M_DARKPRIEST,{
+tavern,61,37,4	script	Father Cassian#7th	4_M_DARKPRIEST,{
 
 	mes "[Father Cassian]";
 	mes "A gaunt man in a dust-grey cassock";
