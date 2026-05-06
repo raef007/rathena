@@ -11513,8 +11513,15 @@ ACMD_FUNC(autoattack) {
 			sprintf(atcmd_output, "Time: %dh %dm %ds remaining", hrs, mins, secs);
 			clif_displaymessage(fd, atcmd_output);
 		}
-		// EXP penalty
-		if (sd->autobattle_data.exp_penalty_base > 0 || sd->autobattle_data.exp_penalty_job > 0) {
+		// EXP penalty (VIPs are exempted)
+#ifdef VIP_ENABLE
+		bool is_vip_player = pc_isvip(sd);
+#else
+		bool is_vip_player = false;
+#endif
+		if (is_vip_player) {
+			clif_displaymessage(fd, "EXP Penalty: None (VIP)");
+		} else if (sd->autobattle_data.exp_penalty_base > 0 || sd->autobattle_data.exp_penalty_job > 0) {
 			sprintf(atcmd_output, "EXP Penalty: Base -%d%%, Job -%d%%",
 				sd->autobattle_data.exp_penalty_base, sd->autobattle_data.exp_penalty_job);
 			clif_displaymessage(fd, atcmd_output);
