@@ -1,0 +1,165 @@
+// ==========================================================================
+// Father Cassian — Disgraced Priest Warper
+// ==========================================================================
+// A priest cast out of the Church on a false accusation of an affair he never
+// had. Stripped of his vestments and his stipend, he now sells warps in the
+// shadow of 7th Heaven Tavern to keep bread on his table.
+//
+// Pricing:
+//   Towns        — 1,000 z
+//   Dungeon F1   — 2,000 z
+//
+// Location: tavern,49,41 (next to Tiffy at 47,41)
+// Sprite  : 4_M_DARKPRIEST
+// ==========================================================================
+
+tavern,49,41,4	script	Father Cassian#7th	4_M_DARKPRIEST,{
+
+	mes "[Father Cassian]";
+	mes "A gaunt man in a dust-grey cassock";
+	mes "looks up from a chipped cup. The";
+	mes "collar at his throat is faded, the";
+	mes "trim long since unstitched.";
+	next;
+
+	mes "[Father Cassian]";
+	mes "Forgive the look of me. The Church";
+	mes "and I... parted ways. A whisper";
+	mes "about an affair that never was, and";
+	mes "suddenly the cathedral doors had no";
+	mes "place for Father Cassian.";
+	next;
+
+	mes "[Father Cassian]";
+	mes "But the saints taught me one useful";
+	mes "trick — Warp Portal. So I sell what";
+	mes "I have. ^00AA001,000 z^000000 to any town,";
+	mes "^00AA002,000 z^000000 to the mouth of any dungeon.";
+	next;
+
+	switch (select(
+		" ~ Warp to a Town",
+		" ~ Warp to a Dungeon",
+		" ~ ^777777Leave him to his cup^000000"
+	)) {
+	case 1:
+		callsub L_TownMenu;
+		end;
+	case 2:
+		callsub L_DungeonMenu;
+		end;
+	case 3:
+		mes "[Father Cassian]";
+		mes "Go in peace.";
+		close;
+	}
+	end;
+
+// ==========================================================================
+// Town Menu
+// ==========================================================================
+L_TownMenu:
+	.@menu$ = "";
+	for (.@i = 0; .@i < getarraysize(.town_map$); .@i++)
+		.@menu$ = .@menu$ + .town_name$[.@i] + ":";
+	.@menu$ = .@menu$ + "^777777Cancel^000000";
+
+	.@sel = select(.@menu$) - 1;
+	if (.@sel < 0 || .@sel >= getarraysize(.town_map$)) {
+		mes "[Father Cassian]";
+		mes "As you wish.";
+		close;
+	}
+	if (Zeny < 1000) {
+		mes "[Father Cassian]";
+		mes "He sighs and shakes his head.";
+		mes " ";
+		mes "A thousand zeny, child. Even a";
+		mes "fallen priest must eat.";
+		close;
+	}
+	Zeny -= 1000;
+	warp .town_map$[.@sel], .town_x[.@sel], .town_y[.@sel];
+	end;
+
+// ==========================================================================
+// Dungeon Menu
+// ==========================================================================
+L_DungeonMenu:
+	.@menu$ = "";
+	for (.@i = 0; .@i < getarraysize(.dun_map$); .@i++)
+		.@menu$ = .@menu$ + .dun_name$[.@i] + ":";
+	.@menu$ = .@menu$ + "^777777Cancel^000000";
+
+	.@sel = select(.@menu$) - 1;
+	if (.@sel < 0 || .@sel >= getarraysize(.dun_map$)) {
+		mes "[Father Cassian]";
+		mes "Another time, then.";
+		close;
+	}
+	if (Zeny < 2000) {
+		mes "[Father Cassian]";
+		mes "Two thousand zeny for the deeper";
+		mes "places. Anchoring a portal to a";
+		mes "dungeon is harder on an old soul.";
+		close;
+	}
+	Zeny -= 2000;
+	warp .dun_map$[.@sel], .dun_x[.@sel], .dun_y[.@sel];
+	end;
+
+// ==========================================================================
+// Initialization — define location tables
+// ==========================================================================
+OnInit:
+	// ---- Towns ----
+	setarray .town_map$[0],
+		"prontera","alberta","aldebaran","amatsu","ayothaya",
+		"comodo","einbech","einbroch","geffen","hugel",
+		"izlude","yuno","gonryun","lighthalzen","louyang",
+		"xmas","morocc","moscovia","niflheim","payon",
+		"rachel","umbala","veins","jawaii";
+	setarray .town_name$[0],
+		"Prontera","Alberta","Aldebaran","Amatsu","Ayothaya",
+		"Comodo","Einbech","Einbroch","Geffen","Hugel",
+		"Izlude","Juno","Kunlun","Lighthalzen","Luoyang",
+		"Lutie","Morocc","Moscovia","Niflheim","Payon",
+		"Rachel","Umbala","Veins","Jawaii";
+	setarray .town_x[0],
+		156,28,140,198,208,
+		209,63,64,119,96,
+		128,157,160,158,217,
+		147,156,223,202,179,
+		130,97,216,251;
+	setarray .town_y[0],
+		183,234,131,84,166,
+		143,35,200,59,145,
+		114,51,120,92,100,
+		134,93,184,174,100,
+		110,153,123,132;
+
+	// ---- Dungeon 1st floors ----
+	// All confirmed walkable in renewal — instance versions (Orc's Memory,
+	// Sealed Shrine, etc.) exist in addition to these, not in place of them.
+	setarray .dun_map$[0],
+		"pay_dun00","gef_dun00","prt_sewb1","mjo_dun01","anthell01",
+		"in_sphinx1","ice_dun01","mag_dun01","ein_dun01","iz_dun00",
+		"orcsdun01","treasure01","ayo_dun01","ama_dun01","gon_dun01",
+		"xmas_dun01","glast_01";
+	setarray .dun_name$[0],
+		"Payon Cave F1","Geffen Dungeon F1","Prontera Culvert F1","Coal Mines F1","Ant Hell F1",
+		"Sphinx F1","Ice Dungeon F1","Magma Dungeon F1","Einbroch Dungeon F1","Byalan Dungeon F1",
+		"Orc Dungeon F1","Sunken Ship F1","Ayothaya Dungeon F1","Amatsu Dungeon F1","Kunlun Dungeon F1",
+		"Toy Factory F1","Glast Heim Entrance";
+	setarray .dun_x[0],
+		21,106,131,52,35,
+		288,157,126,22,168,
+		32,69,275,228,153,
+		205,370;
+	setarray .dun_y[0],
+		183,99,247,17,262,
+		9,14,68,14,168,
+		170,24,19,11,53,
+		15,304;
+	end;
+}

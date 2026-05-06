@@ -2,8 +2,8 @@
 // GCash Ticket Drop System
 // ============================================================
 // Drops GCash Tickets when players kill mobs
-// Active denominations: 1, 3, 5 PHP (50001, 50003, 50004)
-// Legacy items 50002/50005/50006/50007 still exist in DB so existing
+// Active denominations: 1, 2 PHP (50001, 50002)
+// Legacy items 50003/50004/50005/50006/50007 still exist in DB so existing
 // player inventories don't go stale, but they no longer drop.
 // Daily value cap resets at midnight Philippines time
 // GM Commands: @gcash [on|off|debug|test]  (GM level 60+)
@@ -13,7 +13,7 @@
 
 OnInit:
 	.daily_cap = 1000;	// Max total GCash value that can drop per day
-	.drop_rate_per_1000 = 1;	// 0.1% live rate
+	.drop_rate_per_10000 = 5;	// 0.05% live rate
 	bindatcmd "gcash", "GCashTickets::OnAtCommand", 60, 99;
 	callsub S_SyncDailyCap;
 	end;
@@ -42,13 +42,13 @@ OnNPCKillEvent:
 		end;
 	}
 
-	.@roll = rand(1000);
+	.@roll = rand(10000);
 	if (callsub(S_CanShowDebug))
-		dispbottom "[GCash Debug] Kill seen: " + .@mob_name$ + " | Roll: " + .@roll + " | Rate: " + .drop_rate_per_1000 + "/1000";
-	if (.@roll >= .drop_rate_per_1000) end;
+		dispbottom "[GCash Debug] Kill seen: " + .@mob_name$ + " | Roll: " + .@roll + " | Rate: " + .drop_rate_per_10000 + "/10000";
+	if (.@roll >= .drop_rate_per_10000) end;
 
-	setarray .@gcash_items[0], 50001, 50003, 50004;
-	setarray .@gcash_values[0], 1, 3, 5;
+	setarray .@gcash_items[0], 50001, 50002;
+	setarray .@gcash_values[0], 1, 2;
 	.@pick = rand(getarraysize(.@gcash_items));
 
 	if ($GCASH_DAILY_VALUE + .@gcash_values[.@pick] > .daily_cap) {
@@ -93,7 +93,7 @@ OnAtCommand:
 		dispbottom "[GCash] Philippines time: " + gettimestr("%Y-%m-%d %H:%M:%S", 20, gettimetick(2) + 28800);
 		dispbottom "[GCash] Today key: " + .@today + " | Stored reset date: " + $GCASH_RESET_DATE;
 	} else {
-		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Rate: 0.1% | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
+		dispbottom "[GCash] Status: " + ($GCASH_DISABLED ? "DISABLED" : "ENABLED") + " | Rate: 0.05% | Today's value: " + $GCASH_DAILY_VALUE + "/" + .daily_cap;
 		dispbottom "[GCash] Usage: @gcash on | @gcash off | @gcash debug | @gcash test | @gcash time | @gcash reset";
 	}
 	end;

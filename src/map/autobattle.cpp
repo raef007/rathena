@@ -1048,13 +1048,28 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		int32 sp_pct = (sd->battle_status.max_sp > 0) ?
 			(sd->battle_status.sp * 100) / sd->battle_status.max_sp : 100;
 
+		// HP-drop detector for sit retaliation. If current HP is less than
+		// what we sampled last tick, we got hit since then — stamp a tick
+		// the fight-back logic can read. Initialize on first run so the
+		// initial HP sample doesn't look like a "drop" from 0 → max.
+		int32 cur_hp = (int32)sd->battle_status.hp;
+		if (sd->autobattle_data.autosit_last_hp > 0 &&
+			cur_hp < sd->autobattle_data.autosit_last_hp)
+			sd->autobattle_data.autosit_last_hit_tick = tick;
+		sd->autobattle_data.autosit_last_hp = cur_hp;
+
 		bool need_sit = false;
 		if (sd->autobattle_data.autosit_hp_threshold > 0 && hp_pct < sd->autobattle_data.autosit_hp_threshold)
 			need_sit = true;
 		if (sd->autobattle_data.autosit_sp_threshold > 0 && sp_pct < sd->autobattle_data.autosit_sp_threshold)
 			need_sit = true;
 
-		if (need_sit && !pc_issit(sd)) {
+		// Don't sit while we're under active attack — that's how the bot
+		// dies sitting. Fight, then sit when safe.
+		bool under_attack = (sd->autobattle_data.autosit_last_hit_tick > 0 &&
+			DIFF_TICK(tick, sd->autobattle_data.autosit_last_hit_tick) < 3000);
+
+		if (need_sit && !pc_issit(sd) && !under_attack) {
 			// Sit down to regen
 			pc_setsit(sd);
 			skill_sit(sd, true);
@@ -1071,13 +1086,12 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 			if (sd->autobattle_data.autosit_sp_threshold > 0 && sp_pct < sd->autobattle_data.autosit_sp_recover)
 				can_stand = false;
 
-			// Fight-back: if a mob is attacking us, stand up and fight even if not fully recovered
-			if (!can_stand && (sd->autobattle_data.mode & AUTOBATTLE_ATTACK)) {
-				// canmove_tick is extended when player takes damage (flinch / walk delay)
-				// If it was set recently, we're being attacked — stand up and fight back
-				if (sd->ud.canmove_tick > tick - 3000) {
-					can_stand = true;
-				}
+			// Fight-back: if our HP dropped within the last 3 seconds, we're
+			// being hit — stand up and fight even if not fully recovered.
+			// HP-drop is a more reliable signal than canmove_tick (which the
+			// engine doesn't extend on a sitting target).
+			if (!can_stand && (sd->autobattle_data.mode & AUTOBATTLE_ATTACK) && under_attack) {
+				can_stand = true;
 			}
 
 			if (can_stand) {
@@ -1458,7 +1472,11 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 	}
 
 	// ===== AUTO-SUPPORT FOLLOW (Phase 25) =====
-	// When support mode is ON with party scope and no attack target, follow the first valid party target
+	// When support mode is ON with party scope and no attack target, follow a
+	// valid party target. Mode 0 ("auto-lock") cycles through eligible members
+	// every 30 seconds so a multi-character party each gets supported in turn.
+	// Mode 1 (leader) and Mode 2 (specific name) only have one valid target so
+	// cycling is a no-op for them.
 	if ((sd->autobattle_data.mode & AUTOBATTLE_SUPPORT) &&
 		!(sd->autobattle_data.mode & AUTOBATTLE_ATTACK) &&
 		sd->autobattle_data.target_id == -1 &&
@@ -1468,8 +1486,18 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		if (p) {
 			struct map_session_data *follow_sd = nullptr;
 
-			// Keep following the same valid member instead of bouncing between party members.
-			if (sd->autobattle_data.follow_target_id > 0) {
+			// Mode 0 cycle timer: every 30s, drop the locked target so the
+			// re-pick block below selects the NEXT eligible member instead
+			// of returning the same one.
+			bool cycle_due = false;
+			if (sd->autobattle_data.support_target_mode == 0 &&
+				sd->autobattle_data.last_cycle_tick > 0 &&
+				DIFF_TICK(tick, sd->autobattle_data.last_cycle_tick) >= 30000) {
+				cycle_due = true;
+			}
+
+			// Keep following the same valid member UNLESS cycle is due.
+			if (sd->autobattle_data.follow_target_id > 0 && !cycle_due) {
 				struct map_session_data *locked_sd = map_id2sd(sd->autobattle_data.follow_target_id);
 				if (locked_sd && locked_sd->prev && locked_sd != sd &&
 					locked_sd->status.party_id == sd->status.party_id &&
@@ -1487,33 +1515,49 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 			}
 
 			if (!follow_sd) {
-				int16 best_dist = INT16_MAX;
-				for (int pi = 0; pi < MAX_PARTY; pi++) {
-					struct map_session_data *psd = p->data[pi].sd;
-					if (!psd || !psd->prev || psd == sd)
-						continue;
-					if (status_isdead(*psd))
-						continue;
-
-					if (sd->autobattle_data.support_target_mode == 1) {
-						if (!party_isleader(psd)) continue;
-					} else if (sd->autobattle_data.support_target_mode == 2) {
-						if (strcmp(psd->status.name, sd->autobattle_data.support_target_name) != 0) continue;
-					} else if (psd->m != sd->m) {
-						continue; // Auto-lock mode has no stable cross-map target.
+				if (sd->autobattle_data.support_target_mode == 0) {
+					// Mode 0: cycle. Build the eligible list (same party,
+					// alive, not self, on same map) in party-slot order so
+					// the cycle is stable, then pick at cycle_member_pos.
+					struct map_session_data *eligible[MAX_PARTY] = {0};
+					int eligible_count = 0;
+					for (int pi = 0; pi < MAX_PARTY; pi++) {
+						struct map_session_data *psd = p->data[pi].sd;
+						if (!psd || !psd->prev || psd == sd)
+							continue;
+						if (status_isdead(*psd))
+							continue;
+						if (psd->m != sd->m)
+							continue;
+						eligible[eligible_count++] = psd;
 					}
+					if (eligible_count > 0) {
+						uint8 pos = sd->autobattle_data.cycle_member_pos;
+						if (pos >= eligible_count)
+							pos = 0;
+						follow_sd = eligible[pos];
+						// Advance for next cycle (wraps via modulo).
+						sd->autobattle_data.cycle_member_pos = (pos + 1) % eligible_count;
+						sd->autobattle_data.last_cycle_tick = tick;
+					}
+				} else {
+					// Modes 1 and 2: single valid target, no cycling.
+					for (int pi = 0; pi < MAX_PARTY; pi++) {
+						struct map_session_data *psd = p->data[pi].sd;
+						if (!psd || !psd->prev || psd == sd)
+							continue;
+						if (status_isdead(*psd))
+							continue;
 
-					if (sd->autobattle_data.support_target_mode == 0) {
-						int16 dist = distance_bl((block_list*)sd, (block_list*)psd);
-						if (dist < best_dist) {
-							best_dist = dist;
-							follow_sd = psd;
+						if (sd->autobattle_data.support_target_mode == 1) {
+							if (!party_isleader(psd)) continue;
+						} else if (sd->autobattle_data.support_target_mode == 2) {
+							if (strcmp(psd->status.name, sd->autobattle_data.support_target_name) != 0) continue;
 						}
-						continue;
-					}
 
-					follow_sd = psd;
-					break;
+						follow_sd = psd;
+						break;
+					}
 				}
 			}
 
@@ -1915,6 +1959,10 @@ void autobattle_init(map_session_data *sd, const s_autobattle_config *config)
 	sd->autobattle_data.roam_dest_mob_id = 0;
 	memset(sd->autobattle_data.failed_direction_until, 0, sizeof(sd->autobattle_data.failed_direction_until));
 	sd->autobattle_data.last_flywing_tick = 0;
+	sd->autobattle_data.autosit_last_hp = 0;
+	sd->autobattle_data.autosit_last_hit_tick = 0;
+	sd->autobattle_data.last_cycle_tick = 0;
+	sd->autobattle_data.cycle_member_pos = 0;
 	sd->autobattle_data.last_support_tick = 0;
 	sd->autobattle_data.last_item_buff_tick = 0;
 	sd->autobattle_data.last_loot_tick = 0;

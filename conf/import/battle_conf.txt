@@ -84,8 +84,8 @@ autobattle_roam_interval: 3000
 
 // EXP penalty % during auto-battle (0 = no penalty, 50 = half exp, 100 = no exp)
 // Base and Job EXP are independent. Loaded from DB autobattle_settings if rows exist.
-autobattle_exp_penalty_base: 0
-autobattle_exp_penalty_job: 0
+autobattle_exp_penalty_base: 50
+autobattle_exp_penalty_job: 50
 
 //-----------
 // Classic feel tuning (Renewal mode with Pre-RE gameplay)

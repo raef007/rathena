@@ -12,7 +12,7 @@ Body:
     Type: Usable
     Buy: 0
     Sell: 0
-    Weight: 10
+    Weight: 0
     Flags:
       NoConsume: true
     Trade:

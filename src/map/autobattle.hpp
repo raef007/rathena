@@ -177,6 +177,24 @@ struct s_autobattle_data {
 	// of no-combat as a side-behavior.
 	t_tick last_flywing_tick;
 
+	// Auto-sit retaliation: track HP between ticks. If HP dropped since last
+	// sample, we got hit — record the tick. Sit logic uses this to stand up
+	// and fight back even before HP/SP are fully recovered. canmove_tick
+	// (the previous fight-back signal) doesn't reliably extend when sitting,
+	// because the engine doesn't bother updating walk timers on a stationary
+	// target.
+	int32 autosit_last_hp;
+	t_tick autosit_last_hit_tick;
+
+	// Auto-support party cycling. In support_target_mode = 0 ("all party"
+	// auto-lock), we now CYCLE through party members every 30 seconds
+	// instead of locking onto a single one for the whole session. The cycle
+	// index is a logical position into the eligible-members list; advance
+	// it when 30s have passed since last_cycle_tick. Modes 1 (leader) and
+	// 2 (specific name) ignore cycling — only one valid target exists.
+	t_tick last_cycle_tick;
+	uint8  cycle_member_pos;
+
 	// State tracking
 	t_tick last_support_tick;      ///< Throttle support casting
 	t_tick last_item_buff_tick;    ///< Throttle self buff item checks

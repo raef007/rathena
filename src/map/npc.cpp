@@ -19,6 +19,7 @@
 #include <common/utilities.hpp>
 #include <common/utils.hpp>
 
+#include "autobattle.hpp"  // AUTOBATTLE_ATTACK — block warp portals during auto-attack
 #include "battle.hpp"
 #include "chat.hpp"
 #include "clif.hpp"
@@ -1930,6 +1931,13 @@ int32 npc_touch_areanpc(map_session_data* sd, int16 m, int16 x, int16 y, npc_dat
 		if ((!nd->trigger_on_hidden && (pc_ishiding(sd) || sd->sc.getSCE(SC_CAMOUFLAGE))) || pc_isdead(sd))
 			break; // hidden or dead chars cannot use warps
 		if (!pc_job_can_entermap((enum e_job)sd->status.class_, map_mapindex2mapid(nd->u.warp.mapindex), pc_get_group_level(sd)))
+			break;
+		// Asgard custom: auto-attack must not warp the bot to a different map.
+		// The bot wanders into portals while roaming; without this guard it
+		// ends up in towns / dungeons it shouldn't be in. Step on the portal
+		// cell does nothing while AUTOBATTLE_ATTACK is set; player can still
+		// disable auto-attack and walk through manually.
+		if (sd->autobattle_data.mode & AUTOBATTLE_ATTACK)
 			break;
 		if (sd->count_rewarp > 10) {
 			ShowWarning("Prevented infinite warp loop for player (%d:%d). Please fix NPC: '%s', path: '%s'\n", sd->status.account_id, sd->status.char_id, nd->exname, nd->path);

@@ -45,6 +45,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 			.@reward = select(
 				"I am kinda new here",
 				"I need a town portal!",
+				"Got a weapon for me?",
 				"Heard about the Soul Eater?",
 				"Can I get a bag?",
 				"Any supplies for today's stream?",
@@ -103,29 +104,23 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 
 				case 2:
 					// ===== HEAVEN'S RECALL SCROLL =====
-					if (RECALL_SCROLL_CLAIMED || countitem(50010) > 0) {
-						set RECALL_SCROLL_CLAIMED, 1;
+					if (countitem(50010) > 0) {
 						mes "[Tiffy]";
 						mes "^777777* She peeks into your bag";
-						mes "and shrugs apologetically. *^000000";
+						mes "and smiles. *^000000";
 						mes " ";
-						mes "Looks like you've already";
-						mes "got one tucked in there~!";
+						mes "You've still got one tucked";
+						mes "away in there~ One scroll is";
+						mes "all you need.";
 						mes " ";
-						mes "These scrolls are tavern-funded,";
-						mes "so it's just the one per soul.";
-						close;
-					}
-
-					if (checkweight(50010, 1) == 0) {
-						mes "[Tiffy]";
-						mes "Your bag's about to burst!";
-						mes "Tidy up a bit and come back~";
+						mes "Use it whenever you feel lost!";
 						close;
 					}
 
 					mes "[Tiffy]";
-					mes "Lost again, huh~?";
+					mes "Lost the last one already?";
+					mes "No worries, happens to the";
+					mes "best of us~";
 					mes " ";
 					mes "^777777* She giggles and reaches under";
 					mes "the counter, pulling out a";
@@ -147,19 +142,132 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					mes "^FF5500welcome-home^000000 charm from";
 					mes "all of us at 7th Heaven~";
 					mes " ";
-					mes "Just don't lose it, okay?";
-					mes "I can only spare one per";
-					mes "adventurer!";
+					mes "Come back anytime if you";
+					mes "lose it - I keep a stack";
+					mes "behind the counter just for";
+					mes "wanderers like you~";
 
-					set RECALL_SCROLL_CLAIMED, 1;
 					getitem 50010, 1;   // Heaven's Recall Scroll
 					close;
 
 				case 3:
+					// ===== STARTER WEAPON =====
+					if (TIFFY_WEAPON_CLAIMED) {
+						mes "[Tiffy]";
+						mes "^777777* She tilts her head and";
+						mes "smiles apologetically. *^000000";
+						mes " ";
+						mes "I already gave you one,";
+						mes "silly~ The tavern only keeps";
+						mes "one good piece of steel set";
+						mes "aside per adventurer.";
+						mes " ";
+						mes "Take care of it, alright?";
+						close;
+					}
+
+					// Pick weapon by base class
+					.@weapon_id = 0;
+					.@weapon_name$ = "";
+					switch (BaseJob) {
+						// Sword users
+						case Job_Knight:
+						case Job_Crusader:
+						case Job_Swordman:
+							.@weapon_id = 1192;
+							.@weapon_name$ = "Eden Slayer I";
+							break;
+
+						// Axe users
+						case Job_Blacksmith:
+						case Job_Alchemist:
+							.@weapon_id = 1391;
+							.@weapon_name$ = "Eden Two-Handed Axe I";
+							break;
+
+						// Mace users (Acolyte branch)
+						case Job_Priest:
+						case Job_Acolyte:
+							.@weapon_id = 16004;
+							.@weapon_name$ = "Eden Mace I";
+							break;
+
+						// Knuckle users
+						case Job_Monk:
+							.@weapon_id = 1831;
+							.@weapon_name$ = "Eden Knuckle I";
+							break;
+
+						// Staff users
+						case Job_Wizard:
+						case Job_Sage:
+						case Job_Mage:
+							.@weapon_id = 1650;
+							.@weapon_name$ = "Eden Staff I";
+							break;
+
+						// Bow users
+						case Job_Hunter:
+						case Job_Bard:
+						case Job_Dancer:
+						case Job_Archer:
+							.@weapon_id = 1747;
+							.@weapon_name$ = "Eden Bow I";
+							break;
+
+						// Katar users
+						case Job_Assassin:
+							.@weapon_id = 1289;
+							.@weapon_name$ = "Eden Katar I";
+							break;
+
+						// Dagger users (default for Thief / Rogue / Novice / Super Novice / etc.)
+						default:
+							.@weapon_id = 13050;
+							.@weapon_name$ = "Eden Dagger I";
+							break;
+					}
+
+					if (checkweight(.@weapon_id, 1) == 0) {
+						mes "[Tiffy]";
+						mes "Whoa, your bag is heavy!";
+						mes "Drop a thing or two and";
+						mes "come right back, okay~?";
+						close;
+					}
+
+					mes "[Tiffy]";
+					mes "^777777* She rummages behind the";
+					mes "counter and pulls out a";
+					mes "weapon wrapped in oilcloth. *^000000";
+					mes " ";
+					mes "I figured you for a fighter";
+					mes "the moment you walked in~";
+					next;
+
+					mes "[Tiffy]";
+					mes "Here, this one's for you:";
+					mes " ";
+					mes "^00FF001x " + .@weapon_name$ + "^000000";
+					mes " ";
+					mes "It's not much, but it'll keep";
+					mes "you alive long enough to find";
+					mes "something better.";
+					next;
+
+					set TIFFY_WEAPON_CLAIMED, 1;
+					getitem .@weapon_id, 1;
+
+					mes "[Tiffy]";
+					mes "Now go on~ Asgard's not";
+					mes "going to explore itself!";
+					close;
+
+				case 4:
 					doevent "SoulEaterEvent::OnClaimFromTiffy";
 					end;
 
-				case 4:
+				case 5:
 					// ===== BAG REWARD =====
 					if (#TIFFY_BAG_CLAIMED) {
 						mes "[Tiffy]";
@@ -317,7 +425,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					getitem 30003, 1;      // VIP Black Card (1 Day)
 					close;
 
-				case 5:
+				case 6:
 					// ===== STREAMER DAILY SUPPLY =====
 					.@account_id = getcharid(3);
 					.@is_streamer = 0;
@@ -401,7 +509,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					mes "Asgard City for me, okay?";
 					close;
 
-				case 6:
+				case 7:
 					// --- Never mind ---
 					mes "[Tiffy]";
 					mes "No worries! Come back anytime~";
