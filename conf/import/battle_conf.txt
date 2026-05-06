@@ -121,3 +121,10 @@ max_extended_parameter: 99
 //-----------
 // Push Cart provides 10,000 cart weight
 max_cart_weight: 10000
+
+//-----------
+// skill.conf
+//-----------
+// Skip the Teleport Lv1 "Random / Cancel" popup — Lv1 only has Random anyway,
+// so the menu is just a confirmation step. Players cast Lv1, get warped instantly.
+skip_teleport_lv1_menu: yes

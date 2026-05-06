@@ -58,3 +58,14 @@ Body:
       can_trade: true
       can_party: true
       attendance: true
+  - Id: 5
+    Name: VIP
+    # Can do everything Players can; VIPs also get @storage to use storage from anywhere.
+    Inherit:
+      Player: true
+    Level: 0
+    Commands:
+      rates: true
+      go: true
+      autoloot: true
+      storage: true

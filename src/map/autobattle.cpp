@@ -45,6 +45,50 @@ static int32 autobattle_direction_quadrant(map_session_data *sd, int16 x, int16 
 static bool autobattle_direction_blacklisted(map_session_data *sd, int16 x, int16 y, t_tick tick);
 
 /**
+ * Mob-targeting-me scan for auto-sit. Returns true only if a mob within range
+ * has the player as its current target — i.e., something is actively chasing
+ * us. This skips passive mobs that just happen to be in detection range
+ * (which would otherwise prevent the bot from EVER sitting on populated maps).
+ *
+ * Aggressive mobs that aggro the player set md->target_id to sd->id; mobs
+ * that the bot has previously attacked also have target_id == sd->id (they're
+ * counter-attacking). Both are "in combat with us" — we don't want to sit
+ * while they're around. Pure passive mobs that haven't been engaged sit at
+ * target_id = 0 and are correctly ignored.
+ */
+static struct {
+	map_session_data *sd;
+	bool found;
+} g_autosit_scan;
+
+static int32 autobattle_autosit_scan_cb(struct block_list *bl, va_list ap)
+{
+	if (!bl || g_autosit_scan.found)
+		return 0;
+	if (bl->type != BL_MOB)
+		return 0;
+	if (status_isdead(*bl))
+		return 0;
+	struct mob_data *md = (struct mob_data*)bl;
+	if (md->special_state.ai > 0)
+		return 0; // skip summons / pets / clones
+	// Only count mobs actively targeting us. Passive mobs in range with
+	// no target are ignored — they'd otherwise prevent sitting forever.
+	if (md->target_id != g_autosit_scan.sd->id)
+		return 0;
+	g_autosit_scan.found = true;
+	return 1; // halt iteration
+}
+
+static bool autobattle_hostile_nearby(map_session_data *sd, int32 range)
+{
+	g_autosit_scan.sd = sd;
+	g_autosit_scan.found = false;
+	map_foreachinrange(autobattle_autosit_scan_cb, (block_list*)sd, range, BL_MOB);
+	return g_autosit_scan.found;
+}
+
+/**
  * Multi-slot unreachable-mob blacklist helpers. Single-slot blacklist gets
  * overwritten in mazes with multiple wall-blocked mobs and the bot loops
  * between them. 8-slot ring buffer with round-robin replacement.
@@ -150,10 +194,23 @@ bool autobattle_is_buff_skill(uint16 skill_id)
 	if (skill_id == 0 || !skill_get_index(skill_id))
 		return false;
 
-	// Reject obvious non-buff categories
+	// Whitelist for buffs that don't fit the standard "no-damage + self/ally
+	// target + has SC" shape, but the player would reasonably expect to see
+	// in the auto-buff picker. Each entry has its own recast logic in the
+	// support skill loop:
+	//   MO_CALLSPIRITS — no SC; recast condition is sd->spiritball < skill_lv
+	switch (skill_id) {
+		case MO_CALLSPIRITS:
+			return true;
+		default:
+			break;
+	}
+
+	// Reject obvious non-buff categories. INF2_ISQUEST is intentionally
+	// NOT in this list — some "quest" skills (e.g. BS_CRAZYUPROAR with
+	// IsQuest: true in skill_db) are real buffs the player can use.
 	if (skill_get_inf2(skill_id, INF2_ISTRAP) ||
 		skill_get_inf2(skill_id, INF2_ISNPC) ||
-		skill_get_inf2(skill_id, INF2_ISQUEST) ||
 		skill_get_inf2(skill_id, INF2_ISWEDDING) ||
 		skill_get_inf2(skill_id, INF2_ISSPIRIT) ||
 		skill_get_inf2(skill_id, INF2_ISGUILD) ||
@@ -1041,22 +1098,36 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		}
 	}
 
-	// ===== AUTO-SIT (Phase 24) — checked BEFORE attack/roam =====
+	// ===== AUTO-SIT (Phase 24) =====
 	if (sd->autobattle_data.mode & AUTOBATTLE_AUTOSIT) {
 		int32 hp_pct = (sd->battle_status.max_hp > 0) ?
 			(sd->battle_status.hp * 100) / sd->battle_status.max_hp : 100;
 		int32 sp_pct = (sd->battle_status.max_sp > 0) ?
 			(sd->battle_status.sp * 100) / sd->battle_status.max_sp : 100;
 
-		// HP-drop detector for sit retaliation. If current HP is less than
-		// what we sampled last tick, we got hit since then — stamp a tick
-		// the fight-back logic can read. Initialize on first run so the
-		// initial HP sample doesn't look like a "drop" from 0 → max.
+		// HP-drop detector — backup signal for hits we DID take (in case
+		// hostile-nearby scan misses something exotic). Sets last_hit_tick.
 		int32 cur_hp = (int32)sd->battle_status.hp;
 		if (sd->autobattle_data.autosit_last_hp > 0 &&
 			cur_hp < sd->autobattle_data.autosit_last_hp)
 			sd->autobattle_data.autosit_last_hit_tick = tick;
 		sd->autobattle_data.autosit_last_hp = cur_hp;
+
+		// Combat indicators — bot is "in combat" if ANY of these are true:
+		//   - sticky target_id from the previous attack tick
+		//   - HP dropped within the last 3 seconds (we got hit)
+		//   - a mob within attack-search range is currently targeting us
+		//     (md->target_id == sd->id). This catches aggressive mobs that
+		//     have aggroed but haven't hit yet, AND mobs the bot has hit
+		//     that are now retaliating. Passive mobs in range with no
+		//     target are deliberately ignored — otherwise the bot could
+		//     never sit on any map with wildlife around.
+		// While in combat we refuse to sit, and force-stand if already sitting.
+		bool has_target   = (sd->autobattle_data.target_id > 0);
+		bool under_attack = (sd->autobattle_data.autosit_last_hit_tick > 0 &&
+		                     DIFF_TICK(tick, sd->autobattle_data.autosit_last_hit_tick) < 3000);
+		bool hostile_near = autobattle_hostile_nearby(sd, sd->autobattle_data.range);
+		bool in_combat    = has_target || under_attack || hostile_near;
 
 		bool need_sit = false;
 		if (sd->autobattle_data.autosit_hp_threshold > 0 && hp_pct < sd->autobattle_data.autosit_hp_threshold)
@@ -1064,44 +1135,37 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 		if (sd->autobattle_data.autosit_sp_threshold > 0 && sp_pct < sd->autobattle_data.autosit_sp_threshold)
 			need_sit = true;
 
-		// Don't sit while we're under active attack — that's how the bot
-		// dies sitting. Fight, then sit when safe.
-		bool under_attack = (sd->autobattle_data.autosit_last_hit_tick > 0 &&
-			DIFF_TICK(tick, sd->autobattle_data.autosit_last_hit_tick) < 3000);
-
-		if (need_sit && !pc_issit(sd) && !under_attack) {
-			// Sit down to regen
+		// Sit down only when (a) HP/SP need it AND (b) no combat going on.
+		if (need_sit && !pc_issit(sd) && !in_combat) {
 			pc_setsit(sd);
 			skill_sit(sd, true);
 			clif_sitting(*(block_list*)sd);
-			// Skip attack/roam — resting
 			goto autobattle_timer_reschedule;
 		}
 
 		if (pc_issit(sd)) {
-			// Check if recovered enough to stand
-			bool can_stand = true;
+			// Recovery check
+			bool recovered = true;
 			if (sd->autobattle_data.autosit_hp_threshold > 0 && hp_pct < sd->autobattle_data.autosit_hp_recover)
-				can_stand = false;
+				recovered = false;
 			if (sd->autobattle_data.autosit_sp_threshold > 0 && sp_pct < sd->autobattle_data.autosit_sp_recover)
-				can_stand = false;
+				recovered = false;
 
-			// Fight-back: if our HP dropped within the last 3 seconds, we're
-			// being hit — stand up and fight even if not fully recovered.
-			// HP-drop is a more reliable signal than canmove_tick (which the
-			// engine doesn't extend on a sitting target).
-			if (!can_stand && (sd->autobattle_data.mode & AUTOBATTLE_ATTACK) && under_attack) {
-				can_stand = true;
-			}
+			// Stand if recovered OR if combat is going on. Combat ALWAYS
+			// wins — it doesn't matter that we haven't fully regenerated.
+			// A sitting bot can't survive a sustained mob attack and the
+			// only way out is to fight it or run.
+			bool should_stand = recovered ||
+				(in_combat && (sd->autobattle_data.mode & AUTOBATTLE_ATTACK));
 
-			if (can_stand) {
+			if (should_stand) {
 				if (pc_setstand(sd, false)) {
 					skill_sit(sd, false);
 					clif_standing(*(block_list*)sd);
 				}
-				// Recovered or fighting back — resume normal processing below
+				// Fall through to attack/roam — bot fights or recovers further on its feet.
 			} else {
-				// Still resting — skip attack/roam
+				// No combat, not recovered — keep resting.
 				goto autobattle_timer_reschedule;
 			}
 		}
@@ -1325,11 +1389,18 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 				case AUTOSUPPORT_SELF:
 					// For buff trigger type on self, check if buff is missing
 					if (skill.trigger_type == 1) {
-						enum sc_type sc = (skill.buff_id > 0) ? (enum sc_type)skill.buff_id : skill_get_sc(skill.skill_id);
-						if (sc == SC_NONE)
-							continue;
-						if (sd->sc.hasSCE(sc))
-							continue; // Buff still active, skip
+						// Stack-tracked buffs (no SC, condition checked
+						// against character state instead).
+						if (skill.skill_id == MO_CALLSPIRITS) {
+							if (sd->spiritball >= skill.skill_lv)
+								continue; // already at max spheres for our skill lv
+						} else {
+							enum sc_type sc = (skill.buff_id > 0) ? (enum sc_type)skill.buff_id : skill_get_sc(skill.skill_id);
+							if (sc == SC_NONE)
+								continue;
+							if (sd->sc.hasSCE(sc))
+								continue; // Buff still active, skip
+						}
 					}
 					target = sd;
 					break;

@@ -61,6 +61,8 @@ Body:
     Script: |
       callfunc "F_AutoSupportMenu";
 
+  # VIP Passes (30002-30006) - cash shop items, fully tradeable.
+  # Players with cash buy them, then resell to players without cash.
   - Id: 30002
     AegisName: VIP_Pass_30d
     Name: VIP Black Card (30 Days)
@@ -71,13 +73,13 @@ Body:
     Flags:
       NoConsume: true
     Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
+      NoDrop: false
+      NoTrade: false
+      NoSell: false
+      NoCart: false
+      NoGuildStorage: false
+      NoMail: false
+      NoAuction: false
     Script: |
       callfunc "F_VIPPassMenu", 30002, 43200, 30, "30 days";
 
@@ -91,13 +93,13 @@ Body:
     Flags:
       NoConsume: true
     Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
+      NoDrop: false
+      NoTrade: false
+      NoSell: false
+      NoCart: false
+      NoGuildStorage: false
+      NoMail: false
+      NoAuction: false
     Script: |
       callfunc "F_VIPPassMenu", 30003, 1440, 1, "1 day";
 
@@ -111,13 +113,13 @@ Body:
     Flags:
       NoConsume: true
     Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
+      NoDrop: false
+      NoTrade: false
+      NoSell: false
+      NoCart: false
+      NoGuildStorage: false
+      NoMail: false
+      NoAuction: false
     Script: |
       callfunc "F_VIPPassMenu", 30004, 10080, 7, "7 days";
 
@@ -131,13 +133,13 @@ Body:
     Flags:
       NoConsume: true
     Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
+      NoDrop: false
+      NoTrade: false
+      NoSell: false
+      NoCart: false
+      NoGuildStorage: false
+      NoMail: false
+      NoAuction: false
     Script: |
       callfunc "F_VIPPassMenu", 30005, 4320, 3, "3 days";
 
@@ -151,13 +153,13 @@ Body:
     Flags:
       NoConsume: true
     Trade:
-      NoDrop: true
-      NoTrade: true
-      NoSell: true
-      NoCart: true
-      NoGuildStorage: true
-      NoMail: true
-      NoAuction: true
+      NoDrop: false
+      NoTrade: false
+      NoSell: false
+      NoCart: false
+      NoGuildStorage: false
+      NoMail: false
+      NoAuction: false
     Script: |
       callfunc "F_VIPPassMenu", 30006, 21600, 15, "15 days";
 
@@ -420,6 +422,207 @@ Body:
       NoAuction: true
     Equip:
       NoEquip: All
+
+# -----------------------------------------------------------------------
+# Cash Shop items - fully tradeable / sellable / droppable.
+# Players with cash buy from the shop and resell to players without cash.
+# Override clears any restrictive Trade flags inherited from the upstream DB.
+# Keep this list in sync with db/import/item_cash.yml.
+# -----------------------------------------------------------------------
+
+  # --- Hot tab equip ---
+  - Id: 5467  # Helm_Of_Dragoon
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18806  # Black_Rabbit_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5325  # Robo_Eye
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+
+  # --- Consumables tab ---
+  - Id: 12216  # Inc_Agi_10_Scroll
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12215  # Blessing_10_Scroll
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 14516  # Magnificat_5_Scroll
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12263  # Comp_Battle_Manual
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 14592  # Job_Manual50
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12210  # Bubble_Gum
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12209  # Insurance
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12212  # Giant_Fly_Wing
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12221  # Megaphone_
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 14536  # Abrasive
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 678    # Poison_Bottle
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 7136   # Acid_Bottle
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12914  # Inc_Agi_10_Scroll_Box
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12913  # Blessing_10_Scroll_Box
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 13542  # Magnificat_5_Scroll_Box
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 13598  # Battle_Manual_Box1
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 13990  # Job_Manual50_Box
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12910  # Giant_Fly_Wing_Box
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12919  # Megaphone_Box
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+
+  # --- Permanent tab (hats / accessories) ---
+  - Id: 5253   # Lif_Doll_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5503   # Rabbit_Magic_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5286   # Pecopeco_Hairband
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5498   # Wondering_Wolf_Helm
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5423   # Lovecap_China
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5431   # Chicken_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18550  # Asgard_Blessing
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5363   # Helm_Of_Abyss
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5211   # Dress_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5372   # Drooping_White_Kitty
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5277   # Yellow_Bandana
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5311   # Large_Hibiscus
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5291   # Kettle_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18662  # Antler_Fedora
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5183   # Bird_Nest_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18613  # Black_Musang_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5404   # Blue_Ribbon
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5398   # Bone_Head
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5414   # Campfire_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5260   # Cookie_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5182   # Puppy_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18696  # Orange_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5554   # Octopus_Hat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 9019   # Dokkaebi_Egg
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5358   # Pecopeco_Wing_Ears
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5175   # Censor_Bar
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5135   # Cyclops_Visor
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5362   # Ninja_Scroll
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5305   # Pirate_Dagger
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5594   # Donut_In_Mouth
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5775   # Choco_Donut_In_Mouth
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5403   # Fish_In_Mouth
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5521   # Angry_Mouth_C
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5377   # Antique_Pipe
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18745  # Choco_Stick_In_Mouth
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18818  # Red_Pencil_In_Mouth
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5878   # Miracle_Blue_Rose
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18648  # Tongue_Charm
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18616  # Long_Tongue
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5592   # Sigrun's_Wing
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5389   # Angel_Spirit
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5517   # Hawk_Eyes02
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 18877  # Baron_Evil_Eye
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5401   # Black_Glasses
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5800   # Blush_Of_Groom
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5315   # Observer
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5610   # Ice_Wing_Ear
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 5664   # Filir_Wing
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+
+  # --- Other tab (costumes) ---
+  - Id: 18740  # C_Hair_Of_The_Strong
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 19749  # C_Gold_Spirit_Chain
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 19721  # C_Darkness_Helm
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 20009  # C_Dragon_Skull
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 19290  # C_Elder_Devil_Horn
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 19836  # C_L_Magestic_Goat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 20018  # Horo_Ears
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 19617  # C_Ear_Of_Puppy
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 19649  # C_White_Baby_Cat_Ears
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 19643  # C_Whikebain_Ears
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 410099 # C_Avenger
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 31617  # C_Lady_Tanee_TW
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 410048 # C_Tiger
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 31798  # C_Baby_Panda
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 19291  # C_Shiba_Inu
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 31491  # C_Orange_Tabby_Cat
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+
+  # --- Scrolls tab (usables) ---
+  - Id: 7621   # Token_Of_Siegfried
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 7776   # Max_Weight_Up_Scroll
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 25793  # Inventory_Ex
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 50031  # AC_Refine_Protection
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 12922  # Token_Of_Siegfried_Box
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
+  - Id: 13710  # Max_Weight_Up_Box
+    Trade: { NoDrop: false, NoTrade: false, NoSell: false, NoCart: false, NoGuildStorage: false, NoMail: false, NoAuction: false }
 
 
 Footer:

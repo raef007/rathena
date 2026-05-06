@@ -152,35 +152,55 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 
 				case 3:
 					// ===== STARTER WEAPON =====
-					if (TIFFY_WEAPON_CLAIMED) {
-						mes "[Tiffy]";
-						mes "^777777* She tilts her head and";
-						mes "smiles apologetically. *^000000";
-						mes " ";
-						mes "I already gave you one,";
-						mes "silly~ The tavern only keeps";
-						mes "one good piece of steel set";
-						mes "aside per adventurer.";
-						mes " ";
-						mes "Take care of it, alright?";
-						close;
+					// Rules:
+					//   - Novice/Super Novice/Baby: free dagger, doesn't count toward cap
+					//   - Post-job-change: 1 weapon per weapon-group, max 2 claims total
+					//   - Same group as last issue: refused (already gave you that)
+					//   - Cap reached (2 claims): refused (out of stock)
+					//
+					// Weapon group keys (TIFFY_WEAPON_LAST$):
+					//   "novice" "sword" "spear" "axe" "mace" "knuckle"
+					//   "staff"  "bow"   "katar" "dagger"
+
+					// Migration: existing chars with the old single-claim flag count
+					// as 1 prior claim under the new system.
+					if (TIFFY_WEAPON_CLAIMED && TIFFY_WEAPON_CLAIMS == 0 && TIFFY_WEAPON_LAST$ == "") {
+						TIFFY_WEAPON_CLAIMS = 1;
+						TIFFY_WEAPON_LAST$ = "legacy";
 					}
 
-					// Pick weapon by base class
+					.@group$ = "";
 					.@weapon_id = 0;
 					.@weapon_name$ = "";
 					switch (BaseJob) {
-						// Sword users
-						case Job_Knight:
-						case Job_Crusader:
+						// Novice tier — freebie dagger, doesn't count
+						case Job_Novice:
+						case Job_SuperNovice:
+						case Job_Baby:
+							.@group$ = "novice";
+							.@weapon_id = 13050;
+							.@weapon_name$ = "Eden Dagger I";
+							break;
+
+						// Swordman base — 2H sword
 						case Job_Swordman:
+							.@group$ = "sword";
 							.@weapon_id = 1192;
 							.@weapon_name$ = "Eden Slayer I";
+							break;
+
+						// Knight / Crusader — spear (sword-line specialization)
+						case Job_Knight:
+						case Job_Crusader:
+							.@group$ = "spear";
+							.@weapon_id = 1434;
+							.@weapon_name$ = "Eden Spear I";
 							break;
 
 						// Axe users
 						case Job_Blacksmith:
 						case Job_Alchemist:
+							.@group$ = "axe";
 							.@weapon_id = 1391;
 							.@weapon_name$ = "Eden Two-Handed Axe I";
 							break;
@@ -188,12 +208,14 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 						// Mace users (Acolyte branch)
 						case Job_Priest:
 						case Job_Acolyte:
+							.@group$ = "mace";
 							.@weapon_id = 16004;
 							.@weapon_name$ = "Eden Mace I";
 							break;
 
 						// Knuckle users
 						case Job_Monk:
+							.@group$ = "knuckle";
 							.@weapon_id = 1831;
 							.@weapon_name$ = "Eden Knuckle I";
 							break;
@@ -202,6 +224,7 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 						case Job_Wizard:
 						case Job_Sage:
 						case Job_Mage:
+							.@group$ = "staff";
 							.@weapon_id = 1650;
 							.@weapon_name$ = "Eden Staff I";
 							break;
@@ -211,21 +234,50 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 						case Job_Bard:
 						case Job_Dancer:
 						case Job_Archer:
+							.@group$ = "bow";
 							.@weapon_id = 1747;
 							.@weapon_name$ = "Eden Bow I";
 							break;
 
 						// Katar users
 						case Job_Assassin:
+							.@group$ = "katar";
 							.@weapon_id = 1289;
 							.@weapon_name$ = "Eden Katar I";
 							break;
 
-						// Dagger users (default for Thief / Rogue / Novice / Super Novice / etc.)
+						// Dagger users (default for Thief / Rogue / etc.)
 						default:
+							.@group$ = "dagger";
 							.@weapon_id = 13050;
 							.@weapon_name$ = "Eden Dagger I";
 							break;
+					}
+
+					// Already received this weapon group?
+					if (TIFFY_WEAPON_LAST$ == .@group$) {
+						mes "[Tiffy]";
+						mes "^777777* She peeks at your hip and";
+						mes "smiles. *^000000";
+						mes " ";
+						mes "I already gave you one of";
+						mes "those, silly~ Take care of";
+						mes "it, alright?";
+						close;
+					}
+
+					// Cap reached? (Novice freebie doesn't count.)
+					if (.@group$ != "novice" && TIFFY_WEAPON_CLAIMS >= 2) {
+						mes "[Tiffy]";
+						mes "^777777* She tilts her head and";
+						mes "shrugs apologetically. *^000000";
+						mes " ";
+						mes "Sorry, hon~ I can only spare";
+						mes "two pieces of steel per";
+						mes "adventurer. You'll have to";
+						mes "buy your next weapon the";
+						mes "honest way.";
+						close;
 					}
 
 					if (checkweight(.@weapon_id, 1) == 0) {
@@ -241,8 +293,18 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					mes "counter and pulls out a";
 					mes "weapon wrapped in oilcloth. *^000000";
 					mes " ";
-					mes "I figured you for a fighter";
-					mes "the moment you walked in~";
+					if (.@group$ == "novice") {
+						mes "Every adventurer needs a";
+						mes "first blade~ Here you go.";
+					} else if (TIFFY_WEAPON_CLAIMS == 0) {
+						mes "Picked a class, did you?";
+						mes "Let's get you something";
+						mes "that actually fits the job~";
+					} else {
+						mes "Climbing the ranks, huh?";
+						mes "I've got one more piece of";
+						mes "steel set aside for you~";
+					}
 					next;
 
 					mes "[Tiffy]";
@@ -255,12 +317,21 @@ tavern,47,41,4	script	Tiffy	4_F_EDEN_MASTER,{
 					mes "something better.";
 					next;
 
-					set TIFFY_WEAPON_CLAIMED, 1;
+					TIFFY_WEAPON_LAST$ = .@group$;
+					if (.@group$ != "novice")
+						TIFFY_WEAPON_CLAIMS += 1;
 					getitem .@weapon_id, 1;
 
 					mes "[Tiffy]";
-					mes "Now go on~ Asgard's not";
-					mes "going to explore itself!";
+					if (.@group$ != "novice" && TIFFY_WEAPON_CLAIMS >= 2) {
+						mes "That's the last one I can";
+						mes "spare for you, hon~";
+						mes " ";
+						mes "Make it count out there!";
+					} else {
+						mes "Now go on~ Asgard's not";
+						mes "going to explore itself!";
+					}
 					close;
 
 				case 4:

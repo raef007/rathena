@@ -97,6 +97,7 @@ function	script	F_VIPPassMenu	{
 	mes "- ^00CC00+300^000000 extra storage slots";
 	mes "- ^00CC00+6^000000 extra character slots";
 	mes "- ^00CC002x^000000 Autobattle daily time";
+	mes "- ^00CC00No EXP penalty^000000 while Auto-Battling";
 	mes " ";
 	delitem .@item_id, 1;
 	vip_time .@minutes;

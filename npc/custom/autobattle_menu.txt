@@ -241,7 +241,11 @@ L_Cfg_SelfBuff:
 L_Self_SkillBuffs:
 	getskilllist;
 	.@buf_count = 0;
-	for (.@i = 0; .@i < @skilllist_count && .@buf_count < 30; .@i++) {
+	// Cap of 80 — high-tier / all-skill characters can have 40+ buffs once
+	// inherited Acolyte/Priest/Wizard/Knight buffs all match the filter.
+	// Lower caps were silently truncating Monk skills like MO_CALLSPIRITS
+	// because earlier buffs in the list filled all 30 slots first.
+	for (.@i = 0; .@i < @skilllist_count && .@buf_count < 80; .@i++) {
 		.@sid = @skilllist_id[.@i];
 		if (!isautobattlebuffskill(.@sid)) continue;
 		.@buf_ids[.@buf_count] = .@sid;
@@ -644,7 +648,9 @@ L_Sup_Buff:
 			.@buf_ids[.@buf_count] = .@sid;
 			.@buf_lvs[.@buf_count] = .@slv;
 			.@buf_count++;
-			if (.@buf_count >= 20) break;
+			// Same reasoning as L_Self_SkillBuffs — high-tier/all-skill
+			// characters easily exceed 20 buffs.
+			if (.@buf_count >= 80) break;
 		}
 	}
 	if (.@buf_count == 0) {

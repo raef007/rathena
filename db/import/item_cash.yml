@@ -103,7 +103,7 @@ Body:
         Price: 15
 
       # --- Scroll boxes (10 pcs) ---
-      - Item: Inc_Agi_10_Box10
+      - Item: Inc_Agi_10_Scroll_Box
         Price: 25
       - Item: Blessing_10_Scroll_Box
         Price: 25
@@ -225,6 +225,8 @@ Body:
         Price: 700
       - Item: Ice_Wing_Ear
         Price: 1500
+      - Item: Filir_Wing
+        Price: 1200
 
   # ============================================================
   # COSTUME tab
@@ -282,5 +284,5 @@ Body:
         Price: 500
       - Item: Token_Of_Siegfried_Box
         Price: 250
-      - Item: Max_Weight_Up_Scroll_Box10
+      - Item: Max_Weight_Up_Box
         Price: 450
