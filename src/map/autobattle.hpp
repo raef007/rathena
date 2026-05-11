@@ -118,6 +118,16 @@ struct s_autobattle_data {
 	int16 roam_last_y;             ///< Position at previous roam tick (stuck detection)
 	int32 roam_best_dist;          ///< Best (smallest) distance to dest achieved so far (maze escape)
 	t_tick roam_best_tick;         ///< Tick when roam_best_dist was last improved
+	int32 roam_initial_dist;       ///< Manhattan distance to dest at the moment it was picked (for ≥30%-progress check)
+	// Heading-based directional commit: bot picks one of 8 compass headings
+	// and makes 3-5 short picks within ±60° of it before auto-rotating to a
+	// new heading. Auto-rotation prevents edge-walking on open maps; the
+	// blacklist still fires when a heading is genuinely blocked early. Mob-
+	// seek always overrides and resets nothing (heading resumes after combat).
+	uint8 roam_heading;                  ///< Current heading 0..7 (N, NE, E, SE, S, SW, W, NW)
+	bool  roam_has_heading;              ///< Whether a heading is currently chosen
+	uint8 roam_heading_picks_left;       ///< Picks remaining on current heading before auto-rotate
+	t_tick roam_heading_blocked_until[8];///< Per-heading blacklist expiry
 	// Recent-visit ring buffer: gives the bot temporal memory of where it has
 	// been, so it doesn't keep re-entering dead-ends in maze-like corridors.
 	// 64 entries × ~3-cell snapshot stride covers ~190 cells of recent path —
@@ -147,6 +157,7 @@ struct s_autobattle_data {
 	t_tick unreachable_target_until;   // legacy field
 	int32 unreachable_ids[8];
 	t_tick unreachable_until[8];
+	uint8 unreachable_fails[8];   ///< Per-slot repeat-fail count: 1st blacklist = 30s, 2nd+ = 5 min escalation
 	uint8 unreachable_head;
 
 	// "3 strikes" wall counter. Increments every time the hop search has to

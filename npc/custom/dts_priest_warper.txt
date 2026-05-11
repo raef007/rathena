@@ -32,7 +32,7 @@ tavern,61,37,4	script	Father Cassian#7th	4_M_DARKPRIEST,{
 
 	mes "[Father Cassian]";
 	mes "But the saints taught me one useful";
-	mes "trick — Warp Portal. So I sell what";
+	mes "trick - Warp Portal. So I sell what";
 	mes "I have. ^00AA001,000 z^000000 to any town,";
 	mes "^00AA002,000 z^000000 to the mouth of any dungeon.";
 	next;

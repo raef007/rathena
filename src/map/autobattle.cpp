@@ -109,21 +109,36 @@ static void autobattle_blacklist_unreachable(map_session_data *sd, int32 id, t_t
 {
 	if (id <= 0)
 		return;
-	// If this id already has a slot, just refresh its expiry (longer wins).
+	t_tick now = gettick();
+	// If this id already has a slot, escalate. The first ban is short (30s, the
+	// caller's value) so a temporarily-blocked mob (player crossed a corner)
+	// gets a quick second chance. But if the SAME mob_id comes back as a
+	// candidate after the ban lapses and we have to ban it AGAIN, that's
+	// strong evidence the mob is genuinely unreachable from any nearby
+	// position — escalate to 5 minutes so it stops cycling back into
+	// candidacy.
 	for (int i = 0; i < 8; i++) {
 		if (sd->autobattle_data.unreachable_ids[i] == id) {
-			if (DIFF_TICK(until, sd->autobattle_data.unreachable_until[i]) > 0)
-				sd->autobattle_data.unreachable_until[i] = until;
+			if (sd->autobattle_data.unreachable_fails[i] < 255)
+				sd->autobattle_data.unreachable_fails[i]++;
+			t_tick effective_until = until;
+			if (sd->autobattle_data.unreachable_fails[i] >= 2) {
+				t_tick long_until = now + 300000; // 5 min
+				if (DIFF_TICK(long_until, effective_until) > 0)
+					effective_until = long_until;
+			}
+			if (DIFF_TICK(effective_until, sd->autobattle_data.unreachable_until[i]) > 0)
+				sd->autobattle_data.unreachable_until[i] = effective_until;
 			return;
 		}
 	}
 	// Otherwise prefer an empty/expired slot before evicting an active one.
-	t_tick now = gettick();
 	for (int i = 0; i < 8; i++) {
 		if (sd->autobattle_data.unreachable_ids[i] == 0 ||
 			DIFF_TICK(now, sd->autobattle_data.unreachable_until[i]) >= 0) {
 			sd->autobattle_data.unreachable_ids[i] = id;
 			sd->autobattle_data.unreachable_until[i] = until;
+			sd->autobattle_data.unreachable_fails[i] = 1;
 			return;
 		}
 	}
@@ -131,6 +146,7 @@ static void autobattle_blacklist_unreachable(map_session_data *sd, int32 id, t_t
 	uint8 h = sd->autobattle_data.unreachable_head;
 	sd->autobattle_data.unreachable_ids[h] = id;
 	sd->autobattle_data.unreachable_until[h] = until;
+	sd->autobattle_data.unreachable_fails[h] = 1;
 	sd->autobattle_data.unreachable_head = (h + 1) % 8;
 }
 
@@ -343,10 +359,38 @@ static int32 autobattle_nearmob_callback(struct block_list* bl, va_list ap)
 		return 0;
 
 	int32 dist = abs(bl->x - sd->x) + abs(bl->y - sd->y);
-	if (dist < g_nearmob_ctx.best_dist) {
-		g_nearmob_ctx.best_dist = dist;
-		g_nearmob_ctx.best = bl;
-	}
+	if (dist >= g_nearmob_ctx.best_dist)
+		return 0;
+
+	// Range cap: ignore mobs beyond ~RO screen view. Without this the bot
+	// can lock onto a mob clear across the map (cliff/river/ledge on the
+	// other side) just because A* finds a 30-cell detour around the
+	// obstacle. Capping to a screen's worth means each pick is something
+	// the bot can plausibly reach in seconds, and traversal of the whole
+	// map happens via successive picks rather than one ambitious goal.
+	if (dist > 25)
+		return 0;
+
+	// A*-reachability gate. Without this the bot can lock onto the closest
+	// mob even when it's in a walled-off pocket (river island, GAT-isolated
+	// ledge, etc.), then burn stall timers trying to walk toward nothing.
+	walkpath_data wpd = { 0 };
+	if (!path_search(&wpd, sd->m, sd->x, sd->y, bl->x, bl->y, 0, CELL_CHKNOPASS))
+		return 0;
+
+	// Path-length sanity check. A* will happily return a 30-cell snaking
+	// detour around a wide cliff for a mob that's only 20 Manhattan cells
+	// away — A* says "reachable", bot commits, then U-turns at the cliff
+	// edge for stall_timer seconds before bailing. Rejecting candidates
+	// whose actual path is significantly longer than the straight-line
+	// Manhattan distance filters those out at pick time. Slack of +5
+	// allows for normal corner-routing on small obstacles (pyramid 2-cell
+	// walls) without false-rejecting them.
+	if ((int32)wpd.path_len > dist * 3 / 2 + 5)
+		return 0;
+
+	g_nearmob_ctx.best_dist = dist;
+	g_nearmob_ctx.best = bl;
 	return 0;
 }
 
@@ -396,6 +440,7 @@ static bool autobattle_pick_ultimate_dest(map_session_data *sd, t_tick tick)
 		sd->autobattle_data.roam_has_dest = true;
 		sd->autobattle_data.last_roam_tick = tick;
 		sd->autobattle_data.roam_best_dist = abs(nearest->x - sd->x) + abs(nearest->y - sd->y);
+		sd->autobattle_data.roam_initial_dist = sd->autobattle_data.roam_best_dist;
 		sd->autobattle_data.roam_best_tick = tick;
 		sd->autobattle_data.roam_dest_mob_id = nearest->id;
 
@@ -411,96 +456,167 @@ static bool autobattle_pick_ultimate_dest(map_session_data *sd, t_tick tick)
 		return true;
 	}
 
-	// No mob anywhere on the map (or all unreachable/filtered). Fall back to
-	// the random walkable picker biased by stalest quadrant — preserves
-	// continuous map exploration on empty maps.
+	// No mob anywhere on the map (or all unreachable/filtered). Heading-based
+	// directional commit: pick one of 8 compass headings (N/NE/E/SE/S/SW/W/NW),
+	// make 3-5 short picks within ±60° of it, then auto-rotate to a different
+	// heading. Auto-rotation prevents edge-walking on open maps (without it
+	// the bot would beeline for the nearest map corner). The per-heading
+	// blacklist still fires when a heading is genuinely blocked early
+	// (cliff/wall) so the cliff scenario doesn't keep getting re-attempted.
+
+	static const double heading_vec[8][2] = {
+		{ 0.0,  1.0}, { 0.7071,  0.7071}, { 1.0,  0.0}, { 0.7071, -0.7071},
+		{ 0.0, -1.0}, {-0.7071, -0.7071}, {-1.0,  0.0}, {-0.7071,  0.7071}
+	};
+
+	// Pick a fresh heading when:
+	//   1. No heading set (start of session / just rotated),
+	//   2. Current heading's blacklist is active (got blocked recently), or
+	//   3. Pick budget exhausted (auto-rotate after 3-5 picks).
+	bool need_heading = !sd->autobattle_data.roam_has_heading ||
+		DIFF_TICK(tick, sd->autobattle_data.roam_heading_blocked_until[sd->autobattle_data.roam_heading]) < 0 ||
+		sd->autobattle_data.roam_heading_picks_left == 0;
+	if (need_heading) {
+		// Choose from unblocked headings, excluding the current one so we
+		// actually rotate. If only the current is unblocked, allow it (no
+		// rotation but at least we move).
+		uint8 candidates[8];
+		int32 n_cand = 0;
+		bool had_prev = sd->autobattle_data.roam_has_heading;
+		uint8 prev = sd->autobattle_data.roam_heading;
+		for (int32 h = 0; h < 8; h++) {
+			if (had_prev && (uint8)h == prev)
+				continue;
+			if (DIFF_TICK(tick, sd->autobattle_data.roam_heading_blocked_until[h]) >= 0)
+				candidates[n_cand++] = (uint8)h;
+		}
+		if (n_cand > 0) {
+			sd->autobattle_data.roam_heading = candidates[rnd_value<int32>(0, n_cand - 1)];
+		} else if (had_prev &&
+			DIFF_TICK(tick, sd->autobattle_data.roam_heading_blocked_until[prev]) >= 0) {
+			// Only the previous heading is unblocked — keep it.
+			sd->autobattle_data.roam_heading = prev;
+		} else {
+			// All 8 blacklisted (tight pocket). Clear all bans, pick random;
+			// the per-session validation re-blacklists genuinely blocked ones.
+			for (int32 h = 0; h < 8; h++)
+				sd->autobattle_data.roam_heading_blocked_until[h] = 0;
+			sd->autobattle_data.roam_heading = (uint8)rnd_value<int32>(0, 7);
+		}
+		sd->autobattle_data.roam_has_heading = true;
+		sd->autobattle_data.roam_heading_picks_left = (uint8)rnd_value<int32>(8, 12);
+	}
+
+	double hx = heading_vec[sd->autobattle_data.roam_heading][0];
+	double hy = heading_vec[sd->autobattle_data.roam_heading][1];
 
 	const int32 edge = battle_config.map_edge_size;
-	const int16 map_w = (int16)(mapdata->xs - edge * 2);
-	const int16 map_h = (int16)(mapdata->ys - edge * 2);
-	// Aim for ~3/8 the smaller map dimension. Destinations close to the
-	// player produce "wandering in a tight area" where the strike counter
-	// and stall timers don't trip — the bot keeps making short forward
-	// hops within a pocket. Forcing far destinations means each new pick
-	// is meaningfully in a different region of the map. Clamped 30-80 so
-	// small maps still have viable picks.
-	int16 min_dist = (int16)(((map_w < map_h) ? map_w : map_h) * 3 / 8);
-	if (min_dist < 30) min_dist = 30;
-	if (min_dist > 80) min_dist = 80;
+	const int16 min_radius = 20;
+	const int16 max_radius = 35;
 
-	// Find the stalest quadrant (oldest last-visited tick, or never visited).
-	// Prefer one different from the player's current quadrant so we always
-	// commit to going SOMEWHERE other than where we already are.
-	int32 cur_q = autobattle_quadrant_of(sd, sd->x, sd->y);
-	int32 target_q = -1;
-	t_tick oldest = 0;
-	bool oldest_set = false;
-	for (int32 q = 0; q < 4; q++) {
-		if (q == cur_q)
-			continue;
-		t_tick t = sd->autobattle_data.roam_quadrant_tick[q];
-		if (!oldest_set || t < oldest) {
-			oldest = t;
-			oldest_set = true;
-			target_q = q;
-		}
-	}
-	if (target_q < 0)
-		target_q = (cur_q + 1) % 4; // Fallback shouldn't happen.
+	int16 chosen_rx = 0, chosen_ry = 0;
+	int32 chosen_d = 0;
+	bool any_success = false;
+	bool tight_success = false; // hit a candidate within the ±60° arc
 
-	const int16 mid_x = (int16)(mapdata->xs / 2);
-	const int16 mid_y = (int16)(mapdata->ys / 2);
-	const int16 qx_lo = (target_q & 1) ? mid_x : (int16)edge;
-	const int16 qx_hi = (target_q & 1) ? (int16)(mapdata->xs - edge - 1) : mid_x;
-	const int16 qy_lo = (target_q & 2) ? mid_y : (int16)edge;
-	const int16 qy_hi = (target_q & 2) ? (int16)(mapdata->ys - edge - 1) : mid_y;
-
-	// First 150 attempts: stay inside the chosen quadrant AND respect the
-	// direction blacklist (skip cells in directions where wall hits recently
-	// blacklisted us). Next 30 attempts: drop the quadrant constraint but
-	// keep the direction blacklist. Last 20 attempts: drop both — pure
-	// whole-map sampling so we never return false for lack of options.
+	// Phases of relaxation across 200 attempts:
+	//   0-99   : 20-35 radius + ±60° arc + direction blacklist + A*+pathlen
+	//   100-149: 20-35 radius + ±90° arc + A*+pathlen (sidestep around obstacle)
+	//   150-179: 5-35 radius + any direction + A*+pathlen (narrow-corridor entry)
+	//   180-199: 5-35 radius + any non-wall (last-resort)
+	//
+	// The radius drops to 5 in late phases specifically to handle narrow
+	// passages: a 2-tile corridor mouth almost never gets a 20-cell random
+	// pick to land *inside* it (random offsets land in the flanking walls).
+	// A 5-15 cell pick has a much better chance of hitting the corridor
+	// entrance, letting the bot make one small step in. Next session, bot
+	// is already inside the corridor and normal picks extend through it.
 	for (int32 attempts = 0; attempts < 200; attempts++) {
-		int16 rx, ry;
-		if (attempts < 150) {
-			rx = rnd_value<int16>(qx_lo, qx_hi);
-			ry = rnd_value<int16>(qy_lo, qy_hi);
-		} else {
-			rx = rnd_value<int16>((int16)edge, (int16)(mapdata->xs - edge - 1));
-			ry = rnd_value<int16>((int16)edge, (int16)(mapdata->ys - edge - 1));
-		}
+		int16 dx = rnd_value<int16>((int16)-max_radius, (int16)max_radius);
+		int16 dy = rnd_value<int16>((int16)-max_radius, (int16)max_radius);
+		int16 rx = (int16)(sd->x + dx);
+		int16 ry = (int16)(sd->y + dy);
+
+		if (rx < edge) continue;
+		if (ry < edge) continue;
+		if (rx >= mapdata->xs - edge) continue;
+		if (ry >= mapdata->ys - edge) continue;
+
+		int32 d = abs(dx) + abs(dy);
+		int16 cur_min = (attempts >= 150) ? 5 : min_radius;
+		if (d < cur_min || d > max_radius)
+			continue;
+
 		if (map_getcell(sd->m, rx, ry, CELL_CHKNOPASS))
 			continue;
-		if ((abs(rx - sd->x) + abs(ry - sd->y)) < min_dist)
-			continue;
-		// Honour direction blacklist for the first 180 attempts. After that,
-		// drop the constraint as a last-resort escape so we always have SOME
-		// destination to head toward.
-		if (attempts < 180 && autobattle_direction_blacklisted(sd, rx, ry, tick))
+
+		// Heading arc filter.
+		double odx = (double)dx, ody = (double)dy;
+		double olen = sqrt(odx * odx + ody * ody);
+		double cos_t = (olen > 0.0) ? (odx * hx + ody * hy) / olen : 0.0;
+		if (attempts < 100) {
+			if (cos_t < 0.5) continue; // ±60° (forward arc)
+		} else if (attempts < 150) {
+			if (cos_t < 0.0) continue; // ±90° (sidestep allowed, no backwards)
+		}
+		// 150+: any direction.
+
+		// Short-term direction blacklist (set on stall in roam_walk).
+		if (attempts < 150 && autobattle_direction_blacklisted(sd, rx, ry, tick))
 			continue;
 
-		sd->autobattle_data.roam_dest_x = rx;
-		sd->autobattle_data.roam_dest_y = ry;
+		// A*+pathlen validate (skip on last 20 escape-hatch attempts).
+		if (attempts < 180) {
+			walkpath_data wpd = { 0 };
+			if (!path_search(&wpd, sd->m, sd->x, sd->y, rx, ry, 0, CELL_CHKNOPASS))
+				continue;
+			if ((int32)wpd.path_len > d * 3 / 2 + 5)
+				continue;
+		}
+
+		chosen_rx = rx;
+		chosen_ry = ry;
+		chosen_d = d;
+		any_success = true;
+		if (attempts < 100)
+			tight_success = true;
+		break;
+	}
+
+	if (any_success) {
+		sd->autobattle_data.roam_dest_x = chosen_rx;
+		sd->autobattle_data.roam_dest_y = chosen_ry;
 		sd->autobattle_data.roam_has_dest = true;
 		sd->autobattle_data.last_roam_tick = tick;
-		sd->autobattle_data.roam_best_dist = abs(rx - sd->x) + abs(ry - sd->y);
+		sd->autobattle_data.roam_best_dist = chosen_d;
+		sd->autobattle_data.roam_initial_dist = chosen_d;
 		sd->autobattle_data.roam_best_tick = tick;
-		sd->autobattle_data.roam_dest_mob_id = 0; // Random pick — no mob attached.
+		sd->autobattle_data.roam_dest_mob_id = 0;
 
-		// Mark the destination's quadrant as visited NOW (we'll be there
-		// shortly). This stops the same quadrant from being re-picked
-		// immediately if the bot bounces destinations rapidly.
-		int32 dest_q = autobattle_quadrant_of(sd, rx, ry);
+		int32 dest_q = autobattle_quadrant_of(sd, chosen_rx, chosen_ry);
 		sd->autobattle_data.roam_quadrant_tick[dest_q] = tick;
 
-		// Fresh destination = fresh memory.
 		sd->autobattle_data.roam_visit_head = 0;
 		sd->autobattle_data.roam_visit_count = 0;
 		sd->autobattle_data.roam_snapshot_x = sd->x;
 		sd->autobattle_data.roam_snapshot_y = sd->y;
 		sd->autobattle_data.roam_struggle_count = 0;
+
+		// Decrement the commit budget. When it hits 0, the next call will
+		// auto-rotate to a different heading. tight_success picks count
+		// normally; non-tight picks (sidestep escape) DON'T decrement so
+		// the bot still gets its full forward-arc budget after working
+		// around an obstacle.
+		if (tight_success && sd->autobattle_data.roam_heading_picks_left > 0)
+			sd->autobattle_data.roam_heading_picks_left--;
 		return true;
 	}
+
+	// All 200 attempts failed — heading is genuinely blocked. Blacklist for
+	// 60s and force a fresh heading next call.
+	sd->autobattle_data.roam_heading_blocked_until[sd->autobattle_data.roam_heading] = tick + 60000;
+	sd->autobattle_data.roam_has_heading = false;
+	sd->autobattle_data.roam_heading_picks_left = 0;
 	return false;
 }
 
@@ -643,7 +759,7 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 		cur_to_dest = abs(sd->x - dest_x) + abs(sd->y - dest_y);
 	}
 
-	// Track best distance to dest. Improvements reset the stall timer; 15s
+	// Track best distance to dest. Improvements reset the stall timer; 5s
 	// without progress means the dest is in a pocket we can't reach — abandon,
 	// blacklist the mob, blacklist the direction. The 3-strikes path covered
 	// the "lots of sidesteps" case but missed THIS one: when the bot keeps
@@ -655,7 +771,7 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 	if (cur_to_dest < sd->autobattle_data.roam_best_dist) {
 		sd->autobattle_data.roam_best_dist = cur_to_dest;
 		sd->autobattle_data.roam_best_tick = tick;
-	} else if (DIFF_TICK(tick, sd->autobattle_data.roam_best_tick) > 15000) {
+	} else if (DIFF_TICK(tick, sd->autobattle_data.roam_best_tick) > 5000) {
 		// Blacklist the failed direction (relative to current player position)
 		// for 30s, and the source mob for 30s, so mob-seek picks something
 		// different next iteration.
@@ -670,9 +786,30 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 		return;
 	}
 
-	// Absolute 90s timeout. Genuinely unreachable destinations get rotated —
-	// same blacklist update as the 15s stall path.
-	if (DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) > 90000) {
+	// 15s "haven't closed 30% of the gap" check. Catches the case where A*
+	// said the destination was reachable but the actual approach is tortuous
+	// (long detour around a cliff): bot keeps making hops, occasionally
+	// improving best_dist by 1–2 cells, but never seriously closing the gap.
+	// Initial-distance-relative threshold means short goals don't false-trip.
+	if (sd->autobattle_data.roam_initial_dist > 0 &&
+		DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) > 15000) {
+		int32 progressed = sd->autobattle_data.roam_initial_dist - sd->autobattle_data.roam_best_dist;
+		if (progressed * 10 < sd->autobattle_data.roam_initial_dist * 3) {
+			int32 fq = autobattle_direction_quadrant(sd, dest_x, dest_y);
+			sd->autobattle_data.failed_direction_until[fq] = tick + 30000;
+			if (sd->autobattle_data.roam_dest_mob_id > 0) {
+				autobattle_blacklist_unreachable(sd,
+					sd->autobattle_data.roam_dest_mob_id, tick + 30000);
+				sd->autobattle_data.roam_dest_mob_id = 0;
+			}
+			sd->autobattle_data.roam_has_dest = false;
+			return;
+		}
+	}
+
+	// Absolute 30s timeout. Genuinely unreachable destinations get rotated —
+	// same blacklist update as the 5s stall path.
+	if (DIFF_TICK(tick, sd->autobattle_data.last_roam_tick) > 30000) {
 		int32 fq = autobattle_direction_quadrant(sd, dest_x, dest_y);
 		sd->autobattle_data.failed_direction_until[fq] = tick + 30000;
 		if (sd->autobattle_data.roam_dest_mob_id > 0) {
@@ -772,7 +909,7 @@ static void autobattle_roam_walk(map_session_data *sd, t_tick tick)
 						sd->autobattle_data.roam_struggle_count = 0;
 					} else {
 						sd->autobattle_data.roam_struggle_count++;
-						if (sd->autobattle_data.roam_struggle_count >= 3) {
+						if (sd->autobattle_data.roam_struggle_count >= 2) {
 							// Blacklist the failed direction (relative to
 							// current player position) for 30s. Mob-seek will
 							// skip mobs that lie in this direction next pick
@@ -1579,7 +1716,12 @@ int autobattle_process(int tid, t_tick tick, int id, intptr_t data)
 					} else if (sd->autobattle_data.support_target_mode == 2) {
 						if (strcmp(locked_sd->status.name, sd->autobattle_data.support_target_name) == 0)
 							follow_sd = locked_sd;
-					} else if (locked_sd->m == sd->m) {
+					} else {
+						// Mode 0: keep the locked target even when on a different
+						// map. If the supporter accidentally stepped on a warp
+						// portal, the cross-map teleport block below pulls it
+						// back to the locked party member instead of letting it
+						// idle on the wrong map until the 30s cycle resets.
 						follow_sd = locked_sd;
 					}
 				}
